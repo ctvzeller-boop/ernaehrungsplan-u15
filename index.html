@@ -118,6 +118,8 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .likegroup h3{font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em}
 .chip.off{background:transparent;border:1px dashed var(--line);color:var(--muted);text-decoration:line-through}
 .chip.meat{opacity:.55}
+.sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
+.sharebanner span{flex:1 1 260px;min-width:0;font-weight:500}
 .recipelist{display:flex;flex-direction:column;gap:6px}
 .recipelist button{text-align:left;display:flex;justify-content:space-between;gap:8px}
 .recipelist button span{color:var(--muted);font-weight:400;font-size:.85rem}
@@ -168,10 +170,17 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
     </div>
   </header>
 
+  <div class="sharebanner" id="shareBanner" role="status" hidden>
+    <span id="shareBannerText">Du siehst einen geteilten Plan. Du kannst ihn anpassen, Änderungen bleiben in deinem Browser gespeichert.</span>
+    <button type="button" id="undoImport">Meinen vorherigen Plan zurückholen</button>
+    <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
+  </div>
+
   <section class="plates" aria-label="Teller nach Tagestyp" id="plates"></section>
 
   <div class="toolbar">
-    <button class="primary" id="copyBtn" type="button">Plan als Text kopieren</button>
+    <button class="primary" id="shareBtn" type="button">Plan als Link teilen</button>
+    <button id="copyBtn" type="button">Plan als Text kopieren</button>
     <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
     <button id="resetBtn" type="button">Beispielwoche wiederherstellen</button>
     <button id="clearBtn" type="button">Plan leeren</button>
@@ -534,6 +543,47 @@ window.addEventListener("resize",()=>{if(menu.day)positionMenu()});
 document.querySelector(".tablewrap").addEventListener("scroll",()=>{if(menu.day)positionMenu()});
 window.addEventListener("scroll",()=>{if(menu.day)positionMenu()},{passive:true});
 
+/* Plan als Link teilen */
+const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/";
+function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
+async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
+async function encodePlan(){
+  const data=new TextEncoder().encode(JSON.stringify({n:state.name||"",v:!!state.veg,p:state.plan}));
+  if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
+  return "b"+b64url(data);
+}
+async function decodePlan(code){
+  let bytes=unb64url(code.slice(1));
+  if(code[0]==="z")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&!/claude\.ai$/.test(l.hostname)&&!/claudeusercontent|claude\.site/.test(l.hostname)?l.origin+l.pathname:SITE}
+document.getElementById("shareBtn").addEventListener("click",async()=>{
+  let link;try{link=baseUrl()+"#plan="+await encodePlan()}catch(e){flash("Link konnte nicht erstellt werden.");return}
+  const fallback=()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select();flash("Link unten markiert – jetzt kopieren.")};
+  try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
+});
+let beforeImport=null;
+async function importFromHash(){
+  const m=(window.location.hash||"").match(/^#plan=([zb][A-Za-z0-9_-]+)$/);if(!m)return;
+  try{
+    const d=await decodePlan(m[1]);if(!d||!d.p)throw 0;
+    beforeImport=JSON.stringify(state);
+    state.plan=d.p;state.name=d.n||state.name;state.veg=!!d.v;save();
+    document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
+    renderAll();renderLikes();
+    document.getElementById("shareBanner").hidden=false;
+  }catch(e){flash("Der geteilte Plan konnte nicht gelesen werden.")}
+  try{history.replaceState(null,"",window.location.pathname+window.location.search)}catch(e){}
+}
+document.getElementById("undoImport").addEventListener("click",()=>{
+  if(!beforeImport)return;state=JSON.parse(beforeImport);save();
+  document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
+  renderAll();renderLikes();document.getElementById("shareBanner").hidden=true;flash("Vorheriger Plan wiederhergestellt");
+});
+document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
+
 /* PDF-Export */
 const TYPE_RGB={leicht:[226,242,232],mittel:[250,239,217],intensiv:[251,228,223],spiel:[227,236,250]};
 function pdfSafe(s){return String(s||"").replace(/⅓/g,"1/3").replace(/★/g,"").replace(/[^\x00-\xFF–—•]/g,"")}
@@ -642,5 +692,5 @@ pdfBtn.addEventListener("click",()=>{
 
 document.getElementById("athlete").value=state.name||"";
 document.getElementById("vegToggle").checked=!!state.veg;
-renderPlates();renderAll();
+renderPlates();renderAll();importFromHash();
 </script>
