@@ -113,6 +113,11 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .ex summary{cursor:pointer;font-weight:600;list-style:none;display:block}
 .ex summary::-webkit-details-marker{display:none}
 .ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.mat{display:block;font-weight:500;font-size:.8rem;color:var(--muted);margin-top:2px}
+.mat::before{content:"🧰 ";font-size:.75rem}
+.loads .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.matlist{margin:0;font-size:.9rem}
+.matlist b{font-weight:600}
 .ex .note{font-size:.85rem;color:var(--muted);margin:6px 0 0;white-space:pre-line}
 .ex .acts{display:flex;gap:6px;align-items:center}
 .ex .addbtn{padding:5px 12px;font-size:1.05rem}
@@ -287,6 +292,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <h2 id="libTitle">Übungen</h2>
       <input type="search" id="search" placeholder="Übung suchen" aria-label="Übung suchen">
       <div class="cats" id="cats" role="group" aria-label="Kategorie filtern"></div>
+      <div class="cats loads" id="loads" role="group" aria-label="Nach Belastung filtern"></div>
       <div class="libscroll" id="lib"></div>
     </aside>
   </div>
@@ -297,6 +303,8 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="addgrid">
         <div class="field full"><label class="small" for="cName">Name</label><input type="text" id="cName" placeholder="z. B. Goblet Squat"></div>
         <div class="field"><label class="small" for="cCat">Kategorie</label><select id="cCat"></select></div>
+        <div class="field"><label class="small" for="cLoad">Belastung</label><select id="cLoad"><option value="kw">Körpergewicht</option><option value="band">Band</option><option value="gew">Gewicht</option></select></div>
+        <div class="field"><label class="small" for="cMat">Material</label><input type="text" id="cMat" placeholder="z. B. Kettlebell, Matte"></div>
         <div class="field"><label class="small" for="cDose">Sätze × Wdh</label><input type="text" id="cDose" placeholder="3 × 8–10"></div>
         <div class="field full"><label class="small" for="cVid">Video-Link (optional)</label><input type="url" id="cVid" placeholder="https://youtu.be/…"></div>
         <div class="field full"><label class="small" for="cNote">Ausführung (optional)</label><input type="text" id="cNote" placeholder="Worauf achten?"></div>
@@ -426,6 +434,28 @@ const EX=[
  ["spiderman","Spiderman Planks","rumpf","2–3","30 s","","","Aus der Plank abwechselnd das Knie zum gleichseitigen Ellbogen ziehen, Rumpf stabil.",[]],
  ["lowerabs","Untere Bauchmuskulatur (Video-Programm)","rumpf","1","wie im Video","","","Unterer Rücken muss immer den Boden berühren.",[Y("RZRzD9h5RL4")]]
 ].map(([id,n,k,s,w,p,r,b,v])=>({id,n,k,s,w,p,r,b,v}));
+/* Belastung: kw = Körpergewicht, band = Resistance Band, gew = Gewicht; dazu benötigtes Material */
+const LOADS=[["kw","Körpergewicht"],["band","Band"],["gew","Gewicht"]];
+const LOADN=Object.fromEntries(LOADS);
+const MAT={
+ abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],
+ skater:["kw",[]],latbounds:["kw",[]],boxjump:["kw",["Box"]],boxvar:["kw",["Box (niedrig und hoch)"]],depth:["kw",["Box"]],
+ explsplit:["kw",["Bank oder Erhöhung (optional)"]],bsqjump:["kw",["Bank oder Erhöhung"]],hillsprint:["kw",["Hang / Steigung"]],sprints:["kw",[]],
+ mbchest:["gew",["Medizinball","Wand"]],
+ squat:["gew",["Langhantel","Rack"]],rdl:["gew",["Langhantel oder Kurzhanteln"]],splitsq:["gew",["Kurzhanteln","Bank"]],
+ hipthrust:["gew",["Landmine","Langhantel","Bank"]],latlunge:["gew",["Landmine, Kettlebell oder Kurzhantel"]],
+ calf:["kw gew",["Stufe / Erhöhung","Kurzhantel (optional)"]],hamiso:["kw",["Bank"]],nordic:["kw",["Sprossenwand oder Partner","Matte"]],
+ bench:["gew",["Langhantel oder Kurzhanteln","Bank"]],incline:["gew",["Kurzhanteln","Schrägbank"]],
+ pullup:["kw band",["Klimmzugstange","Band zur Unterstützung (optional)"]],pullupw:["gew",["Klimmzugstange","Gewichtsgürtel oder Kurzhantel"]],
+ pushup:["kw",[]],lmpress:["gew",["Landmine","Langhantel"]],lmpressst:["gew",["Landmine","Langhantel"]],
+ row1:["gew",["Kurzhantel","Bank"]],rowchest:["gew",["Rudermaschine oder Langhantel"]],dips:["kw gew",["Barren / Dipstation","Zusatzgewicht (optional)"]],
+ flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],facepull:["band gew",["Kabelzug oder Resistance Band"]],
+ pallof:["band gew",["Kabelzug oder Resistance Band"]],chop:["gew band",["Kabelzug oder Resistance Band"]],birddog:["kw",["Matte"]],
+ lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Resistance Band oder Kabelzug","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
+ rollout:["kw",["Gymnastikball"]],copenhagen:["kw",["Bank / Erhöhung"]],
+ flutter:["kw",["Matte"]],dslr:["kw",["Matte"]],scissor:["kw",["Matte"]],bottomup:["kw",["Matte"]],bicycle:["kw",["Matte"]],spiderman:["kw",["Matte"]],lowerabs:["kw",["Matte"]]
+};
+Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
 const PDFIMG={copenhagen:1,flutter:2,dslr:2,scissor:2,bottomup:2,bicycle:2,spiderman:2};
 const EXBY=Object.fromEntries(EX.map(e=>[e.id,e]));
 
@@ -445,11 +475,14 @@ const KEY="u15-trainingseinheit-v1";
 const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/training/";
 const ST={ok:"geschafft",less:"weniger",more:"mehr"};
 let state=load();
-let filter={cat:"",q:""};
+let filter={cat:"",q:"",load:[]};
 if(!state.mode)state.mode=window.matchMedia("(max-width:760px)").matches?"train":"edit";
 
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function loadOf(id){const e=exById(id);return (e&&e.l)||[]}
+function matOf(id){const e=exById(id);return (e&&e.m)||[]}
+function matLine(id){const l=loadOf(id),m=matOf(id);return [l.map(x=>LOADN[x]).join(" / "),m.length?m.join(", "):(l.length?"kein Material":"")].filter(Boolean).join(" · ")}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
@@ -516,16 +549,19 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
       ${c.a?`<div class="eyebrow">${esc(c.a)}</div>`:""}<h2 class="stitle">${esc(c.t||"Trainingseinheit")}</h2>
       ${c.h?`<p class="snotes">${esc(c.h)}</p>`:""}
+      ${sessMat(c).length?`<p class="matlist"><b>Material:</b> ${esc(sessMat(c).join(", "))}</p>`:""}
       <div class="progress" id="progress"></div></div>`;
     renderProgress();
   }
 }
+function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if(!/optional/i.test(m)&&!out.includes(m))out.push(m)}));return out}
 function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
   el.innerHTML=`<div class="progline"><span class="eyebrow">Fortschritt</span><span><b>${t.done}</b> von ${t.plan} Sätzen${t.plan&&t.done>=t.plan?" · fertig 💪":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${t.plan}" aria-valuenow="${t.done}" aria-label="Erledigte Sätze"><i style="width:${pct}%"></i></div>`}
 function renderSummary(){const el=document.getElementById("summary");if(!el)return;const c=cur();const groups=new Set(labels(c.items).map(l=>l[0])).size;
   const vids=c.items.filter(i=>i.v&&i.v.length).length;
-  el.innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>`:"";}
+  const mats=sessMat(c);const onlyKw=c.items.length&&c.items.every(it=>loadOf(it.id).includes("kw"));
+  el.innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>${onlyKw?`<span>✓ alles mit Körpergewicht möglich</span>`:""}${mats.length?`<span style="flex-basis:100%">Material: <b>${esc(mats.join(", "))}</b></span>`:""}`:"";}
 
 /* Einheit: Übungen */
 function setsHTML(it){
@@ -542,13 +578,13 @@ function renderItems(focusSel){
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${esc(it.n)}<span class="idose">${esc(dose(it))}</span>${vidLinks(it.v)}</div></div>
+        <div class="iname">${esc(it.n)}<span class="idose">${esc(dose(it))}</span>${matOf(it.id).length?`<span class="mat">${esc(matOf(it.id).join(", "))}</span>`:""}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${setsHTML(it)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${esc(it.n)}${vidLinks(it.v)}</div>
+        <div class="iname">${esc(it.n)}${vidLinks(it.v)}${matLine(it.id)?`<span class="mat">${esc(matLine(it.id))}</span>`:""}</div>
         <div class="imove">
           <button type="button" class="iconbtn" data-act="up" aria-label="${esc(it.n)} nach oben"${i===0?" disabled":""}>↑</button>
           <button type="button" class="iconbtn" data-act="down" aria-label="${esc(it.n)} nach unten"${i===c.items.length-1?" disabled":""}>↓</button>
@@ -576,13 +612,16 @@ function renderCats(){
   document.getElementById("cats").innerHTML=`<button type="button" class="cat" data-cat="" aria-pressed="${!filter.cat}">Alle</button>`+
     cats.map(([k,n])=>`<button type="button" class="cat" data-cat="${k}" aria-pressed="${filter.cat===k}">${n}</button>`).join("");
 }
+function renderLoads(){
+  document.getElementById("loads").innerHTML=`<span class="eyebrow" style="align-self:center">Nur:</span>`+LOADS.map(([k,n])=>`<button type="button" class="cat ld-${k}" data-load="${k}" aria-pressed="${filter.load.includes(k)}">${n}</button>`).join("");
+}
 function renderLib(){
   const q=filter.q.trim().toLowerCase();const inSess=new Set(cur().items.map(i=>i.id));
   const html=CATS.filter(([k])=>!filter.cat||filter.cat===k).map(([k,n])=>{
-    const list=exAll().filter(e=>e.k===k&&(!q||e.n.toLowerCase().includes(q)||(e.b||"").toLowerCase().includes(q)));
+    const list=exAll().filter(e=>e.k===k&&(!filter.load.length||(e.l||[]).some(x=>filter.load.includes(x)))&&(!q||[e.n,e.b,(e.m||[]).join(" ")].join(" ").toLowerCase().includes(q)));
     if(!list.length)return "";
     return `<div class="libgroup c-${k}"><h3><span class="dot"></span>${n}</h3>${list.map(e=>`
-      <div class="ex">${thumbHTML(e.id,e.n)}<details><summary>${esc(e.n)}<span class="dose">${esc(dose(e))}</span></summary>
+      <div class="ex">${thumbHTML(e.id,e.n)}<details><summary>${esc(e.n)}<span class="dose">${esc(dose(e))}</span>${matLine(e.id)?`<span class="mat">${esc(matLine(e.id))}</span>`:""}</summary>
         ${e.b?`<p class="note">${esc(e.b)}</p>`:""}</details>
         <div class="acts">${vidLinks(e.v)}<button type="button" class="addbtn" data-add="${esc(e.id)}" aria-label="${esc(e.n)} zur Einheit hinzufügen">+</button></div>
         ${inSess.has(e.id)?`<span class="added">✓ in dieser Einheit</span>`:""}
@@ -593,7 +632,7 @@ function renderLib(){
 /* Text */
 function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
   L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
-  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
+  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(matOf(it.id).length)L.push("    Material: "+matOf(it.id).join(", "));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
   return L.join("\n")}
 function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);const L=[];
   const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
@@ -601,7 +640,7 @@ function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);co
     L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):"– nicht gemacht"))});
   return L.join("\n")}
 function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
-function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLib();renderText()}}
+function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
 
 /* Events */
@@ -624,6 +663,7 @@ document.addEventListener("click",e=>{
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
   const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
   if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
+  const lb=t.closest("[data-load]");if(lb){const k=lb.dataset.load;filter.load=filter.load.includes(k)?filter.load.filter(x=>x!==k):filter.load.concat(k);renderLoads();renderLib();return}
   const cb=t.closest("[data-cat]");if(cb){filter.cat=cb.dataset.cat;renderCats();renderLib();return}
   const ab=t.closest("[data-add]");if(ab){const e2=exById(ab.dataset.add);cur().items.push(itemFrom(e2,false));save();renderItems();renderLib();renderBar();renderText();flash(`„${e2.n}“ hinzugefügt`);
     const again=document.querySelector(`[data-add="${CSS.escape(e2.id)}"]`);if(again)again.focus();return}
@@ -695,10 +735,10 @@ document.getElementById("cAdd").addEventListener("click",async()=>{
   const n=document.getElementById("cName").value.trim();if(!n){flash("Bitte einen Namen eingeben.");document.getElementById("cName").focus();return}
   const d=document.getElementById("cDose").value.trim();const m=d.split(/\s*[×x]\s*/);
   const v=document.getElementById("cVid").value.trim();
-  const ex={id:"c_"+uid(),n,k:document.getElementById("cCat").value,s:m.length>1?m[0]:"",w:m.length>1?m.slice(1).join(" × "):d,p:"",r:"",b:document.getElementById("cNote").value.trim(),v:/^https?:\/\//.test(v)?[v]:[]};
+  const ex={id:"c_"+uid(),n,k:document.getElementById("cCat").value,s:m.length>1?m[0]:"",w:m.length>1?m.slice(1).join(" × "):d,p:"",r:"",b:document.getElementById("cNote").value.trim(),v:/^https?:\/\//.test(v)?[v]:[],l:[document.getElementById("cLoad").value],m:document.getElementById("cMat").value.split(",").map(x=>x.trim()).filter(Boolean)};
   (state.custom=state.custom||[]).push(ex);save();
   const f=document.getElementById("cImg").files[0];if(f)await setOwnImg(ex.id,f);
-  ["cName","cDose","cVid","cNote","cImg"].forEach(id=>document.getElementById(id).value="");
+  ["cName","cDose","cVid","cNote","cImg","cMat"].forEach(id=>document.getElementById(id).value="");
   filter.cat="";renderCustom();renderCats();renderLib();flash(`„${n}“ in der Übungsliste`)});
 
 /* Bild & Ausführung */
@@ -709,6 +749,7 @@ function openEx(id,from){exOpen=id;if(from)exReturn=from;const e=exInfo(id);cons
   document.getElementById("exBody").innerHTML=`<div class="eyebrow">${esc((CATS.find(c=>c[0]===e.k)||["",""])[1])}</div><h3 id="exTitle">${esc(e.n)}</h3>
    ${im.src.length?`<div class="bigimgs">${im.src.map(u=>`<img src="${esc(u.replace("mqdefault","hqdefault"))}" alt="${esc(e.n)}" onerror="this.remove()">`).join("")}</div><div class="imgsrc">${srcTxt}</div>`:`<p class="empty">Noch kein Bild für diese Übung.</p>`}
    ${dose(e)?`<div><b>${esc(dose(e))}</b></div>`:""}
+   ${matLine(id)?`<div class="matlist"><b>Belastung & Material:</b> ${esc(matLine(id))}</div>`:""}
    ${e.b?`<p class="note">${esc(e.b)}</p>`:""}
    <div class="mrow">${vidLinks(e.v)}
      <label class="filebtn"><button type="button" tabindex="-1">${im.k==="own"?"Anderes Bild wählen":"Eigenes Bild hochladen"}</button><input type="file" accept="image/*" id="exImgFile" aria-label="Eigenes Bild für ${esc(e.n)} hochladen"></label>
@@ -788,7 +829,7 @@ async function buildPDF(){
   let y=34;
   if(c.h){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);const l=doc.splitTextToSize(T(c.h),W-2*M);doc.text(l,M,y);y+=l.length*4.4+3}
   const hasPic=pics.some(Boolean);
-  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
+  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(matOf(it.id).length?"\nMaterial: "+T(matOf(it.id).join(", ")):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
   doc.autoTable({head:[["","","Übung","Sätze","Wdh / Zeit","Gewicht","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
     styles:{font:"helvetica",fontSize:9,cellPadding:2.4,textColor:INK,lineColor:LINE,lineWidth:.2,valign:"middle",overflow:"linebreak"},
     headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7.5},
