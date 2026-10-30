@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trainingseinheit U15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: Links die Übungsbibliothek, rechts die Einheit als Trainingsblatt; auf dem Handy die Einheit zuerst */
+:root{
+  --bg:#F2F5F7; --surface:#FFFFFF; --ink:#14232C; --muted:#5A6A73; --line:#D8E0E5;
+  --accent:#1D63C9; --accent-soft:#E3ECFA; --warn:#C2412D;
+  --c-warm:#2E8B57; --c-warm-bg:#E2F2E8;
+  --c-plyo:#C2412D; --c-plyo-bg:#FBE4DF;
+  --c-beine:#B7791F; --c-beine-bg:#FAEFD9;
+  --c-ober:#1D63C9; --c-ober-bg:#E3ECFA;
+  --c-rumpf:#7A4FC2; --c-rumpf-bg:#EEE7FA;
+  --c-eigen:#5A6A73; --c-eigen-bg:#E9EEF1;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
+  --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
+  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
+  --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
+  --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
+  --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
+  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
+  --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
+  --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}
+
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1300px;margin:0 auto;padding-block:24px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:2.4rem;line-height:1}
+h2{font-size:1.4rem;text-transform:uppercase;letter-spacing:.04em}
+.lead{color:var(--muted);max-width:68ch;margin:6px 0 0}
+.eyebrow,label.small{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.sitelink{color:var(--accent);font-weight:600;text-decoration:none}
+.sitelink:hover{text-decoration:underline}
+input[type=text],input[type=url],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:64px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:hover{border-color:var(--accent)}
+button.warn{border-color:var(--warn);color:var(--warn)}
+.iconbtn{padding:4px 9px;font-size:.95rem;line-height:1.2}
+.linkbtn{padding:2px 4px;font-size:.85rem;font-weight:500;border:none;background:none;color:var(--accent);text-decoration:underline;cursor:pointer}
+.status{font-size:.85rem;color:var(--muted);align-self:center;min-height:1.2em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.empty{color:var(--muted);font-size:.88rem}
+
+/* Einheiten-Leiste */
+.sessionbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stab{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%}
+.stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
+.stab small{font-family:var(--body);font-weight:500;font-size:.75rem;color:var(--muted)}
+.stab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.stab[aria-pressed="true"] small{color:inherit;opacity:.75}
+.tplpick{width:auto;max-width:100%}
+
+.sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
+.sharebanner span{flex:1 1 260px;min-width:0;font-weight:500}
+
+/* Hauptbereich */
+.main{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);grid-template-areas:"lib sess";gap:20px;align-items:start}
+.lib{grid-area:lib;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:hidden}
+.sess{grid-area:sess}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr);grid-template-areas:"sess" "lib"}.lib{position:static;max-height:none}}
+
+/* Bibliothek */
+.cats{display:flex;flex-wrap:wrap;gap:6px}
+.cat{padding:4px 10px;border-radius:999px;font-size:.85rem;font-weight:600}
+.cat[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.libscroll{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px;margin:0 -16px -16px;padding:0 16px 16px}
+.libgroup h3{font-size:1.05rem;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--c)}
+.ex{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.ex details{min-width:0}
+.ex summary{cursor:pointer;font-weight:600;list-style:none;display:block}
+.ex summary::-webkit-details-marker{display:none}
+.ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.ex .note{font-size:.85rem;color:var(--muted);margin:6px 0 0;white-space:pre-line}
+.ex .acts{display:flex;gap:6px;align-items:center}
+.ex .addbtn{padding:4px 10px}
+.ex .added{font-size:.75rem;color:var(--muted);grid-column:1/-1}
+.vid{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}
+.vid:hover{text-decoration:underline}
+
+/* Einheit */
+.sesshead{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px}
+.sesshead .full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+#sessTitle{font-family:var(--display);font-size:1.5rem;font-weight:700;padding:5px 9px}
+@media (max-width:520px){.sesshead{grid-template-columns:1fr}}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:520px){.toolbar{display:grid;grid-template-columns:1fr 1fr}.toolbar .primary,.toolbar .status{grid-column:1/-1}}
+
+.items{display:flex;flex-direction:column;gap:0}
+.item{--c:var(--c-eigen);--cbg:var(--c-eigen-bg);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--surface);margin-top:10px}
+.item.linked{margin-top:0;border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
+.item.haslink{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.ihead{display:flex;gap:10px;align-items:flex-start}
+.badge{flex:none;min-width:38px;text-align:center;font-family:var(--display);font-weight:700;font-size:1.15rem;background:var(--cbg);color:var(--c);border-radius:6px;padding:2px 6px}
+.iname{flex:1;min-width:0;font-weight:600;font-size:1.02rem;padding-top:2px}
+.iname .vid{margin-left:6px}
+.imove{display:flex;gap:4px;flex:none}
+.params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.params label{display:flex;flex-direction:column;gap:2px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;min-width:0}
+.params input{font-variant-numeric:tabular-nums;padding:6px 8px}
+@media (max-width:520px){.params{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ifoot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.ifoot input[type=text]{flex:1 1 220px}
+.sslink{display:flex;gap:6px;align-items:center;font-size:.85rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.sslink input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.catbadge-warm,.c-warm{--c:var(--c-warm);--cbg:var(--c-warm-bg)}
+.c-plyo{--c:var(--c-plyo);--cbg:var(--c-plyo-bg)}
+.c-beine{--c:var(--c-beine);--cbg:var(--c-beine-bg)}
+.c-ober{--c:var(--c-ober);--cbg:var(--c-ober-bg)}
+.c-rumpf{--c:var(--c-rumpf);--cbg:var(--c-rumpf-bg)}
+.c-eigen{--c:var(--c-eigen);--cbg:var(--c-eigen-bg)}
+.emptysess{border:1px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--muted)}
+.summary{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.summary b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+.lower{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.addgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.addgrid .full{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);border-radius:999px;padding:3px 4px 3px 10px;font-size:.85rem}
+.chip button{padding:0 7px;border:none;background:transparent;font-size:1rem;line-height:1.2}
+.card p{margin:0}
+textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
+@media (max-width:760px){h1{font-size:2rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Unihockey · Athletik</div>
+      <h1>Trainingseinheit</h1>
+      <p class="lead">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF. Deine Einheiten bleiben in diesem Browser gespeichert.</p>
+    </div>
+    <a class="sitelink" href="../">→ Zur Ernährungswoche</a>
+  </header>
+
+  <div class="sharebanner" id="shareBanner" role="status" hidden>
+    <span>Du siehst eine geteilte Einheit. Sie wurde zu deinen Einheiten hinzugefügt und du kannst sie anpassen.</span>
+    <button type="button" id="undoImport">Wieder entfernen</button>
+    <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
+  </div>
+
+  <div class="sessionbar" id="sessionBar" role="group" aria-label="Meine Einheiten"></div>
+
+  <div class="main">
+    <section class="card sess" aria-labelledby="sessTitleLbl">
+      <div class="sesshead">
+        <div class="field">
+          <label class="small" for="sessTitle" id="sessTitleLbl">Einheit</label>
+          <input type="text" id="sessTitle" placeholder="z. B. Oberkörper Kraft">
+        </div>
+        <div class="field">
+          <label class="small" for="sessAthlete">Athlet/in</label>
+          <input type="text" id="sessAthlete" placeholder="Name">
+        </div>
+        <div class="field full">
+          <label class="small" for="sessNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label>
+          <textarea id="sessNotes" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen"></textarea>
+        </div>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div class="toolbar">
+        <button class="primary" id="shareBtn" type="button">Einheit als Link teilen</button>
+        <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
+        <button id="copyBtn" type="button">Als Text kopieren</button>
+        <button id="dupBtn" type="button">Duplizieren</button>
+        <button id="delBtn" type="button">Einheit löschen</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+      <div class="items" id="items"></div>
+    </section>
+
+    <aside class="card lib" aria-labelledby="libTitle">
+      <h2 id="libTitle">Übungen</h2>
+      <input type="text" id="search" placeholder="Übung suchen" aria-label="Übung suchen">
+      <div class="cats" id="cats" role="group" aria-label="Kategorie filtern"></div>
+      <div class="libscroll" id="lib"></div>
+    </aside>
+  </div>
+
+  <div class="lower">
+    <div class="card">
+      <h2>Eigene Übung</h2>
+      <div class="addgrid">
+        <div class="field full"><label class="small" for="cName">Name</label><input type="text" id="cName" placeholder="z. B. Goblet Squat"></div>
+        <div class="field"><label class="small" for="cCat">Kategorie</label><select id="cCat"></select></div>
+        <div class="field"><label class="small" for="cDose">Sätze × Wdh</label><input type="text" id="cDose" placeholder="3 × 8–10"></div>
+        <div class="field full"><label class="small" for="cVid">Video-Link (optional)</label><input type="url" id="cVid" placeholder="https://youtu.be/…"></div>
+        <div class="field full"><label class="small" for="cNote">Ausführung (optional)</label><input type="text" id="cNote" placeholder="Worauf achten?"></div>
+      </div>
+      <div><button class="primary" id="cAdd" type="button">Zur Übungsliste hinzufügen</button></div>
+      <div class="chips" id="customChips"></div>
+    </div>
+    <div class="card">
+      <h2>Begriffe</h2>
+      <p><b>RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes bis zum Muskelversagen noch möglich gewesen wären. RIR 0 = bis zum Versagen, RIR 2 = zwei wären noch drin gewesen.</p>
+      <p><b>Superset</b>: Übungen mit gleichem Buchstaben (A1, A2) abwechselnd ausführen: 1. Satz A1, dann 1. Satz A2, dann 2. Satz A1 usw.</p>
+      <p><b>/ Seite</b>: Wiederholungen oder Zeit pro Seite bzw. pro Bein.</p>
+    </div>
+    <div class="card">
+      <h2>Text für Athlet/in</h2>
+      <textarea id="planText" readonly aria-label="Einheit als Text"></textarea>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
+const Y=id=>"https://youtu.be/"+id, YS=id=>"https://youtube.com/shorts/"+id;
+/* id, Name, Kategorie, Sätze, Wdh/Zeit, Pause, RIR, Ausführung, Videos */
+const EX=[
+ ["abc","Aufwärmen + Lauf-ABC","warm","1","15 Min.","","","A-/B-Skips, Anfersen, Skippings.",[]],
+ ["warmup","Warm-up: Aktivierung & dynamische Stretches","warm","1","5–10 Min.","","","Körpertemperatur erhöhen, Gelenke mobilisieren.",[]],
+ ["mobroutine","Mobility Routine","warm","1","ca. 10 Min.","","","Genau wie im Video nachmachen. Täglich möglich.",[Y("5AKMPydQ2Ms")]],
+ ["stretch","Mobilität / Stretching","warm","1","10–25 Min.","","","Ideal am Tag vor dem Spiel oder als Active Recovery.",[Y("dASt0QILjaQ")]],
+ ["bandshoulder","Schulterübungen mit Band (Aussenrotation, Pull-Aparts)","warm","2","15","30 s","","",[]],
+
+ ["skater","Skater Bounds (seitliche Sprünge)","plyo","3","10–16 Sprünge","90 s","","Explosiv seitlich abspringen, Landung stabil halten, Knie kontrolliert.",[Y("fouT0L8Z6Vc")]],
+ ["latbounds","Lateral Bounds, stabile Landung","plyo","3","4 / Seite","90 s","","Landung kurz halten, Knie zeigt gerade nach vorne.",[YS("q1X5UpT2o70")]],
+ ["boxjump","Box Jumps (heruntersteigen)","plyo","3","4","90 s","","Explosiv hoch, stabil landen, von der Box heruntersteigen statt springen.",[YS("7EfeTsHZ5vk")]],
+ ["boxvar","Box Jumps – Varianten","plyo","3","6–8 (pro Bein falls einbeinig)","90 s","","1. Seitlich mit dem Bein nahe der Box hoch, gleiches Bein landen, seitlich aufs andere Bein, abstossen, wieder hoch.\n2. Von niedriger Box auf den Boden und direkt plyometrisch auf die höhere Box.\n3. Einbeinig auf die Box hoch und runter.\n4. Von der Box runter, dann 3× plyometrisch bouncen.\n5. Auf Knien vor der Box: erster Sprung auf die Füsse, dann direkt explosiv auf die Box.\nKnie stabil, kein Abknicken nach innen/aussen. Genügend Pause.",[YS("3T7zAynPp7o")]],
+ ["depth","Depth Jumps von der Box","plyo","2","4","90 s","","Von der Box fallen lassen, Bodenkontakt kurz, sofort hoch. Ausführung mit Luca anschauen, falls unklar.",[YS("gpXV2dzZ-oA")]],
+ ["explsplit","Explosive (Bulgarian) Split Squats","plyo","3","8 / Bein","90 s","","Klein anfangen (auch ohne Erhöhung hinten möglich). Weiche Landung, Knie stabil.",[YS("7mi4YZdFYmg")]],
+ ["bsqjump","Bulgarian Squat Jumps","plyo","2","5 / Seite","90 s","","",[YS("evt0TErIHwE")]],
+ ["hillsprint","Bergsprints 10–20 m","plyo","4–6","1 Sprint","2 Min.","","Volle Qualität, vollständige Pause.",[]],
+ ["sprints","Kurze Sprints (Aktivierung)","plyo","2–3","1 Sprint","60 s","","",[]],
+ ["mbchest","Medizinball-Brustpass an die Wand (explosiv)","plyo","3","5","60 s","","",[YS("LS75csmzdAE")]],
+
+ ["squat","Back Squat oder Front Squat","beine","3","8–12","90–120 s","0–1","Wenn möglich Front Squat (2. Video), sonst Back Squat. So tief runter wie möglich.",[Y("QmZAiBqPvZw"),"https://www.youtube.com/watch?v=uYumuL_G_V0"]],
+ ["rdl","Romanian Deadlift","beine","3","8–12","90–120 s","0–1","Nur so tief runter, wie der Rücken gerade bleibt. Stange entlang der Beine nach unten. Im Wachstum: wenig Gewicht und mit Betreuung, zuerst die Technik lernen.",[Y("bT5OOBgY4bc")]],
+ ["splitsq","Split Squats mit Gewicht","beine","3","8 / Bein","90 s","","Im Wachstum: wenig Gewicht und mit Betreuung, Bewegungsmuster korrekt lernen.",[]],
+ ["hipthrust","1-Leg Hip Thrusts – Landmine","beine","3","8–12 / Seite","90–120 s","0–1","",[Y("C2SCkVk4Atc")]],
+ ["latlunge","Lateral Lunge – Landmine","beine","3","6–8 / Seite","90–120 s","0–1","Auch mit Kettlebell, Kurz- oder Langhantel möglich. So tief runtergehen wie möglich.",[Y("VTtLrBvHoJ8")]],
+ ["calf","1-Leg Iso Calf Raise","beine","2–3","45 s / Seite","90–120 s","","Einbeinig isometrisch halten; ein Satz mit gestrecktem Knie, ein Satz gebeugt.",["https://www.youtube.com/shorts/F8rj5UIzOSg"]],
+ ["hamiso","Hamstring 1-Leg Iso Hold","beine","2–3","20–40 s / Seite","60–90 s","","Steigerung: am Boden ohne Bank.",[Y("KSfupEggf1U")]],
+ ["nordic","Nordic Curls","beine","2–3","3–8","90 s","","Füsse an der Sprossenwand einklemmen oder halten lassen. Langsam ablassen, so weit es geht, dann mit den Händen auffangen und abstossen.\nVariation: nur so weit ablassen, dass man wieder hochkommt.\nNicht in den Tagen vor einem Spiel (Muskelkater).",[YS("GzxNzNRy9T0")]],
+
+ ["bench","Bankdrücken (Lang- oder Kurzhantel)","ober","3","10–12","90–120 s","0–1","Für Maximalkraft: 4 × 4–6, 2–3 Min. Pause, RIR 2.",[Y("EsTu2NVM1EI")]],
+ ["incline","Schrägbank Kurzhantel-Drücken","ober","3","8–12","90 s","1–2","",[YS("138iI2KPWDc")]],
+ ["pullup","Klimmzüge / Pull-ups","ober","3","max.","90–120 s","0–1","Falls weniger als 6 möglich sind, ein Band zur Unterstützung nehmen.",[Y("gfRjCi4JSM8")]],
+ ["pullupw","Klimmzüge mit Zusatzgewicht","ober","4","4–6","2–3 Min.","2","Nie bis zum Versagen.",[Y("gfRjCi4JSM8")]],
+ ["pushup","Liegestütze / Push-ups","ober","3","20 oder max.","60–90 s","","",[]],
+ ["lmpress","Half Kneeling Landmine Press","ober","3","10–12 / Seite","90–120 s","0–1","Mit Lang- oder Kurzhantel.",[Y("ORoOn93dnh4")]],
+ ["lmpressst","Stehende Landmine Press","ober","3","6","2 Min.","2","",[Y("6cSTRPhpubs")]],
+ ["row1","1-Arm Kurzhantel-Rudern","ober","3","10–12 / Seite","90–120 s","0–1","Mit Kraft und nicht mit Schwung arbeiten.",[Y("via7TOICUk8")]],
+ ["rowchest","Brustgestütztes Rudern oder Pendlay Row","ober","3","6","2 Min.","2","Brustgestützt, falls Maschine vorhanden.",[YS("0PSfteHhUtg")]],
+ ["dips","Dips (ggf. mit Gewicht)","ober","3","6","2 Min.","2","",[YS("_HxxBada6Jw")]],
+ ["flies","Chest Flies – Kurzhantel","ober","2–3","10–12","90–120 s","0–1","",["https://www.youtube.com/watch?v=4meHGUe0SUk"]],
+ ["latraise","Seitheben","ober","2–3","10–15","60 s","1–2","",[Y("pOmbQuGeHf8")]],
+ ["facepull","Face Pulls oder Band Pull-Aparts","ober","3","15","60 s","","",[YS("1s-0WtJMsu8")]],
+
+ ["pallof","Pallof Press","rumpf","2–3","10 / Seite","60 s","","Anti-Rotation: Becken und Oberkörper bleiben ruhig.",[Y("ecfx4bkhQTE")]],
+ ["chop","Half Kneeling Cable Chop","rumpf","2","8 / Seite","60 s","","",[YS("EzoMXce9M-k")]],
+ ["birddog","Bird Dog (Knie in der Luft)","rumpf","2","6–8 / Seite","60 s","","Oberkörper und Becken möglichst stabil halten.",[Y("Q6-U-Rd5A80")]],
+ ["lmrot","Landmine Rotation","rumpf","3","6–8 / Seite","60–90 s","","Aus Hüfte und Füssen drehen, hinteren Fuss mitdrehen wie beim Schuss.\nRippen über dem Becken, unterer Rücken verdreht sich nicht.\nArme lang, am Umkehrpunkt abbremsen – das Bremsen ist das Zweikampftraining.\nLeicht beginnen: zuerst Kontrolle, dann Gewicht.",[Y("e5DP6961WEk")]],
+ ["sprow","Sideplank Row mit Band oder Kabelzug","rumpf","3","10 / Seite","60 s","","Rumpf stabil halten.",[YS("eJQy9nifij0")]],
+ ["mbrot","Medizinball-Rotationswurf an die Wand","rumpf","3","5 / Seite","60 s","","Explosiv rotieren, aus dem Rumpf arbeiten. Auch im Ausfallschritt oder kniend möglich.",[YS("02c2YLgF8iE")]],
+ ["rollout","Stability Ball Plank Roll-out","rumpf","2","10–12","60–90 s","","",[Y("VOPq6iXol4k")]],
+ ["copenhagen","Copenhagen Plank","rumpf","2","30 s / Seite","","","Auf einer Erhöhung die Position halten, Becken nach oben und vorne drücken, Rumpf anspannen.",[Y("VUJcsfw529k")]],
+ ["flutter","Flutter Kicks","rumpf","2–3","30 s","","","Unterer Rücken auf dem Boden, gestreckte Beine abwechselnd auf- und abbewegen.",[]],
+ ["dslr","Double Straight Leg Raises","rumpf","2–3","30 s","","","Optional mit den Armen über dem Kopf festhalten. Unterer Rücken bleibt am Boden, Beine gestreckt hoch, bis sich das Gesäss gerade vom Boden löst, dann kontrolliert senken.",[]],
+ ["scissor","Scissor Kicks","rumpf","2–3","30 s","","","Unterer Rücken auf dem Boden, kein Hohlkreuz. Beine so tief wie möglich langsam öffnen und schliessen.",[]],
+ ["bottomup","Bottom-ups","rumpf","2–3","30 s","","","In die Kerze hochdrücken, dann kontrolliert mit dem Po zurück zum Boden und wieder hoch. Optional über dem Kopf festhalten.",[]],
+ ["bicycle","Bicycle Crunches","rumpf","2–3","30 s","","","Abwechselnd Ellbogen zum gegenüberliegenden Knie, das andere Bein gestreckt halten.",[]],
+ ["spiderman","Spiderman Planks","rumpf","2–3","30 s","","","Aus der Plank abwechselnd das Knie zum gleichseitigen Ellbogen ziehen, Rumpf stabil.",[]],
+ ["lowerabs","Untere Bauchmuskulatur (Video-Programm)","rumpf","1","wie im Video","","","Unterer Rücken muss immer den Boden berühren.",[Y("RZRzD9h5RL4")]]
+].map(([id,n,k,s,w,p,r,b,v])=>({id,n,k,s,w,p,r,b,v}));
+const EXBY=Object.fromEntries(EX.map(e=>[e.id,e]));
+
+/* Vorlagen: [id, Superset mit vorheriger?, Überschreibungen] */
+const TPL=[
+ {t:"Rumpf U15",h:"Jede Übung 30 s, gesamtes Programm 2–3× durchlaufen, mindestens 2× pro Woche.",i:[["copenhagen",0],["flutter",1],["dslr",1],["scissor",1],["bottomup",1],["bicycle",1],["spiderman",1]],o:{s:"2–3",p:""}},
+ {t:"Beine Kraft",h:"Warm-up 5–10 Min.: Aktivierung, Körpertemperatur erhöhen, dynamische Stretches. Es kann mit Block A oder B begonnen werden. Block C und D als Supersets.",i:[["warmup",0],["squat",0],["rdl",1],["hipthrust",0],["latlunge",1],["calf",0],["hamiso",1],["copenhagen",0,{w:"20–40 s / Seite",p:"60–90 s"}],["rollout",1]]},
+ {t:"Oberkörper Kraft",h:"Warm-up 5–10 Min. Übungen als Supersets. Mit Block A oder B beginnen.",i:[["warmup",0],["bench",0],["pullup",1],["lmpress",0],["row1",1],["flies",0],["latraise",1,{w:"10–12",p:"90–120 s",r:"0–1"}],["pallof",0,{s:"2",w:"10–12 / Seite",p:"60–90 s"}],["birddog",1]]},
+ {t:"Oberkörper Volumen",h:"RIR 1–2. Nach zwei Spielen am Wochenende 2 statt 3 Sätze.",i:[["incline",0],["pullup",1,{w:"max. (1 Wdh Reserve)",p:"90 s",r:"1"}],["lmpress",0,{p:"90 s",r:"1–2"}],["row1",1,{p:"90 s",r:"1–2"}],["facepull",0],["latraise",1,{s:"2"}],["pallof",0],["chop",0],["birddog",0,{w:"6 / Seite"}]]},
+ {t:"Oberkörper Maximalkraft",h:"10 Min. aufwärmen plus 1 leichter Aufwärmsatz. RIR 2, nie bis zum Versagen.",i:[["mbchest",0],["bench",0,{s:"4",w:"4–6",p:"2–3 Min.",r:"2"}],["pullupw",1],["rowchest",0],["dips",1],["lmrot",0],["sprow",0]]},
+ {t:"Schnelligkeit & Explosivität",h:"Wenig Volumen, volle Qualität, ca. 60–70 Min.",i:[["abc",0],["boxjump",0],["latbounds",0],["depth",0],["bsqjump",0],["hillsprint",0],["mbrot",0]]},
+ {t:"Explosivität ohne Gewicht",h:"Für Athleten im Wachstum: Übungen ohne Gewicht für Explosivität, Rumpf und Beweglichkeit. Knie stabil, genügend Pause.",i:[["skater",0],["explsplit",0],["boxvar",0],["nordic",0,{s:"3",w:"8"}],["mbrot",0],["pullup",0,{w:"10 oder max.",r:""}],["pushup",0],["lowerabs",0],["mobroutine",0]]},
+ {t:"Aktivierung vor dem Teamtraining",h:"Kein Krafttraining. Stretching, Active Recovery, kurze Aktivierung.",i:[["stretch",0],["bandshoulder",0],["mbchest",0,{s:"3",w:"3"}],["boxjump",0,{s:"2",w:"3",p:"60 s"}],["sprints",0]]}
+];
+
+const KEY="u15-trainingseinheit-v1";
+const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/training/";
+let state=load();
+let filter={cat:"",q:""};
+
+function uid(){return Math.random().toString(36).slice(2,9)}
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
+function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
+function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss},o||{})}
+function fromTpl(t){return {id:uid(),t:t.t,a:"",h:t.h||"",items:t.i.map(([id,ss,o])=>itemFrom(EXBY[id],ss,Object.assign({},t.o||{},o||{})))}}
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.sessions)&&s.sessions.length)return s}}catch(e){}
+  const first=fromTpl(TPL[0]);return {sessions:[first],active:first.id,custom:[]};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
+function flash(msg){const s=document.getElementById("status");s.textContent=msg;clearTimeout(flash.t);flash.t=setTimeout(()=>s.textContent="",2600)}
+
+function labels(items){
+  const out=[];let g=-1,n=0;const size=[];
+  items.forEach((it,i)=>{if(i===0||!it.ss){g++;n=0}n++;out.push([g,n]);size[g]=n});
+  return out.map(([g,n])=>{const L=g<26?String.fromCharCode(65+g):"Z"+g;return size[g]>1?L+n:L});
+}
+function vidLinks(v,short){return (v||[]).map((u,i)=>`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">▶ Video${v.length>1?" "+(i+1):""}</a>`).join(" ")}
+function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
+
+/* Einheiten-Leiste */
+function renderBar(){
+  const s=state.sessions;
+  document.getElementById("sessionBar").innerHTML=s.map(x=>`<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${x.items.length}</small></button>`).join("")+
+   `<button type="button" id="newSess">+ Neue Einheit</button>
+    <select id="tplPick" class="tplpick" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>`;
+}
+
+/* Einheit */
+function renderHead(){const c=cur();
+  document.getElementById("sessTitle").value=c.t||"";document.getElementById("sessAthlete").value=c.a||"";document.getElementById("sessNotes").value=c.h||"";}
+function renderItems(focusSel){
+  const c=cur(),lab=labels(c.items);const el=document.getElementById("items");
+  if(!c.items.length){el.innerHTML=`<div class="emptysess">Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>.</div>`}
+  else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];
+    return `<div class="item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}" data-u="${it.u}">
+      <div class="ihead"><span class="badge">${lab[i]}</span>
+        <div class="iname">${esc(it.n)}${vidLinks(it.v)}</div>
+        <div class="imove">
+          <button type="button" class="iconbtn" data-act="up" aria-label="${esc(it.n)} nach oben"${i===0?" disabled":""}>↑</button>
+          <button type="button" class="iconbtn" data-act="down" aria-label="${esc(it.n)} nach unten"${i===c.items.length-1?" disabled":""}>↓</button>
+          <button type="button" class="iconbtn" data-act="rm" aria-label="${esc(it.n)} entfernen">×</button>
+        </div></div>
+      <div class="params">
+        <label>Sätze<input type="text" data-f="s" value="${esc(it.s)}"></label>
+        <label>Wdh / Zeit<input type="text" data-f="w" value="${esc(it.w)}"></label>
+        <label>Pause<input type="text" data-f="p" value="${esc(it.p)}"></label>
+        <label>RIR<input type="text" data-f="r" value="${esc(it.r)}"></label>
+      </div>
+      <div class="ifoot">
+        <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
+        ${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
+        ${exById(it.id)&&exById(it.id).b?`<button type="button" class="linkbtn" data-act="info">Ausführung</button>`:""}
+      </div>
+      <div class="empty" data-info hidden>${esc(exById(it.id)?.b||"").replace(/\n/g,"<br>")}</div>
+    </div>`}).join("");
+  renderSummary();
+  if(focusSel){const f=el.querySelector(focusSel);if(f)f.focus()}
+}
+function renderSummary(){const c=cur();const groups=new Set(labels(c.items).map(l=>l[0])).size;
+  const vids=c.items.filter(i=>i.v&&i.v.length).length;
+  document.getElementById("summary").innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>`:"";}
+
+/* Bibliothek */
+function renderCats(){
+  const cats=CATS.filter(([k])=>k!=="eigen"||(state.custom||[]).length);
+  document.getElementById("cats").innerHTML=`<button type="button" class="cat" data-cat="" aria-pressed="${!filter.cat}">Alle</button>`+
+    cats.map(([k,n])=>`<button type="button" class="cat" data-cat="${k}" aria-pressed="${filter.cat===k}">${n}</button>`).join("");
+}
+function renderLib(){
+  const q=filter.q.trim().toLowerCase();const inSess=new Set(cur().items.map(i=>i.id));
+  const html=CATS.filter(([k])=>!filter.cat||filter.cat===k).map(([k,n])=>{
+    const list=exAll().filter(e=>e.k===k&&(!q||e.n.toLowerCase().includes(q)||(e.b||"").toLowerCase().includes(q)));
+    if(!list.length)return "";
+    return `<div class="libgroup c-${k}"><h3><span class="dot"></span>${n}</h3>${list.map(e=>`
+      <div class="ex"><details><summary>${esc(e.n)}<span class="dose">${esc(dose(e))}</span></summary>
+        ${e.b?`<p class="note">${esc(e.b)}</p>`:""}</details>
+        <div class="acts">${vidLinks(e.v)}<button type="button" class="addbtn" data-add="${esc(e.id)}" aria-label="${esc(e.n)} zur Einheit hinzufügen">+</button></div>
+        ${inSess.has(e.id)?`<span class="added">✓ in dieser Einheit</span>`:""}
+      </div>`).join("")}</div>`}).join("");
+  document.getElementById("lib").innerHTML=html||`<p class="empty">Keine Übung gefunden.</p>`;
+}
+
+/* Text */
+function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
+  L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
+  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
+  return L.join("\n")}
+function renderText(){document.getElementById("planText").value=planText()}
+function renderAll(){renderBar();renderHead();renderItems();renderCats();renderLib();renderText()}
+function changed(){save();renderBar();renderSummary();renderText()}
+
+/* Events */
+document.getElementById("sessTitle").addEventListener("input",e=>{cur().t=e.target.value;changed()});
+document.getElementById("sessAthlete").addEventListener("input",e=>{cur().a=e.target.value;changed()});
+document.getElementById("sessNotes").addEventListener("input",e=>{cur().h=e.target.value;changed()});
+document.getElementById("search").addEventListener("input",e=>{filter.q=e.target.value;renderLib()});
+document.getElementById("items").addEventListener("input",e=>{
+  const f=e.target.dataset.f;if(!f||f==="ss")return;const box=e.target.closest("[data-u]");
+  const it=cur().items.find(x=>x.u===box.dataset.u);it[f]=e.target.value;save();renderText()});
+document.getElementById("items").addEventListener("change",e=>{
+  if(e.target.dataset.f!=="ss")return;const u=e.target.closest("[data-u]").dataset.u;
+  cur().items.find(x=>x.u===u).ss=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=ss]`);renderText()});
+document.addEventListener("change",e=>{
+  if(e.target.id==="tplPick"&&e.target.value!==""){const s=fromTpl(TPL[+e.target.value]);state.sessions.push(s);state.active=s.id;save();renderAll();flash(`Vorlage „${s.t}“ geladen`)}
+});
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
+  if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();document.getElementById("sessTitle").select();return}
+  const cb=t.closest("[data-cat]");if(cb){filter.cat=cb.dataset.cat;renderCats();renderLib();return}
+  const ab=t.closest("[data-add]");if(ab){const e2=exById(ab.dataset.add);cur().items.push(itemFrom(e2,false));save();renderItems();renderLib();renderBar();renderText();flash(`„${e2.n}“ hinzugefügt`);
+    const again=document.querySelector(`[data-add="${CSS.escape(e2.id)}"]`);if(again)again.focus();return}
+  const act=t.closest("[data-act]");if(act){const box=act.closest("[data-u]");const items=cur().items;const i=items.findIndex(x=>x.u===box.dataset.u);const a=act.dataset.act;
+    if(a==="info"){const inf=box.querySelector("[data-info]");inf.hidden=!inf.hidden;return}
+    if(a==="rm"){const [it]=items.splice(i,1);if(items[i]&&i===0)items[i].ss=false;save();renderItems();renderLib();renderBar();renderText();flash(`„${it.n}“ entfernt`);return}
+    const j=a==="up"?i-1:i+1;if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];if(items[0])items[0].ss=false;
+    save();renderItems(`[data-u="${box.dataset.u}"] [data-act="${a}"]:not([disabled])`)||null;renderText();
+    if(!document.activeElement||document.activeElement===document.body){const b=document.querySelector(`[data-u="${box.dataset.u}"] [data-act=rm]`);if(b)b.focus()}return}
+  const rc=t.closest("[data-rmc]");if(rc){const id=rc.dataset.rmc;state.custom=state.custom.filter(c=>c.id!==id);save();renderCustom();renderCats();renderLib();return}
+});
+let delArmed=false;
+document.getElementById("delBtn").addEventListener("click",e=>{const b=e.currentTarget;
+  if(!delArmed){delArmed=true;b.textContent="Wirklich löschen?";b.classList.add("warn");setTimeout(()=>{delArmed=false;b.textContent="Einheit löschen";b.classList.remove("warn")},4000);return}
+  delArmed=false;b.textContent="Einheit löschen";b.classList.remove("warn");
+  const name=cur().t;state.sessions=state.sessions.filter(s=>s.id!==state.active);
+  if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
+  state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
+document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>i.u=uid());
+  state.sessions.push(c);state.active=c.id;save();renderAll();flash("Einheit dupliziert")});
+document.getElementById("copyBtn").addEventListener("click",()=>{const txt=planText();
+  const fb=()=>{const ta=document.getElementById("planText");ta.value=txt;ta.focus();ta.select();flash("Text unten markiert – jetzt kopieren.")};
+  try{navigator.clipboard.writeText(txt).then(()=>flash("Einheit kopiert"),fb)}catch(e){fb()}});
+
+/* Eigene Übungen */
+function renderCustom(){
+  document.getElementById("cCat").innerHTML=CATS.map(([k,n])=>`<option value="${k}"${k==="eigen"?" selected":""}>${n}</option>`).join("");
+  const c=state.custom||[];
+  document.getElementById("customChips").innerHTML=c.length?c.map(x=>`<span class="chip">${esc(x.n)}<button type="button" data-rmc="${esc(x.id)}" aria-label="${esc(x.n)} aus der Übungsliste entfernen">×</button></span>`).join(""):`<span class="empty">Eigene Übungen erscheinen in der Übungsliste.</span>`;
+}
+document.getElementById("cAdd").addEventListener("click",()=>{
+  const n=document.getElementById("cName").value.trim();if(!n){flash("Bitte einen Namen eingeben.");document.getElementById("cName").focus();return}
+  const d=document.getElementById("cDose").value.trim();const m=d.split(/\s*[×x]\s*/);
+  const v=document.getElementById("cVid").value.trim();
+  const ex={id:"c_"+uid(),n,k:document.getElementById("cCat").value,s:m.length>1?m[0]:"",w:m.length>1?m.slice(1).join(" × "):d,p:"",r:"",b:document.getElementById("cNote").value.trim(),v:/^https?:\/\//.test(v)?[v]:[]};
+  (state.custom=state.custom||[]).push(ex);save();["cName","cDose","cVid","cNote"].forEach(id=>document.getElementById(id).value="");
+  filter.cat="";renderCustom();renderCats();renderLib();flash(`„${n}“ in der Übungsliste`)});
+
+/* Teilen per Link */
+function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
+async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
+async function encodeSess(){const c=cur();
+  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss})=>[id,n,k,s,w,p,r,b,v,ss?1:0])}));
+  if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
+  return "b"+b64url(data)}
+async function decodeSess(code){let bytes=unb64url(code.slice(1));if(code[0]==="z")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));return JSON.parse(new TextDecoder().decode(bytes))}
+function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&!/claude\.ai$/.test(l.hostname)&&!/claudeusercontent|claude\.site/.test(l.hostname)?l.origin+l.pathname:SITE}
+document.getElementById("shareBtn").addEventListener("click",async()=>{
+  if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
+  let link;try{link=baseUrl()+"#e="+await encodeSess()}catch(e){flash("Link konnte nicht erstellt werden.");return}
+  const fb=()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select();flash("Link unten markiert – jetzt kopieren.")};
+  try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fb)}catch(e){fb()}});
+let importedId=null;
+async function importFromHash(){
+  const m=(window.location.hash||"").match(/^#e=([zb][A-Za-z0-9_-]+)$/);if(!m)return;
+  try{const d=await decodeSess(m[1]);if(!d||!Array.isArray(d.i))throw 0;
+    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss])=>({u:uid(),id,n,k,s,w,p,r,b,v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss}))};
+    state.sessions.push(s);state.active=s.id;importedId=s.id;save();renderAll();document.getElementById("shareBanner").hidden=false;
+  }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.")}
+  try{history.replaceState(null,"",window.location.pathname+window.location.search)}catch(e){}
+}
+document.getElementById("undoImport").addEventListener("click",()=>{
+  state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push(fromTpl(TPL[0]));
+  state.active=state.sessions[state.sessions.length-1].id;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Geteilte Einheit entfernt")});
+document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
+
+/* PDF */
+const CAT_RGB={warm:[46,139,87],plyo:[194,65,45],beine:[183,121,31],ober:[29,99,201],rumpf:[122,79,194],eigen:[110,124,132]};
+function pdfSafe(s){return String(s||"").replace(/[×]/g,"x").replace(/[^\x00-\xFF–—•]/g,"")}
+function buildPDF(){
+  const {jsPDF}=window.jspdf;const c=cur();const lab=labels(c.items);
+  const doc=new jsPDF({unit:"mm",format:"a4"});const W=210,H=297,M=14,INK=[20,35,44],MUTED=[96,112,121],ACC=[29,99,201],LINE=[220,227,232],SOFT=[244,247,249];const T=pdfSafe;
+  doc.setFillColor(...INK);doc.rect(0,0,W,26,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(20);doc.text(T(c.t||"Trainingseinheit"),M,14);
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(185,200,210);doc.text("Unihockey · Athletik",M,20.5);
+  if(c.a){doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(255,255,255);doc.text(T(c.a),W-M,14,{align:"right"})}
+  let y=34;
+  if(c.h){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);const l=doc.splitTextToSize(T(c.h),W-2*M);doc.text(l,M,y);y+=l.length*4.4+3}
+  const body=c.items.map((it,i)=>[lab[i],T(it.n)+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
+  doc.autoTable({head:[["","Übung","Sätze","Wdh / Zeit","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
+    styles:{font:"helvetica",fontSize:9,cellPadding:2.4,textColor:INK,lineColor:LINE,lineWidth:.2,valign:"middle",overflow:"linebreak"},
+    headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7.5},
+    columnStyles:{0:{cellWidth:12,fontStyle:"bold",halign:"center",fontSize:11},1:{cellWidth:"auto"},2:{cellWidth:16},3:{cellWidth:30},4:{cellWidth:20},5:{cellWidth:13},6:{cellWidth:16,textColor:ACC,fontStyle:"bold"}},
+    didParseCell:x=>{if(x.section==="body"&&x.column.index===1)x.cell.styles.fontStyle="normal"},
+    didDrawCell:x=>{if(x.section!=="body")return;const it=c.items[x.row.index];
+      if(x.column.index===0){doc.setFillColor(...(CAT_RGB[it.k]||CAT_RGB.eigen));doc.rect(x.cell.x,x.cell.y,1.4,x.cell.height,"F")}
+      if(x.column.index===6&&it.v&&it.v[0])doc.link(x.cell.x,x.cell.y,x.cell.width,x.cell.height,{url:it.v[0]})}
+  });
+  let ly=doc.lastAutoTable.finalY+8;
+  if(ly<H-30){doc.setFontSize(7.8);doc.setTextColor(...MUTED);
+    const l=doc.splitTextToSize(T("RIR = Wiederholungen, die bis zum Muskelversagen noch möglich gewesen wären. Gleicher Buchstabe (A1, A2) = Superset: abwechselnd ausführen. «Video» antippen öffnet das Video."),W-2*M);doc.text(l,M,ly)}
+  const pages=doc.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(7);doc.setTextColor(150,160,166);doc.text(T((c.t||"Trainingseinheit")+(c.a?" · "+c.a:"")),M,H-8);doc.text(`Seite ${i} von ${pages}`,W-M,H-8,{align:"right"})}
+  return doc}
+let downloadsApi=null;const pdfBtn=document.getElementById("pdfBtn");
+if(window.claude&&typeof window.claude.use==="function"){window.claude.use("downloads").then(d=>{downloadsApi=d;pdfBtn.hidden=!d}).catch(()=>{pdfBtn.hidden=true})}else{pdfBtn.hidden=false}
+pdfBtn.addEventListener("click",()=>{
+  if(!window.jspdf){flash("PDF konnte nicht erstellt werden: keine Internetverbindung.");return}
+  if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
+  const doc=buildPDF();const c=cur();
+  const filename=("Training_"+(c.t||"Einheit")+(c.a?"_"+c.a:"")).trim().replace(/\s+/g,"_").replace(/[^\wäöüÄÖÜ_-]/g,"")+".pdf";
+  if(downloadsApi){downloadsApi.save({filename,data:doc.output("blob")}).then(r=>flash(r&&r.status==="saved"?"PDF gespeichert":"PDF übergeben"))
+    .catch(e=>{const k=e&&e.code;if(k==="declined")flash("Speichern abgebrochen");else if(k==="rate_limited")flash("Bitte einen Moment warten.");else{flash("PDF-Export ist hier nicht verfügbar.");pdfBtn.hidden=true}})}
+  else doc.save(filename)});
+
+renderCustom();renderAll();importFromHash();
+</script>
+</body>
+</html>
