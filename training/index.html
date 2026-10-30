@@ -425,6 +425,7 @@ const EX=[
  ["sprow","Sideplank Row mit Band oder Kabelzug","rumpf","3","10 / Seite","60 s","","Rumpf stabil halten.",[YS("eJQy9nifij0")]],
  ["mbrot","Medizinball-Rotationswurf an die Wand","rumpf","3","5 / Seite","60 s","","Explosiv rotieren, aus dem Rumpf arbeiten. Auch im Ausfallschritt oder kniend möglich.",[YS("02c2YLgF8iE")]],
  ["rollout","Stability Ball Plank Roll-out","rumpf","2","10–12","60–90 s","","",[Y("VOPq6iXol4k")]],
+ ["plank","Plank (Unterarmstütz)","rumpf","3","30–60 s","30–60 s","","Unterarme unter den Schultern, Körper bildet eine gerade Linie von Kopf bis Ferse. Bauch und Gesäss anspannen, kein Hohlkreuz, Becken nicht hängen lassen. Ruhig weiteratmen.",[]],
  ["copenhagen","Copenhagen Plank","rumpf","2","30 s / Seite","","","Auf einer Erhöhung die Position halten, Becken nach oben und vorne drücken, Rumpf anspannen.",[Y("VUJcsfw529k")]],
  ["flutter","Flutter Kicks","rumpf","2–3","30 s","","","Unterer Rücken auf dem Boden, gestreckte Beine abwechselnd auf- und abbewegen.",[]],
  ["dslr","Double Straight Leg Raises","rumpf","2–3","30 s","","","Optional mit den Armen über dem Kopf festhalten. Unterer Rücken bleibt am Boden, Beine gestreckt hoch, bis sich das Gesäss gerade vom Boden löst, dann kontrolliert senken.",[]],
@@ -440,7 +441,7 @@ const LOADS=[["kw","Körpergewicht"],["gew","Gewicht"],["band","Resistance Band"
 const FOCI=[["schnell","Schnelligkeit Beine"],["kraftb","Kraft Beine"],["kraftob","Kraft Oberkörper"],["explob","Explosivität Oberkörper"],["stab","Rumpfstabilität"],["rot","Rumpf Rotation"],["bauch","Bauch / Rumpfkraft"],["mob","Mobilität & Aufwärmen"]];
 const CAT2FOC={warm:["mob"],plyo:["schnell"],beine:["kraftb"],ober:["kraftob"],rumpf:["stab"],eigen:[]};
 const FOC={abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandshoulder:"mob",mbchest:"explob",
- pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",copenhagen:"stab",
+ pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",plank:"stab",copenhagen:"stab",
  flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
 const MAT={
@@ -458,7 +459,7 @@ const MAT={
  flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],facepull:["band gew",["Kabelzug oder Resistance Band"]],
  pallof:["band gew",["Kabelzug oder Resistance Band"]],chop:["gew band",["Kabelzug oder Resistance Band"]],birddog:["kw",["Matte"]],
  lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Resistance Band oder Kabelzug","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
- rollout:["kw",["Gymnastikball"]],copenhagen:["kw",["Bank / Erhöhung"]],
+ rollout:["kw",["Gymnastikball"]],plank:["kw",["Matte"]],copenhagen:["kw",["Bank / Erhöhung"]],
  flutter:["kw",["Matte"]],dslr:["kw",["Matte"]],scissor:["kw",["Matte"]],bottomup:["kw",["Matte"]],bicycle:["kw",["Matte"]],spiderman:["kw",["Matte"]],lowerabs:["kw",["Matte"]]
 };
 Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
