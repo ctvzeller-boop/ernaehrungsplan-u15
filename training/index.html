@@ -4,14 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trainingseinheit U15</title>
+<meta name="theme-color" content="#14232C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
-/* Layout: Links die Übungsbibliothek, rechts die Einheit als Trainingsblatt; auf dem Handy die Einheit zuerst */
+/* Zwei Modi: «Training» (Spieler, Handy zuerst) zeigt die Einheit als Abhakliste; «Bearbeiten» (Coach) zeigt Übungsliste und Parameter */
 :root{
   --bg:#F2F5F7; --surface:#FFFFFF; --ink:#14232C; --muted:#5A6A73; --line:#D8E0E5;
   --accent:#1D63C9; --accent-soft:#E3ECFA; --warn:#C2412D;
+  --ok:#2E8B57; --less:#C2412D; --more:#E07010;
   --c-warm:#2E8B57; --c-warm-bg:#E2F2E8;
   --c-plyo:#C2412D; --c-plyo-bg:#FBE4DF;
   --c-beine:#B7791F; --c-beine-bg:#FAEFD9;
@@ -24,135 +33,154 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
   --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
+  --ok:#2F9E63; --less:#D9534A; --more:#E8801F;
   --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
   --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
   --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
+  --ok:#2F9E63; --less:#D9534A; --more:#E8801F;
   --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
   --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}
 
 [hidden]{display:none!important}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
-.wrap{max-width:1300px;margin:0 auto;padding-block:24px 48px;
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body[data-mode="train"] .edit-only,body[data-mode="edit"] .train-only{display:none!important}
+.wrap{max-width:1300px;margin:0 auto;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(48px,env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  display:flex;flex-direction:column;gap:20px}
+  display:flex;flex-direction:column;gap:18px}
+body[data-mode="train"] .wrap{max-width:760px}
 h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:.01em}
-h1{font-size:2.4rem;line-height:1}
+h1{font-size:2.3rem;line-height:1}
 h2{font-size:1.4rem;text-transform:uppercase;letter-spacing:.04em}
 .lead{color:var(--muted);max-width:68ch;margin:6px 0 0}
 .eyebrow,label.small{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;justify-content:space-between}
 .sitelink{color:var(--accent);font-weight:600;text-decoration:none}
 .sitelink:hover{text-decoration:underline}
-input[type=text],input[type=url],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+input[type=text],input[type=url],input[type=search],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
 textarea{resize:vertical;min-height:64px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-button{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button{font:inherit;font-weight:600;border-radius:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);touch-action:manipulation}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 button:hover{border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
 button.warn{border-color:var(--warn);color:var(--warn)}
-.iconbtn{padding:4px 9px;font-size:.95rem;line-height:1.2}
-.linkbtn{padding:2px 4px;font-size:.85rem;font-weight:500;border:none;background:none;color:var(--accent);text-decoration:underline;cursor:pointer}
-.status{font-size:.85rem;color:var(--muted);align-self:center;min-height:1.2em}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.iconbtn{padding:6px 11px;font-size:1rem;line-height:1.2}
+.linkbtn{padding:4px;font-size:.88rem;font-weight:500;border:none;background:none;color:var(--accent);text-decoration:underline;cursor:pointer}
+.status{font-size:.88rem;color:var(--muted);align-self:center;min-height:1.2em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .empty{color:var(--muted);font-size:.88rem}
+
+/* Modus-Umschalter */
+.modes{display:inline-grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.modes button{border:none;padding:7px 16px;border-radius:7px;background:none}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 
 /* Einheiten-Leiste */
 .sessionbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.stab{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%}
+.stab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
 .stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
 .stab small{font-family:var(--body);font-weight:500;font-size:.75rem;color:var(--muted)}
 .stab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .stab[aria-pressed="true"] small{color:inherit;opacity:.75}
 .tplpick{width:auto;max-width:100%}
 
-.sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
-.sharebanner span{flex:1 1 260px;min-width:0;font-weight:500}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:12px 14px}
+.banner > span,.banner > div{flex:1 1 240px;min-width:0}
+.banner b{display:block}
 
 /* Hauptbereich */
 .main{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);grid-template-areas:"lib sess";gap:20px;align-items:start}
+body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"sess"}
 .lib{grid-area:lib;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:hidden}
 .sess{grid-area:sess}
 @media (max-width:900px){.main{grid-template-columns:minmax(0,1fr);grid-template-areas:"sess" "lib"}.lib{position:static;max-height:none}}
 
 /* Bibliothek */
 .cats{display:flex;flex-wrap:wrap;gap:6px}
-.cat{padding:4px 10px;border-radius:999px;font-size:.85rem;font-weight:600}
+.cat{padding:5px 11px;border-radius:999px;font-size:.85rem;font-weight:600}
 .cat[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .libscroll{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px;margin:0 -16px -16px;padding:0 16px 16px}
 .libgroup h3{font-size:1.05rem;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--c)}
-.ex{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.ex{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
 .ex details{min-width:0}
 .ex summary{cursor:pointer;font-weight:600;list-style:none;display:block}
 .ex summary::-webkit-details-marker{display:none}
 .ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .ex .note{font-size:.85rem;color:var(--muted);margin:6px 0 0;white-space:pre-line}
 .ex .acts{display:flex;gap:6px;align-items:center}
-.ex .addbtn{padding:4px 10px}
-.ex .added{font-size:.75rem;color:var(--muted);grid-column:1/-1}
-.vid{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}
+.ex .addbtn{padding:5px 12px;font-size:1.05rem}
+.ex .added{font-size:.75rem;color:var(--muted);grid-column:2/-1}
+.vid{display:inline-flex;align-items:center;gap:4px;font-size:.85rem;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}
 .vid:hover{text-decoration:underline}
+.thumb{display:block;flex:none;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);cursor:zoom-in}
+.thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.thumb.none{display:grid;place-items:center;color:var(--muted);font-size:1.1rem;cursor:pointer;border-style:dashed}
+.ex .thumb{width:64px;height:46px}
+.item .thumb{width:84px;height:58px}
 
-/* Einheit */
+/* Einheit: Kopf */
 .sesshead{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px}
 .sesshead .full{grid-column:1/-1}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
-#sessTitle{font-family:var(--display);font-size:1.5rem;font-weight:700;padding:5px 9px}
-@media (max-width:520px){.sesshead{grid-template-columns:1fr}}
+#sTitle{font-family:var(--display);font-size:1.5rem;font-weight:700;padding:5px 10px}
+.stitle{font-size:2rem;line-height:1.05;text-transform:none;letter-spacing:.01em}
+.snotes{margin:0;color:var(--muted);white-space:pre-line}
+.progress{display:flex;flex-direction:column;gap:6px}
+.progline{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.progline b{font-family:var(--display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:999px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s;width:0}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px}
-@media (max-width:520px){.toolbar{display:grid;grid-template-columns:1fr 1fr}.toolbar .primary,.toolbar .status{grid-column:1/-1}}
+.summary{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.summary b{color:var(--ink);font-variant-numeric:tabular-nums}
 
-.items{display:flex;flex-direction:column;gap:0}
-.item{--c:var(--c-eigen);--cbg:var(--c-eigen-bg);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--surface);margin-top:10px}
+/* Einheit: Übungen */
+.items{display:flex;flex-direction:column}
+.item{--c:var(--c-eigen);--cbg:var(--c-eigen-bg);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface);margin-top:10px}
 .item.linked{margin-top:0;border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
 .item.haslink{border-bottom-left-radius:0;border-bottom-right-radius:0}
 .ihead{display:flex;gap:10px;align-items:flex-start}
-.badge{flex:none;min-width:38px;text-align:center;font-family:var(--display);font-weight:700;font-size:1.15rem;background:var(--cbg);color:var(--c);border-radius:6px;padding:2px 6px}
-.iname{flex:1;min-width:0;font-weight:600;font-size:1.02rem;padding-top:2px}
-.iname .vid{margin-left:6px}
+.badge{flex:none;min-width:40px;text-align:center;font-family:var(--display);font-weight:700;font-size:1.15rem;background:var(--cbg);color:var(--c);border-radius:6px;padding:2px 6px}
+.item.done .badge{background:var(--ok);color:#fff}
+.iname{flex:1;min-width:0;font-weight:600;font-size:1.05rem;line-height:1.3}
+.iname .vid{margin-left:4px}
+.idose{display:block;font-weight:500;font-size:.88rem;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+.inote{margin:0;font-size:.88rem;color:var(--muted);border-left:3px solid var(--line);padding-left:8px}
 .imove{display:flex;gap:4px;flex:none}
 .params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .params label{display:flex;flex-direction:column;gap:2px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;min-width:0}
-.params input{font-variant-numeric:tabular-nums;padding:6px 8px}
-@media (max-width:520px){.params{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.params input{font-variant-numeric:tabular-nums;padding:7px 8px}
 .ifoot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .ifoot input[type=text]{flex:1 1 220px}
-.sslink{display:flex;gap:6px;align-items:center;font-size:.85rem;font-weight:500;cursor:pointer;white-space:nowrap}
-.sslink input{accent-color:var(--accent);width:16px;height:16px;margin:0}
-.catbadge-warm,.c-warm{--c:var(--c-warm);--cbg:var(--c-warm-bg)}
+.sslink{display:flex;gap:6px;align-items:center;font-size:.88rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.sslink input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+.c-warm{--c:var(--c-warm);--cbg:var(--c-warm-bg)}
 .c-plyo{--c:var(--c-plyo);--cbg:var(--c-plyo-bg)}
 .c-beine{--c:var(--c-beine);--cbg:var(--c-beine-bg)}
 .c-ober{--c:var(--c-ober);--cbg:var(--c-ober-bg)}
 .c-rumpf{--c:var(--c-rumpf);--cbg:var(--c-rumpf-bg)}
 .c-eigen{--c:var(--c-eigen);--cbg:var(--c-eigen-bg)}
-.emptysess{border:1px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--muted)}
-.summary{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
-.summary b{color:var(--ink);font-variant-numeric:tabular-nums}
+.emptysess{border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--muted)}
 
-.thumb{display:block;flex:none;padding:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--bg);cursor:zoom-in;position:relative}
-.thumb img{display:block;width:100%;height:100%;object-fit:cover}
-.thumb.none{display:grid;place-items:center;color:var(--muted);font-size:1.1rem;cursor:pointer;border-style:dashed}
-.ex .thumb{width:64px;height:46px}
-.item .thumb{width:84px;height:58px}
-.ex{grid-template-columns:auto minmax(0,1fr) auto}
-.ex .added{grid-column:2/-1}
-@media (max-width:520px){.item .thumb{width:64px;height:46px}}
-.modal{position:fixed;inset:0;background:rgba(8,18,26,.55);display:grid;place-items:center;z-index:60;padding:16px}
-.modalbox{background:var(--surface);color:var(--ink);border-radius:12px;max-width:620px;width:100%;padding:20px;position:relative;max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
-.modalbox h3{font-size:1.6rem;padding-right:34px}
-.modalclose{position:absolute;top:10px;right:10px;padding:2px 10px;font-size:1.2rem;line-height:1.4}
-.bigimgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
-.bigimgs img{width:100%;max-height:340px;object-fit:contain;border-radius:8px;border:1px solid var(--line);display:block;background:var(--bg)}
-.imgsrc{font-size:.78rem;color:var(--muted)}
-.modalbox .note{white-space:pre-line;margin:0;color:var(--muted)}
-.mrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.filebtn{position:relative;overflow:hidden;display:inline-flex}
-.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* Sätze */
+.sets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.setbox{min-width:48px;height:44px;padding:0 10px;border:none;border-radius:8px;font-family:var(--display);font-size:1.2rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;justify-content:center;gap:2px;line-height:1}
+.setbox.ok{background:var(--ok)}
+.setbox.less{background:var(--less)}
+.setbox.more{background:var(--more)}
+.setbox.todo{background:transparent;border:2px dashed var(--line);color:var(--muted);cursor:default;font-size:1rem}
+.setbox .fire{font-size:1rem}
+.setbtn{margin-left:auto;min-height:44px;padding:8px 16px;background:var(--ink);color:var(--surface);border-color:var(--ink);font-size:1rem}
+.setbtn.extra{background:var(--surface);color:var(--ink);border-color:var(--line)}
+
+/* Untere Karten */
 .lower{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .addgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .addgrid .full{grid-column:1/-1}
@@ -161,67 +189,105 @@ button.warn{border-color:var(--warn);color:var(--warn)}
 .chip button{padding:0 7px;border:none;background:transparent;font-size:1rem;line-height:1.2}
 .card p{margin:0}
 textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
-@media (max-width:760px){h1{font-size:2rem}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* Dialoge (auf dem Handy von unten) */
+.modal{position:fixed;inset:0;background:rgba(8,18,26,.55);display:grid;place-items:center;z-index:60;padding:16px}
+.modalbox{background:var(--surface);color:var(--ink);border-radius:14px;max-width:560px;width:100%;padding:20px;position:relative;max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.modalbox h3{font-size:1.6rem;padding-right:40px;line-height:1.1}
+.modalclose{position:absolute;top:10px;right:10px;padding:4px 12px;font-size:1.25rem;line-height:1.3}
+.bigimgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.bigimgs img{width:100%;max-height:340px;object-fit:contain;border-radius:8px;border:1px solid var(--line);display:block;background:var(--bg)}
+.imgsrc{font-size:.78rem;color:var(--muted)}
+.modalbox .note{white-space:pre-line;margin:0;color:var(--muted)}
+.mrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filebtn{position:relative;overflow:hidden;display:inline-flex}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.goal{font-size:1rem}
+.goal b{font-family:var(--display);font-size:1.35rem}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.choice{min-height:76px;border:none;border-radius:12px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:1.05rem;padding:8px 4px}
+.choice span{font-size:1.5rem;line-height:1}
+.choice.ok{background:var(--ok)}.choice.less{background:var(--less)}.choice.more{background:var(--more)}
+.choice[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+#logVal{font-size:1.4rem;font-family:var(--display);font-weight:700;text-align:center;padding:10px}
+.hint{font-size:.82rem;color:var(--muted);margin:0}
+
+@media (max-width:760px){
+  h1{font-size:2rem}
+  input[type=text],input[type=url],input[type=search],select,textarea{font-size:16px}
+  .sessionbar{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+  .sessionbar::-webkit-scrollbar{display:none}
+  .sesshead{grid-template-columns:1fr}
+  .params{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .item .thumb{width:64px;height:48px}
+  .setbtn{flex:1 1 100%;margin-left:0;min-height:50px;font-size:1.05rem}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .toolbar .primary,.toolbar .status{grid-column:1/-1}
+  .modal{place-items:end stretch;padding:0}
+  .modalbox{max-width:none;border-radius:18px 18px 0 0;padding:20px 16px max(20px,env(safe-area-inset-bottom,0px));max-height:88vh}
+  .lead{font-size:.95rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
+<body data-mode="edit">
 <div class="wrap">
   <header>
     <div>
       <div class="eyebrow">Unihockey · Athletik</div>
       <h1>Trainingseinheit</h1>
-      <p class="lead">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF. Deine Einheiten bleiben in diesem Browser gespeichert.</p>
+      <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
+      <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt». Dein Fortschritt bleibt auf diesem Gerät gespeichert.</p>
     </div>
-    <a class="sitelink" href="../">→ Zur Ernährungswoche</a>
+    <div class="modes" role="group" aria-label="Ansicht">
+      <button type="button" data-mode="train" aria-pressed="false">Training</button>
+      <button type="button" data-mode="edit" aria-pressed="true">Bearbeiten</button>
+    </div>
   </header>
 
-  <div class="sharebanner" id="shareBanner" role="status" hidden>
-    <span>Du siehst eine geteilte Einheit. Sie wurde zu deinen Einheiten hinzugefügt und du kannst sie anpassen.</span>
+  <div class="banner" id="shareBanner" role="status" hidden>
+    <span>Du hast eine Einheit von deinem Coach erhalten. Sie ist jetzt unter deinen Einheiten gespeichert.</span>
     <button type="button" id="undoImport">Wieder entfernen</button>
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
+  </div>
+
+  <div class="banner" id="installCard" hidden>
+    <div><b>Als App auf dem Homescreen speichern</b><span id="installText"></span></div>
+    <button type="button" class="primary" id="installBtn" hidden>App installieren</button>
+    <button type="button" class="linkbtn" id="installClose">Ausblenden</button>
   </div>
 
   <div class="sessionbar" id="sessionBar" role="group" aria-label="Meine Einheiten"></div>
 
   <div class="main">
-    <section class="card sess" aria-labelledby="sessTitleLbl">
-      <div class="sesshead">
-        <div class="field">
-          <label class="small" for="sessTitle" id="sessTitleLbl">Einheit</label>
-          <input type="text" id="sessTitle" placeholder="z. B. Oberkörper Kraft">
-        </div>
-        <div class="field">
-          <label class="small" for="sessAthlete">Athlet/in</label>
-          <input type="text" id="sessAthlete" placeholder="Name">
-        </div>
-        <div class="field full">
-          <label class="small" for="sessNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label>
-          <textarea id="sessNotes" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen"></textarea>
-        </div>
-      </div>
-      <div class="summary" id="summary"></div>
-      <div class="toolbar">
+    <section class="card sess" aria-label="Einheit">
+      <div id="sessHead"></div>
+      <div class="toolbar edit-only">
         <button class="primary" id="shareBtn" type="button">Einheit als Link teilen</button>
         <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
         <button id="copyBtn" type="button">Als Text kopieren</button>
         <button id="dupBtn" type="button">Duplizieren</button>
         <button id="delBtn" type="button">Einheit löschen</button>
-        <span class="status" id="status" role="status"></span>
+        <span class="status" role="status"></span>
       </div>
       <div class="items" id="items"></div>
+      <div class="toolbar train-only">
+        <button class="primary" id="resultBtn" type="button">Ergebnis an Coach senden</button>
+        <button id="resetLogBtn" type="button">Neues Training starten</button>
+        <span class="status" role="status"></span>
+      </div>
     </section>
 
-    <aside class="card lib" aria-labelledby="libTitle">
+    <aside class="card lib edit-only" aria-labelledby="libTitle">
       <h2 id="libTitle">Übungen</h2>
-      <input type="text" id="search" placeholder="Übung suchen" aria-label="Übung suchen">
+      <input type="search" id="search" placeholder="Übung suchen" aria-label="Übung suchen">
       <div class="cats" id="cats" role="group" aria-label="Kategorie filtern"></div>
       <div class="libscroll" id="lib"></div>
     </aside>
   </div>
 
   <div class="lower">
-    <div class="card">
+    <div class="card edit-only">
       <h2>Eigene Übung</h2>
       <div class="addgrid">
         <div class="field full"><label class="small" for="cName">Name</label><input type="text" id="cName" placeholder="z. B. Goblet Squat"></div>
@@ -239,10 +305,12 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <p><b>RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes bis zum Muskelversagen noch möglich gewesen wären. RIR 0 = bis zum Versagen, RIR 2 = zwei wären noch drin gewesen.</p>
       <p><b>Superset</b>: Übungen mit gleichem Buchstaben (A1, A2) abwechselnd ausführen: 1. Satz A1, dann 1. Satz A2, dann 2. Satz A1 usw.</p>
       <p><b>/ Seite</b>: Wiederholungen oder Zeit pro Seite bzw. pro Bein.</p>
+      <p class="train-only"><button type="button" class="linkbtn" id="pasteLinkBtn" style="padding:0">Link vom Coach einfügen</button></p>
     </div>
-    <div class="card">
+    <div class="card edit-only">
       <h2>Text für Athlet/in</h2>
       <textarea id="planText" readonly aria-label="Einheit als Text"></textarea>
+      <button type="button" class="linkbtn" id="pasteLinkBtn2" style="align-self:flex-start;padding:0">Geteilten Link einfügen</button>
     </div>
   </div>
 </div>
@@ -250,12 +318,42 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 <div id="exModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="exTitle">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
-    <div id="exBody"></div>
+    <div id="exBody" style="display:flex;flex-direction:column;gap:12px"></div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<div id="logModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <div class="eyebrow" id="logEyebrow"></div>
+    <h3 id="logTitle"></h3>
+    <div class="goal" id="logGoal"></div>
+    <div class="field">
+      <label class="small" for="logVal" id="logValLbl">Genaue Anzahl (optional)</label>
+      <input type="text" id="logVal" autocomplete="off" enterkeyhint="done">
+      <p class="hint" id="logHint"></p>
+    </div>
+    <div class="choices" role="group" aria-label="Wie lief der Satz?">
+      <button type="button" class="choice ok" data-st="ok"><span>✓</span>Geschafft</button>
+      <button type="button" class="choice less" data-st="less"><span>↓</span>Weniger</button>
+      <button type="button" class="choice more" data-st="more"><span>🔥</span>Mehr</button>
+    </div>
+    <button type="button" class="linkbtn" id="logDel" hidden style="align-self:center">Satz löschen</button>
+  </div>
+</div>
+
+<div id="pasteModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="pasteTitle">Link einfügen</h3>
+    <p class="hint">Füge hier den Link ein, den du vom Coach erhalten hast. Die Einheit wird dann in der App gespeichert.</p>
+    <input type="url" id="pasteInput" placeholder="https://…#e=…" aria-label="Link">
+    <button type="button" class="primary" id="pasteGo">Einheit öffnen</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script>
 const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
 const Y=id=>"https://youtu.be/"+id, YS=id=>"https://youtube.com/shorts/"+id;
@@ -334,13 +432,43 @@ const TPL=[
 
 const KEY="u15-trainingseinheit-v1";
 const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/training/";
+const ST={ok:"geschafft",less:"weniger",more:"mehr"};
 let state=load();
 let filter={cat:"",q:""};
+if(!state.mode)state.mode=window.matchMedia("(max-width:760px)").matches?"train":"edit";
 
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
+function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
+function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
+function fromTpl(t){return {id:uid(),t:t.t,a:"",h:t.h||"",items:t.i.map(([id,ss,o])=>itemFrom(EXBY[id],ss,Object.assign({},t.o||{},o||{})))}}
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.sessions)&&s.sessions.length)return s}}catch(e){}
+  const first=fromTpl(TPL[0]);return {sessions:[first],active:first.id,custom:[]};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
+function flash(msg){document.querySelectorAll(".status").forEach(s=>{s.textContent=msg});clearTimeout(flash.t);flash.t=setTimeout(()=>document.querySelectorAll(".status").forEach(s=>s.textContent=""),2600)}
+
+function labels(items){
+  const out=[];let g=-1,n=0;const size=[];
+  items.forEach((it,i)=>{if(i===0||!it.ss){g++;n=0}n++;out.push([g,n]);size[g]=n});
+  return out.map(([g,n])=>{const L=g<26?String.fromCharCode(65+g):"Z"+g;return size[g]>1?L+n:L});
+}
+function vidLinks(v){return (v||[]).map((u,i)=>`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">▶ Video${v.length>1?" "+(i+1):""}</a>`).join(" ")}
+function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
+
+/* Sätze */
+function plannedSets(it){const m=String(it.s||"").match(/\d+/g);return m?+m[m.length-1]:0}
+function isTime(it){return /\d\s*(s|Sek|Min)\b/i.test(it.w||"")}
+function unitOf(it){const m=/\d\s*(s|Sek\.?|Min\.?)(?=\s|$|\/)/i.exec(it.w||"");return m?m[1]:""}
+function planShort(it){return String(it.w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").replace(/\s*Sprünge?$/,"").trim()||"✓"}
+function setVal(it,e){const v=(e.v||"").trim();if(!v)return planShort(it);const u=unitOf(it);return u&&/^\d+([.,]\d+)?$/.test(v)?`${v} ${u}`:v}
+function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
+
+/* Bilder: eigenes Bild > Bilder aus dem PDF > Vorschaubild des Videos */
 function ytId(u){const m=/(?:youtu\.be\/|shorts\/|[?&]v=)([A-Za-z0-9_-]{11})/.exec(u||"");return m?m[1]:null}
-/* Bildquellen: eigenes Bild > Bilder aus dem PDF > Vorschaubild des Videos */
 function imgsFor(id,v){
   const own=(state.imgs||{})[id];if(own)return {src:[own],k:"own"};
   if(PDFIMG[id])return {src:Array.from({length:PDFIMG[id]},(_,i)=>`img/${id}-${i+1}.jpg`),k:"pdf"};
@@ -349,43 +477,64 @@ function imgsFor(id,v){
 }
 function thumbHTML(id,name,v){const im=imgsFor(id,v);
   return im.src.length?`<button type="button" class="thumb" data-show="${esc(id)}" aria-label="Bild und Ausführung: ${esc(name)}"><img src="${esc(im.src[0])}" alt="" loading="lazy" onerror="this.parentNode.classList.add('none');this.parentNode.textContent='＋';"></button>`
-   :`<button type="button" class="thumb none" data-show="${esc(id)}" aria-label="Bild hinzufügen: ${esc(name)}">＋</button>`}
-function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
-function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
-function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss},o||{})}
-function fromTpl(t){return {id:uid(),t:t.t,a:"",h:t.h||"",items:t.i.map(([id,ss,o])=>itemFrom(EXBY[id],ss,Object.assign({},t.o||{},o||{})))}}
-function load(){
-  try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.sessions)&&s.sessions.length)return s}}catch(e){}
-  const first=fromTpl(TPL[0]);return {sessions:[first],active:first.id,custom:[]};
-}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
-function flash(msg){const s=document.getElementById("status");s.textContent=msg;clearTimeout(flash.t);flash.t=setTimeout(()=>s.textContent="",2600)}
+   :`<button type="button" class="thumb none" data-show="${esc(id)}" aria-label="Bild und Ausführung: ${esc(name)}">＋</button>`}
 
-function labels(items){
-  const out=[];let g=-1,n=0;const size=[];
-  items.forEach((it,i)=>{if(i===0||!it.ss){g++;n=0}n++;out.push([g,n]);size[g]=n});
-  return out.map(([g,n])=>{const L=g<26?String.fromCharCode(65+g):"Z"+g;return size[g]>1?L+n:L});
-}
-function vidLinks(v,short){return (v||[]).map((u,i)=>`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">▶ Video${v.length>1?" "+(i+1):""}</a>`).join(" ")}
-function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
+/* Modus */
+function setMode(m){state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
 
 /* Einheiten-Leiste */
 function renderBar(){
   const s=state.sessions;
-  document.getElementById("sessionBar").innerHTML=s.map(x=>`<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${x.items.length}</small></button>`).join("")+
-   `<button type="button" id="newSess">+ Neue Einheit</button>
-    <select id="tplPick" class="tplpick" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>`;
+  document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
+   `<button type="button" id="newSess" class="edit-only" style="flex:none">+ Neue Einheit</button>
+    <select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>`;
+  const a=document.querySelector(".stab[aria-pressed=true]");if(a&&a.scrollIntoView&&document.getElementById("sessionBar").scrollWidth>innerWidth)a.scrollIntoView({block:"nearest",inline:"center"});
 }
 
-/* Einheit */
-function renderHead(){const c=cur();
-  document.getElementById("sessTitle").value=c.t||"";document.getElementById("sessAthlete").value=c.a||"";document.getElementById("sessNotes").value=c.h||"";}
+/* Einheit: Kopf */
+function renderHead(){const c=cur();const el=document.getElementById("sessHead");
+  if(state.mode==="edit"){
+    el.innerHTML=`<div class="sesshead">
+      <div class="field"><label class="small" for="sTitle">Einheit</label><input type="text" id="sTitle" data-sf="t" value="${esc(c.t)}" placeholder="z. B. Oberkörper Kraft"></div>
+      <div class="field"><label class="small" for="sAth">Athlet/in</label><input type="text" id="sAth" data-sf="a" value="${esc(c.a)}" placeholder="Name"></div>
+      <div class="field full"><label class="small" for="sNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label><textarea id="sNotes" data-sf="h" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen">${esc(c.h)}</textarea></div>
+    </div><div class="summary" id="summary" style="margin-top:10px"></div>`;
+    renderSummary();
+  }else{
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
+      ${c.a?`<div class="eyebrow">${esc(c.a)}</div>`:""}<h2 class="stitle">${esc(c.t||"Trainingseinheit")}</h2>
+      ${c.h?`<p class="snotes">${esc(c.h)}</p>`:""}
+      <div class="progress" id="progress"></div></div>`;
+    renderProgress();
+  }
+}
+function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
+  const pct=t.plan?Math.round(100*t.done/t.plan):0;
+  el.innerHTML=`<div class="progline"><span class="eyebrow">Fortschritt</span><span><b>${t.done}</b> von ${t.plan} Sätzen${t.plan&&t.done>=t.plan?" · fertig 💪":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${t.plan}" aria-valuenow="${t.done}" aria-label="Erledigte Sätze"><i style="width:${pct}%"></i></div>`}
+function renderSummary(){const el=document.getElementById("summary");if(!el)return;const c=cur();const groups=new Set(labels(c.items).map(l=>l[0])).size;
+  const vids=c.items.filter(i=>i.v&&i.v.length).length;
+  el.innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>`:"";}
+
+/* Einheit: Übungen */
+function setsHTML(it){
+  const log=it.log||[],p=plannedSets(it);
+  const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}, ${ST[e.st]}. Ändern">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</button>`).join("");
+  const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">${esc(planShort(it))}</span>`).join("");
+  const n=log.length+1;const extra=p&&log.length>=p;
+  return `<div class="sets">${boxes}${todo}<button type="button" class="setbtn${extra?" extra":""}" data-log="1">${extra?"＋ Zusätzlicher Satz":`✓ Satz ${n}${p?" von "+p:""} erledigt`}</button></div>`;
+}
 function renderItems(focusSel){
-  const c=cur(),lab=labels(c.items);const el=document.getElementById("items");
-  if(!c.items.length){el.innerHTML=`<div class="emptysess">Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>.</div>`}
-  else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];
-    return `<div class="item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}" data-u="${it.u}">
+  const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
+  if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?"Diese Einheit ist noch leer.":"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
+  else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
+    const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}`;
+    if(train)return `<div class="${cls}" data-u="${it.u}">
+      <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
+        <div class="iname">${esc(it.n)}<span class="idose">${esc(dose(it))}</span>${vidLinks(it.v)}</div></div>
+      ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
+      ${setsHTML(it)}
+    </div>`;
+    return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
         <div class="iname">${esc(it.n)}${vidLinks(it.v)}</div>
         <div class="imove">
@@ -402,16 +551,11 @@ function renderItems(focusSel){
       <div class="ifoot">
         <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
         ${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
-        ${exById(it.id)&&exById(it.id).b?`<button type="button" class="linkbtn" data-act="info">Ausführung</button>`:""}
       </div>
-      <div class="empty" data-info hidden>${esc(exById(it.id)?.b||"").replace(/\n/g,"<br>")}</div>
     </div>`}).join("");
-  renderSummary();
+  renderSummary();renderProgress();
   if(focusSel){const f=el.querySelector(focusSel);if(f)f.focus()}
 }
-function renderSummary(){const c=cur();const groups=new Set(labels(c.items).map(l=>l[0])).size;
-  const vids=c.items.filter(i=>i.v&&i.v.length).length;
-  document.getElementById("summary").innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>`:"";}
 
 /* Bibliothek */
 function renderCats(){
@@ -438,14 +582,17 @@ function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
   L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
   c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
   return L.join("\n")}
-function renderText(){document.getElementById("planText").value=planText()}
-function renderAll(){renderBar();renderHead();renderItems();renderCats();renderLib();renderText()}
+function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);const L=[];
+  const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
+  c.items.forEach((it,i)=>{const log=it.log||[];const sym={ok:"✓",less:"↓",more:"🔥"};
+    L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}`).join("  |  "):"– nicht gemacht"))});
+  return L.join("\n")}
+function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
+function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
 
 /* Events */
-document.getElementById("sessTitle").addEventListener("input",e=>{cur().t=e.target.value;changed()});
-document.getElementById("sessAthlete").addEventListener("input",e=>{cur().a=e.target.value;changed()});
-document.getElementById("sessNotes").addEventListener("input",e=>{cur().h=e.target.value;changed()});
+document.getElementById("sessHead").addEventListener("input",e=>{const f=e.target.dataset.sf;if(!f)return;cur()[f]=e.target.value;changed()});
 document.getElementById("search").addEventListener("input",e=>{filter.q=e.target.value;renderLib()});
 document.getElementById("items").addEventListener("input",e=>{
   const f=e.target.dataset.f;if(!f||f==="ss")return;const box=e.target.closest("[data-u]");
@@ -458,32 +605,69 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("click",e=>{
   const t=e.target;
+  const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
+  const lg=t.closest("[data-log]");if(lg){openLog(lg.closest("[data-u]").dataset.u,null,lg);return}
+  const ed=t.closest("[data-edit]");if(ed){openLog(ed.closest("[data-u]").dataset.u,+ed.dataset.edit,ed);return}
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
   const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
-  if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();document.getElementById("sessTitle").select();return}
+  if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
   const cb=t.closest("[data-cat]");if(cb){filter.cat=cb.dataset.cat;renderCats();renderLib();return}
   const ab=t.closest("[data-add]");if(ab){const e2=exById(ab.dataset.add);cur().items.push(itemFrom(e2,false));save();renderItems();renderLib();renderBar();renderText();flash(`„${e2.n}“ hinzugefügt`);
     const again=document.querySelector(`[data-add="${CSS.escape(e2.id)}"]`);if(again)again.focus();return}
   const act=t.closest("[data-act]");if(act){const box=act.closest("[data-u]");const items=cur().items;const i=items.findIndex(x=>x.u===box.dataset.u);const a=act.dataset.act;
-    if(a==="info"){const inf=box.querySelector("[data-info]");inf.hidden=!inf.hidden;return}
-    if(a==="rm"){const [it]=items.splice(i,1);if(items[i]&&i===0)items[i].ss=false;save();renderItems();renderLib();renderBar();renderText();flash(`„${it.n}“ entfernt`);return}
+    if(a==="rm"){const [it]=items.splice(i,1);if(items[0])items[0].ss=false;save();renderItems();renderLib();renderBar();renderText();flash(`„${it.n}“ entfernt`);return}
     const j=a==="up"?i-1:i+1;if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];if(items[0])items[0].ss=false;
-    save();renderItems(`[data-u="${box.dataset.u}"] [data-act="${a}"]:not([disabled])`)||null;renderText();
-    if(!document.activeElement||document.activeElement===document.body){const b=document.querySelector(`[data-u="${box.dataset.u}"] [data-act=rm]`);if(b)b.focus()}return}
+    save();renderItems();renderText();const u=box.dataset.u;const b=document.querySelector(`[data-u="${u}"] [data-act="${a}"]:not([disabled])`)||document.querySelector(`[data-u="${u}"] [data-act=rm]`);if(b)b.focus();return}
   const rc=t.closest("[data-rmc]");if(rc){const id=rc.dataset.rmc;state.custom=state.custom.filter(c=>c.id!==id);if(state.imgs)delete state.imgs[id];save();renderCustom();renderCats();renderLib();return}
 });
-let delArmed=false;
-document.getElementById("delBtn").addEventListener("click",e=>{const b=e.currentTarget;
-  if(!delArmed){delArmed=true;b.textContent="Wirklich löschen?";b.classList.add("warn");setTimeout(()=>{delArmed=false;b.textContent="Einheit löschen";b.classList.remove("warn")},4000);return}
-  delArmed=false;b.textContent="Einheit löschen";b.classList.remove("warn");
+function armed(btn,label,confirmLabel,fn){btn.addEventListener("click",()=>{
+  if(!btn._arm){btn._arm=true;btn.textContent=confirmLabel;btn.classList.add("warn");btn._t=setTimeout(()=>{btn._arm=false;btn.textContent=label;btn.classList.remove("warn")},4000);return}
+  clearTimeout(btn._t);btn._arm=false;btn.textContent=label;btn.classList.remove("warn");fn()})}
+armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",()=>{
   const name=cur().t;state.sessions=state.sessions.filter(s=>s.id!==state.active);
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
-document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>i.u=uid());
+armed(document.getElementById("resetLogBtn"),"Neues Training starten","Alle Sätze zurücksetzen?",()=>{
+  cur().items.forEach(it=>it.log=[]);save();renderAll();flash("Bereit für das nächste Training")});
+document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>{i.u=uid();i.log=[]});
   state.sessions.push(c);state.active=c.id;save();renderAll();flash("Einheit dupliziert")});
+function copyOrShare(txt,okMsg,title){
+  const fb=()=>{const ta=document.getElementById("planText");if(ta&&state.mode==="edit"){ta.value=txt;ta.focus();ta.select();flash("Text unten markiert – jetzt kopieren.")}else flash("Kopieren nicht möglich.")};
+  if(navigator.share&&matchMedia("(pointer:coarse)").matches){navigator.share({title,text:txt}).catch(()=>{});return}
+  try{navigator.clipboard.writeText(txt).then(()=>flash(okMsg),fb)}catch(e){fb()}}
 document.getElementById("copyBtn").addEventListener("click",()=>{const txt=planText();
-  const fb=()=>{const ta=document.getElementById("planText");ta.value=txt;ta.focus();ta.select();flash("Text unten markiert – jetzt kopieren.")};
-  try{navigator.clipboard.writeText(txt).then(()=>flash("Einheit kopiert"),fb)}catch(e){fb()}});
+  try{navigator.clipboard.writeText(txt).then(()=>flash("Einheit kopiert"),()=>copyOrShare(txt,"Einheit kopiert",cur().t))}catch(e){copyOrShare(txt,"Einheit kopiert",cur().t)}});
+document.getElementById("resultBtn").addEventListener("click",()=>copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis"));
+
+/* Satz erfassen */
+const logModal=document.getElementById("logModal");let logCtx=null;
+function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return;
+  const log=it.log||[];const e=idx==null?null:log[idx];const p=plannedSets(it);const n=idx==null?log.length+1:idx+1;
+  logCtx={u,idx,from};
+  document.getElementById("logEyebrow").textContent=`Satz ${n}${p?" von "+p:""}`;
+  document.getElementById("logTitle").textContent=it.n;
+  document.getElementById("logGoal").innerHTML=`Ziel: <b>${esc(it.w||"–")}</b>${it.r?` · RIR ${esc(it.r)}`:""}`;
+  const time=isTime(it);
+  document.getElementById("logValLbl").textContent=time?"Genaue Zeit (optional)":"Genaue Anzahl Wiederholungen (optional)";
+  const inp=document.getElementById("logVal");inp.value=e?e.v||"":"";inp.placeholder=planShort(it);inp.inputMode=time?"text":"numeric";
+  document.getElementById("logHint").textContent=`Leer lassen = ${planShort(it)} wie im Plan.`;
+  logModal.querySelectorAll("[data-st]").forEach(b=>b.setAttribute("aria-pressed",String(!!e&&e.st===b.dataset.st)));
+  document.getElementById("logDel").hidden=!e;
+  logModal.hidden=false;(e?logModal.querySelector(`[data-st="${e.st}"]`):logModal.querySelector('[data-st="ok"]')).focus();
+}
+function closeLog(){logModal.hidden=true;const c=logCtx;logCtx=null;
+  if(c){const b=document.querySelector(`[data-u="${c.u}"] [data-log]`);if(b)b.focus()}}
+logModal.addEventListener("click",e=>{
+  if(e.target===logModal||e.target.closest("[data-close]")){closeLog();return}
+  const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
+  const sb=e.target.closest("[data-st]");
+  if(sb){const entry={st:sb.dataset.st,v:document.getElementById("logVal").value.trim()};
+    if(logCtx.idx==null)it.log.push(entry);else it.log[logCtx.idx]=entry;
+    save();renderItems();renderBar();closeLog();
+    flash(entry.st==="more"?"Stark! 🔥":entry.st==="less"?"Gespeichert – nächstes Mal klappt’s.":"Satz gespeichert ✓");return}
+  if(e.target.id==="logDel"){it.log.splice(logCtx.idx,1);save();renderItems();renderBar();closeLog();flash("Satz gelöscht")}
+});
+document.getElementById("logVal").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();logModal.querySelector('[data-st="ok"]').click()}});
 
 /* Eigene Übungen */
 function renderCustom(){
@@ -503,7 +687,7 @@ document.getElementById("cAdd").addEventListener("click",async()=>{
 
 /* Bild & Ausführung */
 const exModal=document.getElementById("exModal");let exReturn=null,exOpen=null;
-function exInfo(id){const e=exById(id);if(e)return e;const it=cur().items.find(x=>x.id===id);return it||{id,n:id,v:[],b:""}}
+function exInfo(id){const it=cur().items.find(x=>x.id===id);const e=exById(id);return Object.assign({},e||{id,n:id,v:[],b:""},it&&state.mode==="train"?{s:it.s,w:it.w,p:it.p,r:it.r}:{},{b:(e&&e.b)||""})}
 function openEx(id,from){exOpen=id;if(from)exReturn=from;const e=exInfo(id);const im=imgsFor(id,e.v);
   const srcTxt={own:"Eigenes Bild",pdf:"Bilder aus «Rumpf U15»",yt:"Vorschaubild aus dem Video","":""}[im.k];
   document.getElementById("exBody").innerHTML=`<div class="eyebrow">${esc((CATS.find(c=>c[0]===e.k)||["",""])[1])}</div><h3 id="exTitle">${esc(e.n)}</h3>
@@ -517,7 +701,6 @@ function openEx(id,from){exOpen=id;if(from)exReturn=from;const e=exInfo(id);cons
 function closeEx(){exModal.hidden=true;exOpen=null;if(exReturn&&document.body.contains(exReturn))exReturn.focus()}
 exModal.addEventListener("click",e=>{if(e.target===exModal||e.target.closest("[data-close]")){closeEx();return}
   if(e.target.id==="exImgDel"){const id=exOpen;delete state.imgs[id];save();rerenderImgs();openEx(id);flash("Eigenes Bild entfernt")}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!exModal.hidden)closeEx()});
 function resizeImage(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
   const max=480,sc=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
   const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.78))};img.onerror=rej;img.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
@@ -528,7 +711,11 @@ async function setOwnImg(id,file){
     return true}catch(e){flash("Bild konnte nicht gelesen werden.");return false}}
 exModal.addEventListener("change",async e=>{if(e.target.id!=="exImgFile")return;const id=exOpen;
   if(await setOwnImg(id,e.target.files[0])){rerenderImgs();openEx(id);flash("Bild gespeichert")}});
-function rerenderImgs(){renderItems();renderLib()}
+function rerenderImgs(){renderItems();if(state.mode==="edit")renderLib()}
+
+/* Escape schliesst den obersten Dialog */
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;
+  if(!logModal.hidden)closeLog();else if(!exModal.hidden)closeEx();else if(!pasteModal.hidden)pasteModal.hidden=true});
 
 /* Teilen per Link */
 function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
@@ -543,21 +730,31 @@ function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&
 document.getElementById("shareBtn").addEventListener("click",async()=>{
   if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
   let link;try{link=baseUrl()+"#e="+await encodeSess()}catch(e){flash("Link konnte nicht erstellt werden.");return}
+  if(navigator.share&&matchMedia("(pointer:coarse)").matches){navigator.share({title:cur().t||"Trainingseinheit",url:link}).catch(()=>{});return}
   const fb=()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select();flash("Link unten markiert – jetzt kopieren.")};
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fb)}catch(e){fb()}});
 let importedId=null;
-async function importFromHash(){
-  const m=(window.location.hash||"").match(/^#e=([zb][A-Za-z0-9_-]+)$/);if(!m)return;
-  try{const d=await decodeSess(m[1]);if(!d||!Array.isArray(d.i))throw 0;
-    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss])=>({u:uid(),id,n,k,s,w,p,r,b,v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss}))};
-    state.sessions.push(s);state.active=s.id;importedId=s.id;save();renderAll();document.getElementById("shareBanner").hidden=false;
-  }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.")}
-  try{history.replaceState(null,"",window.location.pathname+window.location.search)}catch(e){}
+/* Der Link bleibt in der Adresszeile: so landet die Einheit auch in der Homescreen-App (iPhone speichert die App getrennt vom Browser). */
+async function importCode(code,fromPaste){
+  state.imported=state.imported||{};
+  const known=state.imported[code];
+  if(known&&state.sessions.some(s=>s.id===known)){state.active=known;if(fromPaste)state.mode="train";save();renderAll();if(fromPaste)flash("Einheit geöffnet");return true}
+  try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
+    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss])=>({u:uid(),id,n,k,s,w,p,r,b,v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
+    state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
+    document.getElementById("shareBanner").hidden=false;return true
+  }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
 }
+function codeFrom(str){const m=String(str||"").match(/#e=([zb][A-Za-z0-9_-]+)/);return m?m[1]:null}
 document.getElementById("undoImport").addEventListener("click",()=>{
   state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push(fromTpl(TPL[0]));
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Geteilte Einheit entfernt")});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
+const pasteModal=document.getElementById("pasteModal");
+["pasteLinkBtn","pasteLinkBtn2"].forEach(id=>document.getElementById(id).addEventListener("click",()=>{pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus()}));
+pasteModal.addEventListener("click",e=>{if(e.target===pasteModal||e.target.closest("[data-close]"))pasteModal.hidden=true});
+document.getElementById("pasteGo").addEventListener("click",async()=>{const c=codeFrom(document.getElementById("pasteInput").value);
+  if(!c){flash("Das ist kein Einheiten-Link.");return}pasteModal.hidden=true;await importCode(c,true)});
 
 /* PDF */
 const CAT_RGB={warm:[46,139,87],plyo:[194,65,45],beine:[183,121,31],ober:[29,99,201],rumpf:[122,79,194],eigen:[110,124,132]};
@@ -605,7 +802,26 @@ pdfBtn.addEventListener("click",async()=>{
     .catch(e=>{const k=e&&e.code;if(k==="declined")flash("Speichern abgebrochen");else if(k==="rate_limited")flash("Bitte einen Moment warten.");else{flash("PDF-Export ist hier nicht verfügbar.");pdfBtn.hidden=true}})}
   else doc.save(filename)});
 
-renderCustom();renderAll();importFromHash();
+/* App auf dem Homescreen */
+const isStandalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+let installEvt=null;
+function showInstall(){
+  let dismissed=false;try{dismissed=localStorage.getItem(KEY+"-noinstall")==="1"}catch(e){}
+  if(isStandalone||dismissed||!/^https?:$/.test(location.protocol)||/claude/.test(location.hostname))return;
+  const txt=document.getElementById("installText");
+  if(installEvt){txt.textContent=" Dann startet das Training mit einem Tipp, auch ohne Browser.";document.getElementById("installBtn").hidden=false}
+  else if(isIOS)txt.textContent=" In Safari unten auf «Teilen» (Quadrat mit Pfeil) tippen, dann «Zum Home-Bildschirm». Tipp: zuerst den Link vom Coach öffnen, dann speichern – so ist die Einheit gleich in der App.";
+  else if(matchMedia("(pointer:coarse)").matches)txt.textContent=" Im Browser-Menü ⋮ «Zum Startbildschirm hinzufügen» wählen.";
+  else return;
+  document.getElementById("installCard").hidden=false}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;showInstall()});
+document.getElementById("installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;document.getElementById("installCard").hidden=true});
+document.getElementById("installClose").addEventListener("click",()=>{document.getElementById("installCard").hidden=true;try{localStorage.setItem(KEY+"-noinstall","1")}catch(e){}});
+if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+
+renderCustom();renderAll();showInstall();
+{const c=codeFrom(location.hash);if(c)importCode(c)}
 </script>
 </body>
 </html>
