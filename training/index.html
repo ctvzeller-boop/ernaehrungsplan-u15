@@ -114,8 +114,8 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .ex summary::-webkit-details-marker{display:none}
 .ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .mat{display:block;font-weight:500;font-size:.8rem;color:var(--muted);margin-top:2px}
-.mat::before{content:"🧰 ";font-size:.75rem}
-.loads .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.loads .cat[aria-pressed="true"],#cats .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.cats .fl{align-self:center;flex-basis:100%;margin-top:2px}
 .matlist{margin:0;font-size:.9rem}
 .matlist b{font-weight:600}
 .ex .note{font-size:.85rem;color:var(--muted);margin:6px 0 0;white-space:pre-line}
@@ -291,7 +291,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <aside class="card lib edit-only" aria-labelledby="libTitle">
       <h2 id="libTitle">Übungen</h2>
       <input type="search" id="search" placeholder="Übung suchen" aria-label="Übung suchen">
-      <div class="cats" id="cats" role="group" aria-label="Kategorie filtern"></div>
+      <div class="cats" id="cats" role="group" aria-label="Nach Fokus filtern"></div>
       <div class="cats loads" id="loads" role="group" aria-label="Nach Belastung filtern"></div>
       <div class="libscroll" id="lib"></div>
     </aside>
@@ -303,7 +303,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="addgrid">
         <div class="field full"><label class="small" for="cName">Name</label><input type="text" id="cName" placeholder="z. B. Goblet Squat"></div>
         <div class="field"><label class="small" for="cCat">Kategorie</label><select id="cCat"></select></div>
-        <div class="field"><label class="small" for="cLoad">Belastung</label><select id="cLoad"><option value="kw">Körpergewicht</option><option value="band">Band</option><option value="gew">Gewicht</option></select></div>
+        <div class="field"><label class="small" for="cLoad">Belastung</label><select id="cLoad"><option value="kw">Körpergewicht</option><option value="gew">Gewicht</option><option value="band">Resistance Band</option></select></div>
         <div class="field"><label class="small" for="cMat">Material</label><input type="text" id="cMat" placeholder="z. B. Kettlebell, Matte"></div>
         <div class="field"><label class="small" for="cDose">Sätze × Wdh</label><input type="text" id="cDose" placeholder="3 × 8–10"></div>
         <div class="field full"><label class="small" for="cVid">Video-Link (optional)</label><input type="url" id="cVid" placeholder="https://youtu.be/…"></div>
@@ -435,7 +435,13 @@ const EX=[
  ["lowerabs","Untere Bauchmuskulatur (Video-Programm)","rumpf","1","wie im Video","","","Unterer Rücken muss immer den Boden berühren.",[Y("RZRzD9h5RL4")]]
 ].map(([id,n,k,s,w,p,r,b,v])=>({id,n,k,s,w,p,r,b,v}));
 /* Belastung: kw = Körpergewicht, band = Resistance Band, gew = Gewicht; dazu benötigtes Material */
-const LOADS=[["kw","Körpergewicht"],["band","Band"],["gew","Gewicht"]];
+const LOADS=[["kw","Körpergewicht"],["gew","Gewicht"],["band","Resistance Band"]];
+/* Fokus (Mehrfach-Zuordnung möglich) */
+const FOCI=[["schnell","Schnelligkeit Beine"],["kraftb","Kraft Beine"],["kraftob","Kraft Oberkörper"],["explob","Explosivität Oberkörper"],["stab","Rumpfstabilität"],["rot","Rumpf Rotation"],["bauch","Bauch / Rumpfkraft"],["mob","Mobilität & Aufwärmen"]];
+const CAT2FOC={warm:["mob"],plyo:["schnell"],beine:["kraftb"],ober:["kraftob"],rumpf:["stab"],eigen:[]};
+const FOC={abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandshoulder:"mob",mbchest:"explob",
+ pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",copenhagen:"stab",
+ flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
 const MAT={
  abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],
@@ -456,6 +462,7 @@ const MAT={
  flutter:["kw",["Matte"]],dslr:["kw",["Matte"]],scissor:["kw",["Matte"]],bottomup:["kw",["Matte"]],bicycle:["kw",["Matte"]],spiderman:["kw",["Matte"]],lowerabs:["kw",["Matte"]]
 };
 Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
+EX.forEach(e=>{e.f=FOC[e.id]?FOC[e.id].split(" "):CAT2FOC[e.k].slice()});
 const PDFIMG={copenhagen:1,flutter:2,dslr:2,scissor:2,bottomup:2,bicycle:2,spiderman:2};
 const EXBY=Object.fromEntries(EX.map(e=>[e.id,e]));
 
@@ -475,14 +482,15 @@ const KEY="u15-trainingseinheit-v1";
 const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/training/";
 const ST={ok:"geschafft",less:"weniger",more:"mehr"};
 let state=load();
-let filter={cat:"",q:"",load:[]};
+let filter={q:"",load:[],foc:[]};
 if(!state.mode)state.mode=window.matchMedia("(max-width:760px)").matches?"train":"edit";
 
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function loadOf(id){const e=exById(id);return (e&&e.l)||[]}
 function matOf(id){const e=exById(id);return (e&&e.m)||[]}
-function matLine(id){const l=loadOf(id),m=matOf(id);return [l.map(x=>LOADN[x]).join(" / "),m.length?m.join(", "):(l.length?"kein Material":"")].filter(Boolean).join(" · ")}
+function matLine(id){return matOf(id).join(", ")}
+function focOf(e){return e.f||CAT2FOC[e.k]||[]}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
@@ -608,17 +616,15 @@ function renderItems(focusSel){
 
 /* Bibliothek */
 function renderCats(){
-  const cats=CATS.filter(([k])=>k!=="eigen"||(state.custom||[]).length);
-  document.getElementById("cats").innerHTML=`<button type="button" class="cat" data-cat="" aria-pressed="${!filter.cat}">Alle</button>`+
-    cats.map(([k,n])=>`<button type="button" class="cat" data-cat="${k}" aria-pressed="${filter.cat===k}">${n}</button>`).join("");
+  document.getElementById("cats").innerHTML=`<span class="eyebrow fl">Fokus</span>`+FOCI.map(([k,n])=>`<button type="button" class="cat" data-foc="${k}" aria-pressed="${filter.foc.includes(k)}">${n}</button>`).join("");
 }
 function renderLoads(){
-  document.getElementById("loads").innerHTML=`<span class="eyebrow" style="align-self:center">Nur:</span>`+LOADS.map(([k,n])=>`<button type="button" class="cat ld-${k}" data-load="${k}" aria-pressed="${filter.load.includes(k)}">${n}</button>`).join("");
+  document.getElementById("loads").innerHTML=`<span class="eyebrow fl">Belastung</span>`+LOADS.map(([k,n])=>`<button type="button" class="cat ld-${k}" data-load="${k}" aria-pressed="${filter.load.includes(k)}">${n}</button>`).join("");
 }
 function renderLib(){
   const q=filter.q.trim().toLowerCase();const inSess=new Set(cur().items.map(i=>i.id));
-  const html=CATS.filter(([k])=>!filter.cat||filter.cat===k).map(([k,n])=>{
-    const list=exAll().filter(e=>e.k===k&&(!filter.load.length||(e.l||[]).some(x=>filter.load.includes(x)))&&(!q||[e.n,e.b,(e.m||[]).join(" ")].join(" ").toLowerCase().includes(q)));
+  const html=CATS.map(([k,n])=>{
+    const list=exAll().filter(e=>e.k===k&&(!filter.foc.length||focOf(e).some(x=>filter.foc.includes(x)))&&(!filter.load.length||(e.l||[]).some(x=>filter.load.includes(x)))&&(!q||[e.n,e.b,(e.m||[]).join(" ")].join(" ").toLowerCase().includes(q)));
     if(!list.length)return "";
     return `<div class="libgroup c-${k}"><h3><span class="dot"></span>${n}</h3>${list.map(e=>`
       <div class="ex">${thumbHTML(e.id,e.n)}<details><summary>${esc(e.n)}<span class="dose">${esc(dose(e))}</span>${matLine(e.id)?`<span class="mat">${esc(matLine(e.id))}</span>`:""}</summary>
@@ -664,7 +670,7 @@ document.addEventListener("click",e=>{
   const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
   if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
   const lb=t.closest("[data-load]");if(lb){const k=lb.dataset.load;filter.load=filter.load.includes(k)?filter.load.filter(x=>x!==k):filter.load.concat(k);renderLoads();renderLib();return}
-  const cb=t.closest("[data-cat]");if(cb){filter.cat=cb.dataset.cat;renderCats();renderLib();return}
+  const fb=t.closest("[data-foc]");if(fb){const k=fb.dataset.foc;filter.foc=filter.foc.includes(k)?filter.foc.filter(x=>x!==k):filter.foc.concat(k);renderCats();renderLib();return}
   const ab=t.closest("[data-add]");if(ab){const e2=exById(ab.dataset.add);cur().items.push(itemFrom(e2,false));save();renderItems();renderLib();renderBar();renderText();flash(`„${e2.n}“ hinzugefügt`);
     const again=document.querySelector(`[data-add="${CSS.escape(e2.id)}"]`);if(again)again.focus();return}
   const act=t.closest("[data-act]");if(act){const box=act.closest("[data-u]");const items=cur().items;const i=items.findIndex(x=>x.u===box.dataset.u);const a=act.dataset.act;
@@ -739,7 +745,7 @@ document.getElementById("cAdd").addEventListener("click",async()=>{
   (state.custom=state.custom||[]).push(ex);save();
   const f=document.getElementById("cImg").files[0];if(f)await setOwnImg(ex.id,f);
   ["cName","cDose","cVid","cNote","cImg","cMat"].forEach(id=>document.getElementById(id).value="");
-  filter.cat="";renderCustom();renderCats();renderLib();flash(`„${n}“ in der Übungsliste`)});
+  filter.foc=[];filter.load=[];renderLoads();renderCustom();renderCats();renderLib();flash(`„${n}“ in der Übungsliste`)});
 
 /* Bild & Ausführung */
 const exModal=document.getElementById("exModal");let exReturn=null,exOpen=null;
@@ -749,7 +755,7 @@ function openEx(id,from){exOpen=id;if(from)exReturn=from;const e=exInfo(id);cons
   document.getElementById("exBody").innerHTML=`<div class="eyebrow">${esc((CATS.find(c=>c[0]===e.k)||["",""])[1])}</div><h3 id="exTitle">${esc(e.n)}</h3>
    ${im.src.length?`<div class="bigimgs">${im.src.map(u=>`<img src="${esc(u.replace("mqdefault","hqdefault"))}" alt="${esc(e.n)}" onerror="this.remove()">`).join("")}</div><div class="imgsrc">${srcTxt}</div>`:`<p class="empty">Noch kein Bild für diese Übung.</p>`}
    ${dose(e)?`<div><b>${esc(dose(e))}</b></div>`:""}
-   ${matLine(id)?`<div class="matlist"><b>Belastung & Material:</b> ${esc(matLine(id))}</div>`:""}
+   ${matLine(id)?`<div class="matlist"><b>Material:</b> ${esc(matLine(id))}</div>`:""}
    ${e.b?`<p class="note">${esc(e.b)}</p>`:""}
    <div class="mrow">${vidLinks(e.v)}
      <label class="filebtn"><button type="button" tabindex="-1">${im.k==="own"?"Anderes Bild wählen":"Eigenes Bild hochladen"}</button><input type="file" accept="image/*" id="exImgFile" aria-label="Eigenes Bild für ${esc(e.n)} hochladen"></label>
