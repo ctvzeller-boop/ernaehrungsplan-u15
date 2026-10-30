@@ -120,6 +120,23 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .chip.meat{opacity:.55}
 .sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
 .sharebanner span{flex:1 1 260px;min-width:0;font-weight:500}
+.sleepgrid{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:20px;align-items:start}
+.sleepinputs{display:flex;flex-direction:column;gap:6px}
+.sleepinputs input{font:inherit;font-size:1.3rem;font-family:var(--display);font-weight:700;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin-bottom:8px}
+.sleepresult{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);background:var(--cbg);border-left:5px solid var(--c);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sleepresult[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
+.sleepresult[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
+.sleepresult p{margin:0;max-width:65ch}
+.sleepnum{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.sleepnum #sleepHours{font-family:var(--display);font-weight:700;font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.sleeptag{background:var(--c);color:var(--surface);border-radius:999px;padding:3px 10px;font-weight:600;font-size:.85rem}
+.sleepmeter{position:relative;height:10px;background:var(--surface);border-radius:999px;margin-bottom:16px}
+.sleepfill{position:absolute;inset:0 auto 0 0;background:var(--c);border-radius:999px;width:0;transition:width .3s}
+.sleepmeter .mark{position:absolute;top:12px;font-size:.72rem;color:var(--muted);transform:translateX(-50%)}
+.sleepmeter .mark::before{content:"";position:absolute;left:50%;top:-14px;height:14px;border-left:1px dashed var(--muted)}
+.sleepmeter .m7{left:58.333%}.sleepmeter .m8{left:66.667%}
+.sleephint{font-size:.85rem;color:var(--muted)}
+@media (max-width:600px){.sleepgrid{grid-template-columns:1fr}}
 .recipelist{display:flex;flex-direction:column;gap:6px}
 .recipelist button{text-align:left;display:flex;justify-content:space-between;gap:8px}
 .recipelist button span{color:var(--muted);font-weight:400;font-size:.85rem}
@@ -194,6 +211,24 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
   <div class="tablewrap">
     <table id="week"></table>
   </div>
+
+  <section class="card sleep" aria-labelledby="sleepTitle">
+    <h2 id="sleepTitle">Schlafrechner</h2>
+    <div class="sleepgrid">
+      <div class="sleepinputs">
+        <label class="small" for="sleepBed">Ich gehe schlafen um</label>
+        <input type="time" id="sleepBed" value="22:00">
+        <label class="small" for="sleepWake">Ich muss aufstehen um</label>
+        <input type="time" id="sleepWake" value="06:30">
+      </div>
+      <div class="sleepresult" id="sleepResult" data-level="gruen">
+        <div class="sleepnum"><span id="sleepHours">8 h 30 min</span><span class="sleeptag" id="sleepTag">Genug Schlaf</span></div>
+        <div class="sleepmeter" aria-hidden="true"><div class="sleepfill" id="sleepFill"></div><span class="mark m7">7 h</span><span class="mark m8">8 h</span></div>
+        <p id="sleepText"></p>
+        <p class="sleephint" id="sleepHint"></p>
+      </div>
+    </div>
+  </section>
 
   <div class="lower">
     <div class="card likes">
@@ -542,6 +577,38 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&menu.day)closeMenu(
 window.addEventListener("resize",()=>{if(menu.day)positionMenu()});
 document.querySelector(".tablewrap").addEventListener("scroll",()=>{if(menu.day)positionMenu()});
 window.addEventListener("scroll",()=>{if(menu.day)positionMenu()},{passive:true});
+
+/* Schlafrechner */
+const SLEEP_TEXT={
+  gruen:["Genug Schlaf","Sehr gut. Mit mindestens 8 Stunden Schlaf erholt sich dein Körper, und du bist bereit für Training und Spiel."],
+  orange:["Etwas zu wenig","Das ist zu wenig Schlaf. Wenn es nur einmal vorkommt, ist das aber kein grosses Problem für deine Leistungsfähigkeit. Schau, dass du mindestens die 2 Nächte vor einem Spiel 8 Stunden oder mehr schläfst."],
+  rot:["Viel zu wenig","Weniger als 7 Stunden Schlaf hat einen stark negativen Einfluss auf deine Leistungsfähigkeit, Lernfähigkeit, Konzentration, dein Muskelwachstum, dein Immunsystem und deine Erholung. Verletzungen können häufiger werden. Das solltest du unbedingt verhindern."]
+};
+function toMin(v){const m=/^(\d{1,2}):(\d{2})/.exec(v||"");return m?(+m[1])*60+(+m[2]):null}
+function fmtDur(min){const h=Math.floor(min/60),m=min%60;return m?`${h} h ${m} min`:`${h} h`}
+function fmtTime(min){min=((min%1440)+1440)%1440;return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0")}
+function renderSleep(){
+  const bedEl=document.getElementById("sleepBed"),wakeEl=document.getElementById("sleepWake");
+  const bed=toMin(bedEl.value),wake=toMin(wakeEl.value);
+  const res=document.getElementById("sleepResult");
+  if(bed===null||wake===null){document.getElementById("sleepHours").textContent="–";document.getElementById("sleepTag").textContent="Zeiten eingeben";
+    document.getElementById("sleepText").textContent="Gib ein, wann du schlafen gehst und wann du aufstehen musst.";document.getElementById("sleepHint").textContent="";document.getElementById("sleepFill").style.width="0";return}
+  let dur=(wake-bed+1440)%1440;if(dur===0)dur=1440;
+  const level=dur>=480?"gruen":dur>=420?"orange":"rot";
+  res.dataset.level=level;
+  document.getElementById("sleepHours").textContent=fmtDur(dur);
+  document.getElementById("sleepTag").textContent=SLEEP_TEXT[level][0];
+  document.getElementById("sleepText").textContent=SLEEP_TEXT[level][1];
+  document.getElementById("sleepFill").style.width=Math.min(100,dur/720*100)+"%";
+  document.getElementById("sleepHint").textContent=level==="gruen"?"":`Für 8 Stunden Schlaf müsstest du spätestens um ${fmtTime(wake-480)} schlafen.`;
+}
+(function initSleep(){
+  const bedEl=document.getElementById("sleepBed"),wakeEl=document.getElementById("sleepWake");
+  if(state.sleep){if(state.sleep.bed)bedEl.value=state.sleep.bed;if(state.sleep.wake)wakeEl.value=state.sleep.wake}
+  const on=()=>{state.sleep={bed:bedEl.value,wake:wakeEl.value};save();renderSleep()};
+  bedEl.addEventListener("input",on);wakeEl.addEventListener("input",on);
+  renderSleep();
+})();
 
 /* Plan als Link teilen */
 const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/";
