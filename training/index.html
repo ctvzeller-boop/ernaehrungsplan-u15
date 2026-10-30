@@ -347,7 +347,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
         <input type="text" id="logVal" autocomplete="off" enterkeyhint="next">
       </div>
       <div class="field">
-        <label class="small" for="logKg">Gewicht (kg)</label>
+        <label class="small" for="logKg" id="logKgLbl">Gewicht / Band</label>
         <input type="text" id="logKg" autocomplete="off" inputmode="decimal" enterkeyhint="done">
       </div>
     </div>
@@ -605,7 +605,7 @@ function renderItems(focusSel){
       <div class="params">
         <label>Sätze<input type="text" data-f="s" value="${esc(it.s)}"></label>
         <label>Wdh / Zeit<input type="text" data-f="w" value="${esc(it.w)}"></label>
-        <label>Gewicht<input type="text" data-f="kg" value="${esc(it.kg||"")}" inputmode="decimal" placeholder="kg"></label>
+        <label>Gewicht / Band<input type="text" data-f="kg" value="${esc(it.kg||"")}" placeholder="kg oder Band"></label>
         <label>Pause<input type="text" data-f="p" value="${esc(it.p)}"></label>
         <label>RIR<input type="text" data-f="r" value="${esc(it.r)}"></label>
       </div>
@@ -714,8 +714,8 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   document.getElementById("logValLbl").textContent=time?"Zeit":"Wiederholungen";
   const inp=document.getElementById("logVal");inp.value=e?e.v||"":"";inp.placeholder=planShort(it);inp.inputMode=time?"text":"numeric";
   const lastKg=[...log].reverse().find(x=>x.kg);const kgIn=document.getElementById("logKg");
-  kgIn.value=e?e.kg||"":(lastKg?lastKg.kg:(it.kg||"")).toString().replace(/\s*kg$/i,"");kgIn.placeholder="–";
-  document.getElementById("logHint").textContent=`Beides optional. Leer lassen = ${planShort(it)} wie im Plan; Gewicht nur bei Übungen mit Zusatzgewicht.`;
+  kgIn.value=e?e.kg||"":(lastKg?lastKg.kg:(it.kg||"")).toString().replace(/\s*kg$/i,"");const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
+  document.getElementById("logHint").textContent=`Beides optional. Leer lassen = ${planShort(it)} wie im Plan; Gewicht in kg oder Bandstärke (z. B. «rot»), nur wenn verwendet.`;
   logModal.querySelectorAll("[data-st]").forEach(b=>b.setAttribute("aria-pressed",String(!!e&&e.st===b.dataset.st)));
   document.getElementById("logDel").hidden=!e;
   logModal.hidden=false;(e?logModal.querySelector(`[data-st="${e.st}"]`):logModal.querySelector('[data-st="ok"]')).focus();
@@ -840,7 +840,7 @@ async function buildPDF(){
   if(c.h){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);const l=doc.splitTextToSize(T(c.h),W-2*M);doc.text(l,M,y);y+=l.length*4.4+3}
   const hasPic=pics.some(Boolean);
   const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(matOf(it.id).length?"\nMaterial: "+T(matOf(it.id).join(", ")):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
-  doc.autoTable({head:[["","","Übung","Sätze","Wdh / Zeit","Gewicht","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
+  doc.autoTable({head:[["","","Übung","Sätze","Wdh / Zeit","Gewicht / Band","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
     styles:{font:"helvetica",fontSize:9,cellPadding:2.4,textColor:INK,lineColor:LINE,lineWidth:.2,valign:"middle",overflow:"linebreak"},
     headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7.5},
     columnStyles:{0:{cellWidth:11,fontStyle:"bold",halign:"center",fontSize:11},1:{cellWidth:hasPic?26:0.01},2:{cellWidth:"auto"},3:{cellWidth:13},4:{cellWidth:25},5:{cellWidth:16},6:{cellWidth:17},7:{cellWidth:10},8:{cellWidth:14,textColor:ACC,fontStyle:"bold"}},
