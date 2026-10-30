@@ -121,21 +121,16 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
 .sharebanner span{flex:1 1 260px;min-width:0;font-weight:500}
 .sleepintro{margin:0;color:var(--muted);max-width:65ch}
-.sleepgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
-.nights{display:flex;flex-direction:column;gap:4px;min-width:0}
-.nighthead,.night{display:grid;grid-template-columns:76px minmax(0,1fr) minmax(0,1fr) 112px;gap:8px;align-items:center}
-.nighthead{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:0 8px}
-.night{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;padding:6px 8px;cursor:pointer;background:var(--surface)}
-.night[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
-.night[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
-.night[aria-current="true"]{background:var(--cbg)}
-.night .nlabel{font-family:var(--display);font-weight:700;font-size:1.05rem;line-height:1.1}
-.night .nlabel small{display:block;font-family:var(--body);font-weight:500;font-size:.72rem;color:var(--muted)}
-.night input[data-f="bed"]::before,.night input[data-f="wake"]::before{content:none}
-.night input{font:inherit;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%;box-sizing:border-box;min-width:0}
-.ndur{background:var(--c);color:var(--surface);border-radius:999px;padding:3px 8px;font-weight:700;font-size:.85rem;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
-.night .nwarn{grid-column:1/-1;font-size:.8rem;font-weight:600;color:var(--t-intensiv)}
-.sleepresult{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);background:var(--cbg);border-left:5px solid var(--c);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;position:sticky;top:12px}
+.sleepcell{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);box-shadow:inset 0 4px 0 var(--c);cursor:pointer}
+.sleepcell[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
+.sleepcell[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
+.sleepcell[aria-current="true"]{background:var(--cbg)}
+.sleepcell .slabel{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:4px 0 2px}
+.sleepcell input{font:inherit;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%;box-sizing:border-box;min-width:0}
+.ndur{display:inline-block;margin-top:8px;background:var(--c);color:var(--surface);border-radius:999px;padding:3px 10px;font-weight:700;font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nwarn{display:block;margin-top:6px;font-size:.78rem;font-weight:600;color:var(--t-intensiv)}
+.nwarn:empty{display:none}
+.sleepresult{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);background:var(--cbg);border-left:5px solid var(--c);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;max-width:760px}
 .sleepresult[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
 .sleepresult[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
 .sleepresult p{margin:0;max-width:65ch}
@@ -149,13 +144,6 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .sleepmeter .m7{left:58.333%}.sleepmeter .m8{left:66.667%}
 .sleephint{font-size:.85rem;color:var(--muted)}
 .sleepavg{font-size:.9rem;color:var(--muted)}
-@media (max-width:760px){.sleepgrid{grid-template-columns:1fr}.sleepresult{position:static}}
-@media (max-width:520px){
-  .nighthead{display:none}
-  .night{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"l d" "b w" "x x";row-gap:6px}
-  .night .nlabel{grid-area:l}.night .ndur{grid-area:d;justify-self:end}
-  .night input[data-f="bed"]{grid-area:b}.night input[data-f="wake"]{grid-area:w}.night .nwarn{grid-area:x}
-}
 .recipelist{display:flex;flex-direction:column;gap:6px}
 .recipelist button{text-align:left;display:flex;justify-content:space-between;gap:8px}
 .recipelist button span{color:var(--muted);font-weight:400;font-size:.85rem}
@@ -233,20 +221,14 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
 
   <section class="card sleep" aria-labelledby="sleepTitle">
     <h2 id="sleepTitle">Schlafrechner</h2>
-    <p class="sleepintro">Trage für jede Nacht ein, wann du schlafen gehst und wann du am nächsten Morgen aufstehen musst. Tippe auf eine Nacht, um die Erklärung zu sehen.</p>
-    <div class="sleepgrid">
-      <div class="nights">
-        <div class="nighthead" aria-hidden="true"><span>Nacht</span><span>Schlafen</span><span>Aufstehen</span><span>Schlaf</span></div>
-        <div id="nightRows"></div>
-        <p class="sleepavg" id="sleepAvg"></p>
-      </div>
-      <div class="sleepresult" id="sleepResult" data-level="gruen" aria-live="polite">
-        <div class="eyebrow" id="sleepNight"></div>
-        <div class="sleepnum"><span id="sleepHours"></span><span class="sleeptag" id="sleepTag"></span></div>
-        <div class="sleepmeter" aria-hidden="true"><div class="sleepfill" id="sleepFill"></div><span class="mark m7">7 h</span><span class="mark m8">8 h</span></div>
-        <p id="sleepText"></p>
-        <p class="sleephint" id="sleepHint"></p>
-      </div>
+    <p class="sleepintro">Trage in der Zeile «Schlaf» unter jedem Tag ein, wann du am Abend schlafen gehst und wann du am nächsten Morgen aufstehen musst. Tippe auf eine Nacht, um hier die Erklärung zu sehen.</p>
+    <p class="sleepavg" id="sleepAvg"></p>
+    <div class="sleepresult" id="sleepResult" data-level="gruen" aria-live="polite">
+      <div class="eyebrow" id="sleepNight"></div>
+      <div class="sleepnum"><span id="sleepHours"></span><span class="sleeptag" id="sleepTag"></span></div>
+      <div class="sleepmeter" aria-hidden="true"><div class="sleepfill" id="sleepFill"></div><span class="mark m7">7 h</span><span class="mark m8">8 h</span></div>
+      <p id="sleepText"></p>
+      <p class="sleephint" id="sleepHint"></p>
     </div>
   </section>
 
@@ -442,7 +424,18 @@ function renderTable(){
     });
     h+=`</tr>`;
   });
-  h+=`</tbody>`;
+  ensureSleep();const sw=matchWarnings();
+  h+=`<tr class="sleeprow"><th class="slot" scope="row">Schlaf<small>Nacht auf den nächsten Tag</small></th>`;
+  DAYS.forEach(([k,n],i)=>{const v=state.sleepWeek[k],nt=nightOf(k),nx=DAYS[(i+1)%7];
+    h+=`<td data-day="${k}" class="sleepcell${k===activeDay?" active":""}" data-night="${k}" data-level="${nt?nt.level:"rot"}" aria-current="${k===sleepSel}">
+      <label class="slabel" for="bed-${k}">Schlafen</label>
+      <input type="time" id="bed-${k}" data-sleep="${k}" data-f="bed" value="${esc(v.bed||"")}">
+      <label class="slabel" for="wake-${k}">Aufstehen (${nx[2]})</label>
+      <input type="time" id="wake-${k}" data-sleep="${k}" data-f="wake" value="${esc(v.wake||"")}">
+      <span class="ndur" id="dur-${k}">${nt?fmtShort(nt.dur):"–"}</span>
+      <span class="nwarn" id="warn-${k}">${sw[k]?`Vor dem Matchday am ${sw[k].join(" und ")}: mind. 8 h`:""}</span>
+    </td>`});
+  h+=`</tr></tbody>`;
   t.innerHTML=h;
 }
 
@@ -468,7 +461,7 @@ function planText(){
 }
 function renderText(){document.getElementById("planText").value=planText()}
 
-function renderAll(){renderTabs();renderTable();renderCustom();renderText();if(typeof renderNights==="function"&&document.getElementById("nightRows"))renderNights()}
+function renderAll(){renderTabs();renderTable();renderCustom();renderText();if(document.getElementById("sleepResult")&&typeof sleepSel!=="undefined")renderNights()}
 
 function flash(msg){const s=document.getElementById("status");s.textContent=msg;clearTimeout(flash.t);flash.t=setTimeout(()=>s.textContent="",2500)}
 
@@ -633,22 +626,17 @@ function ensureSleep(){
     DAYS.forEach(([k])=>state.sleepWeek[k]={bed:old.bed||(k==="fr"||k==="sa"?"23:00":"22:00"),wake:old.wake||(k==="fr"||k==="sa"?"08:00":"06:30")});
   }
 }
-function renderNights(){
-  ensureSleep();const warn=matchWarnings();
-  if(sleepSel===null){let worst=null;DAYS.forEach(([k])=>{const nt=nightOf(k);if(nt&&(!worst||nt.dur<worst.dur))worst={k,dur:nt.dur}});sleepSel=worst?worst.k:"mo"}
-  document.getElementById("nightRows").innerHTML=DAYS.map(([k,n],i)=>{
-    const v=state.sleepWeek[k],nt=nightOf(k);
-    return `<div class="night" data-night="${k}" data-level="${nt?nt.level:"rot"}" aria-current="${k===sleepSel}" style="margin-bottom:4px">
-      <span class="nlabel">${nightLabel(i)}</span>
-      <input type="time" id="bed-${k}" data-sleep="${k}" data-f="bed" value="${esc(v.bed||"")}" aria-label="Schlafen ${n}abend">
-      <input type="time" id="wake-${k}" data-sleep="${k}" data-f="wake" value="${esc(v.wake||"")}" aria-label="Aufstehen ${DAYS[(i+1)%7][1]}">
-      <span class="ndur" id="dur-${k}">${nt?fmtShort(nt.dur):"–"}</span>
-      ${warn[k]?`<span class="nwarn">Vor dem Matchday am ${warn[k].join(" und ")}: mindestens 8 h schlafen</span>`:""}
-    </div>`}).join("");
+function renderSleepAvg(){
   const all=DAYS.map(([k])=>nightOf(k)).filter(Boolean);
   document.getElementById("sleepAvg").textContent=all.length?`Durchschnitt diese Woche: ${fmtDur(Math.round(all.reduce((a,b)=>a+b.dur,0)/all.length))} · ${all.filter(x=>x.level==="gruen").length} von ${all.length} Nächten mit mind. 8 h`:"";
-  renderSleepDetail();
 }
+function renderNights(){
+  ensureSleep();
+  if(sleepSel===null){let worst=null;DAYS.forEach(([k])=>{const nt=nightOf(k);if(nt&&(!worst||nt.dur<worst.dur))worst={k,dur:nt.dur}});sleepSel=worst?worst.k:"mo"}
+  document.querySelectorAll(".sleepcell").forEach(c=>c.setAttribute("aria-current",String(c.dataset.night===sleepSel)));
+  renderSleepAvg();renderSleepDetail();
+}
+function selectNight(k){if(k===sleepSel)return;sleepSel=k;document.querySelectorAll(".sleepcell").forEach(c=>c.setAttribute("aria-current",String(c.dataset.night===sleepSel)));renderSleepDetail()}
 function renderSleepDetail(){
   const i=DAYS.findIndex(([k])=>k===sleepSel);const k=sleepSel;const nt=nightOf(k);const res=document.getElementById("sleepResult");
   document.getElementById("sleepNight").textContent=`Nacht ${DAYS[i][1]} auf ${DAYS[(i+1)%7][1]}`;
@@ -664,19 +652,14 @@ function renderSleepDetail(){
 }
 document.addEventListener("input",e=>{
   const el=e.target;if(!el.dataset||!el.dataset.sleep)return;
-  ensureSleep();state.sleepWeek[el.dataset.sleep][el.dataset.f]=el.value;save();sleepSel=el.dataset.sleep;
-  const nt=nightOf(el.dataset.sleep);const row=el.closest(".night");
-  row.dataset.level=nt?nt.level:"rot";document.getElementById("dur-"+el.dataset.sleep).textContent=nt?fmtShort(nt.dur):"–";
-  document.querySelectorAll(".night").forEach(r=>r.setAttribute("aria-current",String(r.dataset.night===sleepSel)));
-  const all=DAYS.map(([k])=>nightOf(k)).filter(Boolean);
-  document.getElementById("sleepAvg").textContent=all.length?`Durchschnitt diese Woche: ${fmtDur(Math.round(all.reduce((a,b)=>a+b.dur,0)/all.length))} · ${all.filter(x=>x.level==="gruen").length} von ${all.length} Nächten mit mind. 8 h`:"";
-  renderSleepDetail();
+  const k=el.dataset.sleep;ensureSleep();state.sleepWeek[k][el.dataset.f]=el.value;save();
+  const nt=nightOf(k);const cell=el.closest(".sleepcell");cell.dataset.level=nt?nt.level:"rot";
+  document.getElementById("dur-"+k).textContent=nt?fmtShort(nt.dur):"–";
+  const w=matchWarnings();DAYS.forEach(([d])=>{const x=document.getElementById("warn-"+d);if(x)x.textContent=w[d]?`Vor dem Matchday am ${w[d].join(" und ")}: mind. 8 h`:""});
+  selectNight(k);renderSleepAvg();renderSleepDetail();
 });
-document.addEventListener("change",e=>{if(e.target.dataset&&e.target.dataset.sleep)renderNights()});
-document.getElementById("nightRows").addEventListener("click",e=>{const r=e.target.closest(".night");if(!r||r.dataset.night===sleepSel)return;sleepSel=r.dataset.night;
-  document.querySelectorAll(".night").forEach(x=>x.setAttribute("aria-current",String(x.dataset.night===sleepSel)));renderSleepDetail()});
-document.getElementById("nightRows").addEventListener("focusin",e=>{const r=e.target.closest(".night");if(r&&r.dataset.night!==sleepSel){sleepSel=r.dataset.night;
-  document.querySelectorAll(".night").forEach(x=>x.setAttribute("aria-current",String(x.dataset.night===sleepSel)));renderSleepDetail()}});
+document.getElementById("week").addEventListener("click",e=>{const c=e.target.closest(".sleepcell");if(c)selectNight(c.dataset.night)});
+document.getElementById("week").addEventListener("focusin",e=>{const c=e.target.closest(".sleepcell");if(c)selectNight(c.dataset.night)});
 renderNights();
 
 /* Plan als Link teilen */
