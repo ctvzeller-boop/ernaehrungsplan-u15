@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ernährungswoche U15</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -92,7 +94,13 @@ thead th{background:var(--bg)}
 .tm-type[aria-pressed="true"] .arrow::before{content:"✓ ";color:var(--accent)}
 .tm-sub{padding:12px;display:flex;flex-direction:column;gap:9px;min-width:0;background:var(--bg)}
 .tm-sub button{align-self:flex-start;padding:6px 12px}
-@media (max-width:520px){#typemenu{grid-template-columns:1fr}.tm-types{border-right:none;border-bottom:1px solid var(--line)}}
+@media (max-width:520px){#typemenu{grid-template-columns:1fr}.tm-types{border-right:none;border-bottom:1px solid var(--line)}
+  #typemenu.sheet{left:0;right:0;bottom:0;top:auto;max-width:none;border-radius:16px 16px 0 0;box-shadow:0 -10px 40px rgba(10,25,40,.3);padding-bottom:env(safe-area-inset-bottom,0px);max-height:85vh;overflow:auto}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .toolbar #shareBtn{grid-column:1/-1}
+  .toolbar .status{grid-column:1/-1}
+  .headctl{width:100%}.namefield{flex:1}
+}
 .typebtn[data-t="leicht"],.tm-type[data-t="leicht"] .dot{background:var(--t-leicht-bg);border-left-color:var(--t-leicht)}
 .typebtn[data-t="mittel"],.tm-type[data-t="mittel"] .dot{background:var(--t-mittel-bg);border-left-color:var(--t-mittel)}
 .typebtn[data-t="intensiv"],.tm-type[data-t="intensiv"] .dot{background:var(--t-intensiv-bg);border-left-color:var(--t-intensiv)}
@@ -573,6 +581,8 @@ function previewSub(tk){
   document.getElementById("tmsub").innerHTML=subHTML();
 }
 function positionMenu(){
+  if(window.innerWidth<=520){menuEl.classList.add("sheet");menuEl.style.left="";menuEl.style.top="";return}
+  menuEl.classList.remove("sheet");
   const trig=document.getElementById("typebtn-"+menu.day);
   if(!trig||!trig.offsetParent){closeMenu(false);return}
   const r=trig.getBoundingClientRect();const w=menuEl.offsetWidth,h=menuEl.offsetHeight;
@@ -584,7 +594,7 @@ function closeMenu(focusTrigger){
   if(!menu.day)return;const k=menu.day;menu.day=null;menu.sub=null;menuEl.hidden=true;
   const t=document.getElementById("typebtn-"+k);if(t){t.setAttribute("aria-expanded","false");if(focusTrigger)t.focus()}
 }
-menuEl.addEventListener("pointerover",e=>{const b=e.target.closest("[data-tmtype]");if(b&&e.pointerType==="mouse")previewSub(b.dataset.tmtype)});
+menuEl.addEventListener("pointerover",e=>{const b=e.target.closest("[data-tmtype]");if(b&&e.pointerType==="mouse"&&!menuEl.classList.contains("sheet"))previewSub(b.dataset.tmtype)});
 menuEl.addEventListener("focusin",e=>{const b=e.target.closest("[data-tmtype]");if(b)previewSub(b.dataset.tmtype)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&menu.day)closeMenu(true)});
 window.addEventListener("resize",()=>{if(menu.day)positionMenu()});
