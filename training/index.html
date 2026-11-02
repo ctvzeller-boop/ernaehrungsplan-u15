@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Trainingseinheit U15</title>
+<title>CZ Training</title>
 <meta name="theme-color" content="#14232C">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="apple-mobile-web-app-title" content="CZ Training">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,6 +60,9 @@ h1{font-size:2.3rem;line-height:1}
 h2{font-size:1.4rem;text-transform:uppercase;letter-spacing:.04em}
 .lead{color:var(--muted);max-width:68ch;margin:6px 0 0}
 .eyebrow,label.small{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.brand{display:flex;gap:14px;align-items:flex-start}
+.logo{width:64px;height:64px;border-radius:14px;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+@media (max-width:760px){.logo{width:52px;height:52px;border-radius:12px}}
 header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;justify-content:space-between}
 .sitelink{color:var(--accent);font-weight:600;text-decoration:none}
 .sitelink:hover{text-decoration:underline}
@@ -275,11 +279,14 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 <body data-mode="edit">
 <div class="wrap">
   <header>
-    <div>
-      <div class="eyebrow">Unihockey · Athletik</div>
+    <div class="brand">
+      <img class="logo" src="icons/icon-192.png" alt="CZ Training by Calvin Zeller" width="64" height="64">
+      <div>
+      <div class="eyebrow">CZ Training · Unihockey Athletik</div>
       <h1>Trainingseinheit</h1>
       <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
       <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt» und am Schluss auf «Training abschliessen». So siehst du beim nächsten Mal, was du letztes Mal geschafft hast.</p>
+      </div>
     </div>
     <div class="modes" role="group" aria-label="Ansicht">
       <button type="button" data-mode="train" aria-pressed="false">Training</button>

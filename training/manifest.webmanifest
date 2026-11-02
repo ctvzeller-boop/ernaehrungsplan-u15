@@ -1,15 +1,25 @@
 {
-  "name": "Trainingseinheit U15",
-  "short_name": "Training",
+  "name": "CZ Training by Calvin Zeller",
+  "short_name": "CZ Training",
   "description": "Trainingseinheiten abhaken – Unihockey Athletik",
   "lang": "de",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F2F5F7",
-  "theme_color": "#14232C",
+  "background_color": "#FF2E88",
+  "theme_color": "#0B0B0D",
   "icons": [
-    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
