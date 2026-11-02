@@ -51,6 +51,8 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
 body[data-mode="train"] .edit-only,body[data-mode="edit"] .train-only{display:none!important}
+body[data-mode="stats"] .edit-only,body[data-mode="stats"] .train-only,body[data-mode="stats"] .main,body[data-mode="stats"] .sessionbar,body[data-mode="stats"] .lower,body:not([data-mode="stats"]) .stats-only{display:none!important}
+body[data-mode="stats"] .wrap{max-width:760px}
 .wrap{max-width:1300px;margin:0 auto;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(48px,env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:18px}
@@ -81,7 +83,7 @@ button.warn{border-color:var(--warn);color:var(--warn)}
 .empty{color:var(--muted);font-size:.88rem}
 
 /* Modus-Umschalter */
-.modes{display:inline-grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.modes{display:inline-grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .modes button{border:none;padding:7px 16px;border-radius:7px;background:none}
 .modes button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 
@@ -154,6 +156,17 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hcount{color:var(--muted);font-size:.88rem}
 .hentry .htab{margin:4px 0 10px;width:100%}
 .hentry .htab th{white-space:normal;width:45%}
+#statsView{display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.kpi b{font-family:var(--display);font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.8rem;color:var(--muted)}
+.hlist{display:flex;flex-direction:column}
+.hrow{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;text-align:left;border:none;border-top:1px solid var(--line);border-radius:0;padding:12px 6px;background:none}
+.hrow[aria-pressed="true"]{background:var(--accent-soft);border-radius:8px}
+.best td{font-weight:700;font-variant-numeric:tabular-nums}.best .bd{color:var(--muted);font-weight:500;padding-left:12px}
+.best th{white-space:normal}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -302,12 +315,14 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="eyebrow">CZ Training · Unihockey Athletik</div>
       <h1>Trainingseinheit</h1>
       <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
+      <p class="lead stats-only">Alle abgeschlossenen Trainings. Tippe auf ein Training, um alle Sätze, Wiederholungen und Gewichte zu sehen.</p>
       <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt» und am Schluss auf «Training abschliessen». So siehst du beim nächsten Mal, was du letztes Mal geschafft hast.</p>
       </div>
     </div>
     <div class="modes" role="group" aria-label="Ansicht">
       <button type="button" data-mode="train" aria-pressed="false">Training</button>
       <button type="button" data-mode="edit" aria-pressed="true">Bearbeiten</button>
+      <button type="button" data-mode="stats" aria-pressed="false">Stats</button>
     </div>
   </header>
 
@@ -361,10 +376,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     </aside>
   </div>
 
-  <section class="card" id="histCard" aria-labelledby="histTitle">
-    <h2 id="histTitle">Absolvierte Trainings</h2>
-    <div id="histList"></div>
-  </section>
+  <section class="stats-only" id="statsView" aria-label="Stats"></section>
 
   <div class="lower">
     <div class="card edit-only">
@@ -702,7 +714,7 @@ function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if
   return out.filter(f=>!(f.includes(" oder ")&&f.split(" oder ").some(x=>out.includes(x))))}
 function doneCardHTML(){const c=cur();if(c.items.some(it=>(it.log||[]).length))return "";const h=lastSessHist(c);if(!h||Date.now()-h.d>36*3600e3)return "";
   let n=0;h.items.forEach(x=>n+=x.log.length);
-  return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · unten unter «Absolvierte Trainings»</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
+  return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · alle Details unter «Stats»</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
 function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
   const dc=document.getElementById("doneSlot");if(dc)dc.innerHTML=doneCardHTML();
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
@@ -824,13 +836,37 @@ function renderText(){const ta=document.getElementById("planText");if(ta)ta.valu
 function histEntryText(h){const sym={ok:"✓",less:"↓",more:"🔥"};const L=[];let n=0;h.items.forEach(x=>n+=x.log.length);
   L.push(`${h.t||"Training"} (${new Date(h.d).toLocaleDateString("de-CH")})`);L.push(`${n} Sätze erledigt`);L.push("");
   h.items.forEach(x=>{const e=EXBY[x.id];L.push(`${e?e.n:x.n}`);L.push("   "+x.log.map(z=>`${sym[z.st]} ${setTxt(z,x.w)}`).join("  |  "))});return L.join("\n")}
-function renderHist(){const el=document.getElementById("histList");if(!el)return;const h=hist().map((x,i)=>[x,i]).sort((a,b)=>b[0].d-a[0].d);
-  if(!h.length){el.innerHTML=`<p class="empty">Noch keine Trainings abgeschlossen. Nach dem Training unten in der Einheit auf «✓ Training abschliessen &amp; speichern» tippen.</p>`;return}
-  el.innerHTML=h.map(([x,i])=>{let n=0;x.items.forEach(y=>n+=y.log.length);const dt=new Date(x.d);
-    return `<details class="hentry"><summary><span class="hdate">${dt.toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"2-digit"})}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${n} Sätze</span></summary>
-      <table class="htab"><tbody>${x.items.map(y=>{const e=EXBY[y.id];return `<tr><th scope="row">${esc((e?e.n:y.n).split(" (")[0])}</th><td>${y.log.map(z=>`<span class="lt-${z.st}">${esc(setTxt(z,y.w))}</span>`).join(" · ")}</td></tr>`}).join("")}</tbody></table>
-      <div class="mrow"><button type="button" data-hsend="${i}">An Coach senden</button><button type="button" class="linkbtn" data-hdel="${i}">Löschen</button></div></details>`}).join("");}
-function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderHist();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
+let statSel=null;
+function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
+function renderStats(){const el=document.getElementById("statsView");if(!el)return;
+  const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
+  if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>`;return}
+  if(statSel===null||!hist()[statSel])statSel=H[0].i;
+  let sets=0,fire=0;H.forEach(({x})=>x.items.forEach(y=>y.log.forEach(z=>{sets++;if(z.st==="more")fire++})));
+  const ws=weekStart(),week=H.filter(({x})=>x.d>=ws).length;
+  /* Bestwerte: höchstes Gewicht pro Übung */
+  const best={};H.forEach(({x})=>x.items.forEach(y=>{const k=bestKg(y.log);if(k!==null&&(!best[y.id]||k>best[y.id].k))best[y.id]={k,d:x.d}}));
+  const bestRows=Object.entries(best).sort((a,b)=>b[1].d-a[1].d).slice(0,8);
+  const x=hist()[statSel];let n=0;x.items.forEach(y=>n+=y.log.length);
+  el.innerHTML=`<div class="kpis">
+      <div class="kpi"><b>${H.length}</b><span>Trainings</span></div>
+      <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
+      <div class="kpi"><b>${sets}</b><span>Sätze</span></div>
+      <div class="kpi"><b>${fire}</b><span>🔥 mehr geschafft</span></div></div>
+    ${bestRows.length?`<div class="card"><h2>Bestwerte</h2><table class="htab best"><tbody>${bestRows.map(([id,b])=>{const e=EXBY[id];return `<tr><th scope="row">${esc(e?e.n.split(" (")[0]:id)}</th><td>${esc(kgTxt(String(b.k)))}</td><td class="bd">${fmtDate(b.d)}</td></tr>`}).join("")}</tbody></table></div>`:""}
+    <div class="card"><h2>Absolvierte Trainings</h2>
+      <div class="hlist" role="list">${H.map(({x,i})=>{let c=0;x.items.forEach(y=>c+=y.log.length);return `<button type="button" role="listitem" class="hrow" data-hsel="${i}" aria-pressed="${i===statSel}"><span class="hdate">${new Date(x.d).toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"2-digit"})}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${c} Sätze</span></button>`}).join("")}</div></div>
+    <div class="card" id="statDetail">
+      <div class="eyebrow">${new Date(x.d).toLocaleDateString("de-CH",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})} · ${new Date(x.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}</div>
+      <h2 class="stitle">${esc(x.t||"Training")}</h2>
+      <div class="summary"><span><b>${x.items.length}</b> Übungen</span><span><b>${n}</b> Sätze</span></div>
+      <div class="items">${x.items.map(y=>{const e=EXBY[y.id]||{n:y.n,k:"eigen"};const fake={w:y.w};
+        return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div></div>
+          <div class="sets">${y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div></div>`}).join("")}</div>
+      <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hdel="${statSel}">Training löschen</button></div>
+    </div>`;
+}
+function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
 
 /* Events */
@@ -849,9 +885,10 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",e=>{
   const t=e.target;
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
+  const hsl=t.closest("[data-hsel]");if(hsl){statSel=+hsl.dataset.hsel;renderStats();const d=document.getElementById("statDetail");if(d&&innerWidth<900)d.scrollIntoView({block:"start",behavior:"smooth"});return}
   const hs=t.closest("[data-hsend]");if(hs){copyOrShare(histEntryText(hist()[+hs.dataset.hsend]),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
-  const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;hd.textContent="Wirklich löschen?";hd.classList.add("warn");setTimeout(()=>{hd._arm=false;hd.textContent="Löschen";hd.classList.remove("warn")},4000);return}
-    hist().splice(+hd.dataset.hdel,1);save();renderAll();flash("Training aus dem Verlauf gelöscht");return}
+  const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;hd.textContent="Wirklich löschen?";hd.classList.add("warn");setTimeout(()=>{hd._arm=false;hd.textContent="Training löschen";hd.classList.remove("warn")},4000);return}
+    hist().splice(+hd.dataset.hdel,1);statSel=null;save();renderAll();flash("Training gelöscht");return}
   if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
   const rs=t.closest("[data-rmset]");if(rs){const u=rs.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=Math.max(0,(it.xs||0)-1);save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();return}
