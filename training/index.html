@@ -606,17 +606,7 @@ const PDFIMG={copenhagen:1,flutter:2,dslr:2,scissor:2,bottomup:2,bicycle:2,spide
 const EXBY=Object.fromEntries(EX.map(e=>[e.id,e]));
 
 /* Vorlagen: [id, Superset mit vorheriger?, Überschreibungen] */
-const TPL=[
- {t:"Rumpf U15",h:"Jede Übung 30 s, gesamtes Programm 2–3× durchlaufen, mindestens 2× pro Woche.",i:[["copenhagen",0],["flutter",1],["dslr",1],["scissor",1],["bottomup",1],["bicycle",1],["spiderman",1]],o:{s:"2–3",p:""}},
- {t:"Beine Kraft",h:"Warm-up 5–10 Min.: Aktivierung, Körpertemperatur erhöhen, dynamische Stretches. Es kann mit Block A oder B begonnen werden. Block C und D als Supersets.",i:[["warmup",0],["squat",0],["rdl",1],["hipthrust",0],["latlunge",1],["calf",0],["hamiso",1],["copenhagen",0,{w:"20–40 s / Seite",p:"60–90 s"}],["rollout",1]]},
- {t:"Oberkörper Kraft",h:"Warm-up 5–10 Min. Übungen als Supersets. Mit Block A oder B beginnen.",i:[["shoulderwarm",0],["warmup",0],["bench",0],["pullup",1],["lmpress",0],["row1",1],["flies",0],["latraise",1,{w:"10–12",p:"90–120 s",r:"0–1"}],["pallof",0,{s:"2",w:"10–12 / Seite",p:"60–90 s"}],["birddog",1]]},
- {t:"Oberkörper Volumen",h:"RIR 1–2. Nach zwei Spielen am Wochenende 2 statt 3 Sätze.",i:[["shoulderwarm",0],["incline",0],["pullup",1,{w:"max. (1 Wdh Reserve)",p:"90 s",r:"1"}],["lmpress",0,{p:"90 s",r:"1–2"}],["row1",1,{p:"90 s",r:"1–2"}],["facepull",0],["latraise",1,{s:"2"}],["pallof",0],["chop",0],["birddog",0,{w:"6 / Seite"}]]},
- {t:"Oberkörper Maximalkraft",h:"10 Min. aufwärmen plus 1 leichter Aufwärmsatz. RIR 2, nie bis zum Versagen.",i:[["shoulderwarm",0],["mbchest",0],["bench",0,{s:"4",w:"4–6",p:"2–3 Min.",r:"2"}],["pullupw",1],["rowchest",0],["dips",1],["lmrot",0],["sprow",0]]},
- {t:"Schnelligkeit & Explosivität",h:"Wenig Volumen, volle Qualität, ca. 60–70 Min.",i:[["abc",0],["boxjump",0],["latbounds",0],["depth",0],["bsqjump",0],["hillsprint",0],["mbrot",0]]},
- {t:"Explosivität ohne Gewicht",h:"Für Athleten im Wachstum: Übungen ohne Gewicht für Explosivität, Rumpf und Beweglichkeit. Knie stabil, genügend Pause.",i:[["skater",0],["explsplit",0],["boxvar",0],["nordic",0,{s:"3",w:"8"}],["mbrot",0],["pullup",0,{w:"10 oder max.",r:""}],["pushup",0],["lowerabs",0],["mobroutine",0]]},
- {t:"Goalie Schnelligkeit",h:"Goaliespezifisch. Ziele: Explosivität/Schnellkraft in den Beinen, Rumpfstabilität und schnelle Rumpfreaktionen, Beweglichkeit. Da du noch im Wachstum bist, vor allem Übungen ohne Gewicht. Wichtig: explosiv, Knie stabil (kein Abknicken nach innen/aussen, Knie zeigt gerade nach vorne), genügend Pause zwischen den Übungen.",i:[["skater",0],["explsplit",0],["boxvar",0],["nordic",0,{s:"3",w:"8"}],["mbrot",0],["lowerabs",0],["pullup",0,{w:"10 oder max.",r:"",b:"Am Anfang auch mit Gummiband zur Unterstützung."}],["pushup",0],["splitsq",0,{opt:true,b:"Nur mit Betreuung und wenig Gewicht: Technik lernen."}],["rdl",1,{opt:true,b:"Nur mit Betreuung und wenig Gewicht: Technik lernen."}],["mobroutine",0,{b:"Täglich."}]]},
- {t:"Aktivierung vor dem Teamtraining",h:"Kein Krafttraining. Stretching, Active Recovery, kurze Aktivierung.",i:[["stretch",0],["bandshoulder",0],["mbchest",0,{s:"3",w:"3"}],["boxjump",0,{s:"2",w:"3",p:"60 s"}],["sprints",0]]}
-];
+const TPL=[]; /* Vorlagen vorerst entfernt */
 
 const KEY="u15-trainingseinheit-v1";
 const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/training/";
@@ -654,7 +644,7 @@ function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"ei
 function fromTpl(t){return {id:uid(),t:t.t,a:"",h:t.h||"",items:t.i.map(([id,ss,o])=>itemFrom(EXBY[id],ss,Object.assign({},t.o||{},o||{})))}}
 function load(){
   try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.sessions)&&s.sessions.length)return s}}catch(e){}
-  const first=fromTpl(TPL[0]);return {sessions:[first],active:first.id,custom:[]};
+  const first={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};return {sessions:[first],active:first.id,custom:[]};
 }
 function syncNames(st){(st.sessions||[]).forEach(se=>(se.items||[]).forEach(it=>{if(EXBY[it.id])it.n=EXBY[it.id].n}))}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
@@ -699,7 +689,7 @@ function renderBar(){
   const s=state.sessions;
   document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
    `<button type="button" id="newSess" class="edit-only" style="flex:none">+ Neue Einheit</button>
-    <select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>`;
+    ${TPL.length?"":"<!--"}<select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>${TPL.length?"":"-->"}`;
   const a=document.querySelector(".stab[aria-pressed=true]");if(a&&a.scrollIntoView&&document.getElementById("sessionBar").scrollWidth>innerWidth)a.scrollIntoView({block:"nearest",inline:"center"});
 }
 
@@ -1139,7 +1129,7 @@ function codeFrom(str){const m=String(str||"").match(/#e=([zbyc][A-Za-z0-9_-]+)/
 let replacedBackup=null;
 document.getElementById("undoImport").addEventListener("click",()=>{
   if(replacedBackup){const i=state.sessions.findIndex(x=>x.id===replacedBackup.id);if(i>=0)state.sessions[i]=replacedBackup;replacedBackup=null;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Alte Version wiederhergestellt");return}
-  state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push(fromTpl(TPL[0]));
+  state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Geteilte Einheit entfernt")});
 document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=location.href;
   try{navigator.clipboard.writeText(u).then(()=>flash("Link kopiert – jetzt die App öffnen"),()=>flash("Bitte Link in der Adresszeile kopieren"))}catch(e){flash("Bitte Link in der Adresszeile kopieren")}});
