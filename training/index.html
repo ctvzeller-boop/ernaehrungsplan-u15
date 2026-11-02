@@ -137,6 +137,13 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .htab{border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
 .htab th{text-align:left;color:var(--muted);font-weight:600;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top}
 .htab td{padding:3px 0;font-weight:600}
+.setbox.addset{background:transparent;border:2px solid var(--line);color:var(--ink);min-width:44px;font-size:1rem;cursor:pointer}
+.setbox.addset:hover{border-color:var(--accent)}
+.donecard{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--c-warm-bg);border:1px solid var(--ok);border-radius:10px;padding:12px 14px}
+.donecard div{display:flex;flex-direction:column;min-width:0}.donecard span{font-size:.85rem;color:var(--muted)}
+.addcoach{align-self:flex-start;border:2px dashed var(--accent);color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:10px 14px}
+.warnbanner{background:var(--c-beine-bg);border-color:var(--c-beine)}
+.warnbanner span{display:block;font-size:.9rem;margin-top:2px}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -300,6 +307,12 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
   </div>
 
+  <div class="banner warnbanner" id="browserBanner" hidden>
+    <div><b>Du bist im Browser, nicht in der App</b><span>Hast du CZ Training schon auf dem Homescreen? Dann so in die App holen: 1. «Link kopieren» tippen · 2. App öffnen · 3. «＋ Neue Einheit vom Coach hinzufügen». Noch keine App? Dann jetzt über Teilen → «Zum Home-Bildschirm» speichern.</span></div>
+    <button type="button" class="primary" id="copyHereBtn">Link kopieren</button>
+    <button type="button" class="linkbtn" id="browserClose">Ausblenden</button>
+  </div>
+
   <div class="banner" id="installCard" hidden>
     <div><b>Als App auf dem Homescreen speichern</b><span id="installText"></span></div>
     <button type="button" class="primary" id="installBtn" hidden>App installieren</button>
@@ -307,6 +320,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 
   <div class="sessionbar" id="sessionBar" role="group" aria-label="Meine Einheiten"></div>
+  <button type="button" class="addcoach train-only" id="addCoachBtn">＋ Neue Einheit vom Coach hinzufügen</button>
 
   <div class="main">
     <section class="card sess" aria-label="Einheit">
@@ -416,7 +430,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
     <h3 id="pasteTitle">Link einfügen</h3>
-    <p class="hint">Füge hier den Link ein, den du vom Coach erhalten hast. Die Einheit wird dann in der App gespeichert.</p>
+    <p class="hint">1. In WhatsApp lange auf den Link vom Coach drücken → «Kopieren».<br>2. Hier ins Feld tippen → «Einsetzen» → «Einheit öffnen».</p>
     <input type="url" id="pasteInput" placeholder="https://…#e=…" aria-label="Link">
     <button type="button" class="primary" id="pasteGo">Einheit öffnen</button>
   </div>
@@ -616,7 +630,8 @@ function kgTxt(k){k=String(k||"").trim();return !k?"":/^\d+([.,]\d+)?$/.test(k)?
 function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
 
 /* Sätze */
-function plannedSets(it){const m=String(it.s||"").match(/\d+/g);return m?+m[m.length-1]:0}
+function baseSets(it){const m=String(it.s||"").match(/\d+/g);return m?+m[m.length-1]:0}
+function plannedSets(it){return baseSets(it)+(it.xs||0)}
 function isTime(it){return /\d\s*(s|Sek|Min)\b/i.test(it.w||"")}
 function unitOf(it){const m=/\d\s*(s|Sek\.?|Min\.?)(?=\s|$|\/)/i.exec(it.w||"");return m?m[1]:""}
 function planShort(it){return String(it.w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").replace(/\s*Sprünge?$/,"").trim()||"✓"}
@@ -662,6 +677,7 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
       ${c.a?`<div class="eyebrow">${esc(c.a)}</div>`:""}<h2 class="stitle">${esc(c.t||"Trainingseinheit")}</h2>
       ${c.h?`<p class="snotes">${esc(c.h)}</p>`:""}
       ${sessMat(c).length?`<p class="matlist"><b>Material:</b> ${esc(sessMat(c).join(", "))}</p>`:""}
+      <div id="doneSlot"></div>
       <div class="progress" id="progress"></div></div>`;
     renderProgress();
   }
@@ -669,7 +685,11 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
 function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if(m[0]==="?")return;const f=fmtMat(m);if(!out.includes(f))out.push(f)}));
   /* «A oder B» weglassen, wenn A oder B ohnehin gebraucht wird */
   return out.filter(f=>!(f.includes(" oder ")&&f.split(" oder ").some(x=>out.includes(x))))}
+function doneCardHTML(){const c=cur();if(c.items.some(it=>(it.log||[]).length))return "";const h=lastSessHist(c);if(!h||Date.now()-h.d>36*3600e3)return "";
+  let n=0;h.items.forEach(x=>n+=x.log.length);
+  return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · im Verlauf bei jeder Übung</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
 function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
+  const dc=document.getElementById("doneSlot");if(dc)dc.innerHTML=doneCardHTML();
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
   el.innerHTML=`<div class="progline"><span class="eyebrow">Fortschritt</span><span><b>${t.done}</b> von ${t.plan} Sätzen${t.plan&&t.done>=t.plan?" · fertig 💪":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${t.plan}" aria-valuenow="${t.done}" aria-label="Erledigte Sätze"><i style="width:${pct}%"></i></div>`}
 function renderSummary(){const el=document.getElementById("summary");if(!el)return;const c=cur();const groups=new Set(labels(c.items).map(l=>l[0])).size;
@@ -690,13 +710,15 @@ function lastHTML(it){const l=lastFor(it.id);if(!l)return "";
 function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
 function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,w:it.w,log:it.log.map(e=>Object.assign({},e))}));
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
-  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>it.log=[]);save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`)}
+  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
+  const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
 function setsHTML(it){
   const log=it.log||[],p=plannedSets(it);
   const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
   const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">${esc(planShort(it))}</span>`).join("");
   const n=log.length+1;const extra=p&&log.length>=p;
-  return `<div class="sets">${boxes}${todo}<button type="button" class="setbtn${extra?" extra":""}" data-log="1">${extra?"＋ Zusätzlicher Satz":`✓ Satz ${n}${p?" von "+p:""} erledigt`}</button></div>`;
+  const addrm=`<button type="button" class="setbox addset" data-addset="1" aria-label="Satz hinzufügen">＋ Satz</button>${(it.xs||0)>0&&p>log.length?`<button type="button" class="setbox addset" data-rmset="1" aria-label="Zusätzlichen Satz entfernen">−</button>`:""}`;
+  return `<div class="sets">${boxes}${todo}${addrm}<button type="button" class="setbtn${extra?" extra":""}" data-log="1">${extra?"＋ Zusätzlicher Satz":`✓ Satz ${n}${p?" von "+p:""} erledigt`}</button></div>`;
 }
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
@@ -764,10 +786,19 @@ function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
   L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
   c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}${it.opt?" (optional)":""}`);const d=dose(it);if(d)L.push("    "+d);if(musOf(it.id))L.push("    Muskeln: "+musOf(it.id));if(matLine(it.id))L.push("    Material: "+matLine(it.id));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
   return L.join("\n")}
-function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);const L=[];
+function lastSessHist(c){const h=hist().filter(x=>x.sid===c.id);return h.length?h[h.length-1]:null}
+function resultText(c){c=c||cur();
+  if(!c.items.some(it=>(it.log||[]).length)){const h=lastSessHist(c);if(h)return histResultText(c,h)}
+  const lab=labels(c.items);const t=totals(c);const L=[];
   const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
   c.items.forEach((it,i)=>{const log=it.log||[];const sym={ok:"✓",less:"↓",more:"🔥"};
     L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
+  return L.join("\n")}
+function histResultText(c,h){const lab=labels(c.items);const sym={ok:"✓",less:"↓",more:"🔥"};const L=[];
+  let n=0;h.items.forEach(x=>n+=x.log.length);
+  L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${new Date(h.d).toLocaleDateString("de-CH")})`);L.push(`${n} Sätze erledigt`);L.push("");
+  c.items.forEach((it,i)=>{const x=h.items.find(y=>y.id===it.id);L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);
+    L.push("   "+(x?x.log.map(e=>`${sym[e.st]} ${setTxt(e,x.w)}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
   return L.join("\n")}
 function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
 function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
@@ -789,6 +820,9 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",e=>{
   const t=e.target;
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
+  if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
+  const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
+  const rs=t.closest("[data-rmset]");if(rs){const u=rs.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=Math.max(0,(it.xs||0)-1);save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();return}
   const lg=t.closest("[data-log]");if(lg){openLog(lg.closest("[data-u]").dataset.u,null,lg);return}
   const ed=t.closest("[data-edit]");if(ed){openLog(ed.closest("[data-u]").dataset.u,+ed.dataset.edit,ed);return}
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
@@ -815,7 +849,7 @@ armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
 armed(document.getElementById("resetLogBtn"),"Sätze zurücksetzen","Ohne Speichern löschen?",()=>{
-  cur().items.forEach(it=>it.log=[]);save();renderAll();flash("Sätze gelöscht")});
+  cur().items.forEach(it=>{it.log=[];it.xs=0});save();renderAll();flash("Sätze gelöscht")});
 armed(document.getElementById("finishBtn"),"✓ Training abschliessen & speichern","Jetzt abschliessen? Nochmals tippen",finishTraining);
 document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>{i.u=uid();i.log=[]});
   state.sessions.push(c);state.active=c.id;save();renderAll();flash("Einheit dupliziert")});
@@ -971,7 +1005,7 @@ async function importCode(code,fromPaste){
       state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
       txt.textContent="Du hast eine Einheit von deinem Coach erhalten. Sie ist jetzt unter deinen Einheiten gespeichert.";undo.textContent="Wieder entfernen";
     }
-    document.getElementById("shareBanner").hidden=false;return true
+    document.getElementById("shareBanner").hidden=false;browserHint();return true
   }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
 }
 function codeFrom(str){const m=String(str||"").match(/#e=([zbyc][A-Za-z0-9_-]+)/);return m?m[1]:null}
@@ -980,8 +1014,14 @@ document.getElementById("undoImport").addEventListener("click",()=>{
   if(replacedBackup){const i=state.sessions.findIndex(x=>x.id===replacedBackup.id);if(i>=0)state.sessions[i]=replacedBackup;replacedBackup=null;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Alte Version wiederhergestellt");return}
   state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push(fromTpl(TPL[0]));
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Geteilte Einheit entfernt")});
+document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=location.href;
+  try{navigator.clipboard.writeText(u).then(()=>flash("Link kopiert – jetzt die App öffnen"),()=>flash("Bitte Link in der Adresszeile kopieren"))}catch(e){flash("Bitte Link in der Adresszeile kopieren")}});
+document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+document.getElementById("addCoachBtn").addEventListener("click",async()=>{
+  try{if(navigator.clipboard&&navigator.clipboard.readText){const txt=await navigator.clipboard.readText();const c=codeFrom(txt);if(c){await importCode(c,true);return}}}catch(e){}
+  pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus()});
 ["pasteLinkBtn","pasteLinkBtn2"].forEach(id=>document.getElementById(id).addEventListener("click",()=>{pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus()}));
 pasteModal.addEventListener("click",e=>{if(e.target===pasteModal||e.target.closest("[data-close]"))pasteModal.hidden=true});
 document.getElementById("pasteGo").addEventListener("click",async()=>{const c=codeFrom(document.getElementById("pasteInput").value);
@@ -1035,6 +1075,10 @@ pdfBtn.addEventListener("click",async()=>{
 
 /* App auf dem Homescreen */
 const isStandalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+/* iPhone: Links aus WhatsApp öffnen immer im Browser, die Homescreen-App hat einen eigenen Speicher */
+function browserHint(){if(isStandalone||!/^https?:$/.test(location.protocol)||/claude/.test(location.hostname))return;
+  if(!(/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)))return;
+  const b=document.getElementById("browserBanner");if(b)b.hidden=false}
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 let installEvt=null;
 function showInstall(){
