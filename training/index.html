@@ -1201,7 +1201,7 @@ let importedId=null;
 async function importCode(code,fromPaste){
   state.imported=state.imported||{};
   const known=state.imported[code];
-  if(known&&state.sessions.some(s=>s.id===known)){state.active=known;if(fromPaste)state.mode="train";save();renderAll();if(fromPaste)flash("Einheit geöffnet");return true}
+  if(known&&state.sessions.some(s=>s.id===known)){state.active=known;state.mode="train";save();renderAll();flash("Einheit geöffnet");scrollTo(0,0);return true}
   try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
     const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal,opt])=>({u:uid(),id,opt:!!opt,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
     /* Gleiche Einheit schon vorhanden (gleicher Name und Athlet)? Dann aktualisieren statt doppelt anlegen. */
@@ -1313,6 +1313,8 @@ if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(lo
 
 renderCustom();renderAll();showInstall();
 {const c=codeFrom(location.hash);if(c)importCode(c)}
+/* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
+addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
 </script>
 </body>
 </html>
