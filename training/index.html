@@ -938,7 +938,9 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
       <div class="kpi"><b>${sets}</b><span>Sätze</span></div>
       <div class="kpi"><b>${fire}</b><span>🔥 mehr geschafft</span></div></div>
-    ${(()=>{const ids=[];H.forEach(({x})=>x.items.forEach(y=>{if(!ids.includes(y.id))ids.push(y.id)}));if(!ids.length)return "";
+    ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{cnt[y.id]=(cnt[y.id]||0)+1}));
+      /* am häufigsten gemachte Übung zuerst (bei Gleichstand die zuletzt gemachte) */
+      const ids=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);if(!ids.length)return "";
       if(!chartEx||!ids.includes(chartEx))chartEx=ids[0];
       return `<div class="card"><h2>Verlauf pro Übung</h2><select id="chartPick" aria-label="Übung wählen">${ids.map(id=>`<option value="${esc(id)}"${id===chartEx?" selected":""}>${esc((EXBY[id]?EXBY[id].n:id).split(" (")[0])} (${histFor(id).length}×)</option>`).join("")}</select><div id="chartSlot">${chartHTML(chartEx)}</div><p class="hint">Gewicht = schwerster Satz, Wdh = Durchschnitt pro Satz.</p></div>`})()}
     ${bestRows.length?`<div class="card"><h2>Bestwerte</h2><table class="htab best"><tbody>${bestRows.map(([id,b])=>{const e=EXBY[id];return `<tr><th scope="row">${esc(e?e.n.split(" (")[0]:id)}</th><td>${esc(kgTxt(String(b.k)))}</td><td class="bd">${fmtDate(b.d)}</td></tr>`}).join("")}</tbody></table></div>`:""}
