@@ -923,11 +923,22 @@ document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;
 function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
+/* Kompaktes Format: Übungen aus der Liste nur als Kürzel plus Abweichungen von der Vorgabe */
+function packItem(it){const e=EXBY[it.id];const o={};
+  if(!e){Object.assign(o,{n:it.n,k:it.k,v:it.v||[]});["s","w","p","r"].forEach(f=>{if(it[f])o[f]=it[f]})}
+  else ["s","w","p","r"].forEach(f=>{if((it[f]||"")!==(e[f]||""))o[f]=it[f]||""});
+  if(it.b)o.b=it.b;if(it.kg)o.g=it.kg;if(it.goal)o.z=it.goal;if(it.opt)o.o=1;if(it.ss)o.x=1;
+  return Object.keys(o).length?Object.assign({i:it.id},o):it.id}
+function unpackItem(x){const o=typeof x==="string"?{i:x}:x;const e=EXBY[o.i]||{};
+  const f=k=>o[k]!==undefined?o[k]:(e[k]||"");
+  return [o.i,o.n||e.n||o.i,o.k||e.k||"eigen",f("s"),f("w"),f("p"),f("r"),o.b||"",o.v||e.v||[],o.x?1:0,o.g||"",o.z||"",o.o?1:0]}
 async function encodeSess(){const c=cur();
-  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss,kg,goal,opt})=>[id,n,k,s,w,p,r,b,v,ss?1:0,kg||"",goal||"",opt?1:0])}));
-  if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
-  return "b"+b64url(data)}
-async function decodeSess(code){let bytes=unb64url(code.slice(1));if(code[0]==="z")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));return JSON.parse(new TextDecoder().decode(bytes))}
+  const obj={t:c.t,i:c.items.map(packItem)};if(c.a)obj.a=c.a;if(c.h)obj.h=c.h;
+  const data=new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream!=="undefined"){try{return "y"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
+  return "c"+b64url(data)}
+async function decodeSess(code){let bytes=unb64url(code.slice(1));if(code[0]==="z"||code[0]==="y")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));
+  const d=JSON.parse(new TextDecoder().decode(bytes));if((code[0]==="y"||code[0]==="c")&&d&&Array.isArray(d.i))d.i=d.i.map(unpackItem);return d}
 function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&!/claude\.ai$/.test(l.hostname)&&!/claudeusercontent|claude\.site/.test(l.hostname)?l.origin+l.pathname:SITE}
 document.getElementById("shareBtn").addEventListener("click",async()=>{
   if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
@@ -963,7 +974,7 @@ async function importCode(code,fromPaste){
     document.getElementById("shareBanner").hidden=false;return true
   }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
 }
-function codeFrom(str){const m=String(str||"").match(/#e=([zb][A-Za-z0-9_-]+)/);return m?m[1]:null}
+function codeFrom(str){const m=String(str||"").match(/#e=([zbyc][A-Za-z0-9_-]+)/);return m?m[1]:null}
 let replacedBackup=null;
 document.getElementById("undoImport").addEventListener("click",()=>{
   if(replacedBackup){const i=state.sessions.findIndex(x=>x.id===replacedBackup.id);if(i>=0)state.sessions[i]=replacedBackup;replacedBackup=null;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Alte Version wiederhergestellt");return}
