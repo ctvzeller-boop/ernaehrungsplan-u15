@@ -331,6 +331,9 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <p><b>RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes bis zum Muskelversagen noch möglich gewesen wären. RIR 0 = bis zum Versagen, RIR 2 = zwei wären noch drin gewesen.</p>
       <p><b>Superset</b>: Übungen mit gleichem Buchstaben (A1, A2) abwechselnd ausführen: 1. Satz A1, dann 1. Satz A2, dann 2. Satz A1 usw.</p>
       <p><b>/ Seite</b>: Wiederholungen oder Zeit pro Seite bzw. pro Bein.</p>
+      <p><b>Maximalkraft</b> (4 × 4–6, 2–3 Min. Pause, RIR 2): <b>schweres Gewicht</b>, mit dem nur 4–6 saubere Wiederholungen möglich sind (ca. 80–85 % vom Maximum). Ziel: mehr Kraft, ohne viel Muskelmasse aufzubauen – das Nervensystem lernt, mehr Muskelfasern gleichzeitig einzusetzen. Lange Pausen, damit jeder Satz mit voller Kraft gelingt.</p>
+      <p><b>Volumen</b> (3 × 8–12, 90 s Pause, RIR 1–2): <b>mittleres Gewicht</b>, mit dem 8–12 Wiederholungen gehen (ca. 65–75 % vom Maximum). Ziel: Muskelaufbau und eine gute Basis für späteres Maximalkrafttraining. Kürzere Pausen, die Muskeln dürfen gut ermüden.</p>
+      <p><b>Gewicht wählen</b>: So schwer, dass die vorgegebenen Wiederholungen mit dem angegebenen RIR sauber gehen. Gehen mehr Wiederholungen als vorgegeben (🔥), beim nächsten Training etwas mehr Gewicht nehmen.</p>
       <p class="train-only"><button type="button" class="linkbtn" id="pasteLinkBtn" style="padding:0">Link vom Coach einfügen</button></p>
     </div>
     <div class="card edit-only">
@@ -614,7 +617,7 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
       <div class="field"><label class="small" for="sAth">Athlet/in</label><input type="text" id="sAth" data-sf="a" value="${esc(c.a)}" placeholder="Name"></div>
       <div class="field full"><label class="small" for="sNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label><textarea id="sNotes" data-sf="h" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen">${esc(c.h)}</textarea></div>
     </div><div class="summary" id="summary" style="margin-top:10px"></div>
-    <div class="goalpick" id="goalAll" role="group" aria-label="Alle Kraftübungen" style="margin-top:10px"><span class="eyebrow">Alle Kraftübungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="">Standard</button></div>`;
+    <div class="goalpick" id="goalAll" role="group" aria-label="Alle Kraftübungen" style="margin-top:10px"><span class="eyebrow" title="Maximalkraft = schweres Gewicht, wenige Wdh, lange Pausen. Volumen = mittleres Gewicht, mehr Wdh, kürzere Pausen.">Alle Kraftübungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="">Standard</button></div>`;
     renderSummary();
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
