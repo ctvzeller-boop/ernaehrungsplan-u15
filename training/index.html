@@ -447,22 +447,23 @@ const FOC={abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandsho
  pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",plank:"stab",copenhagen:"stab",
  flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
+/* Material: einheitliche Namen; "A|B" = A oder B, "?A" = optional */
 const MAT={
  abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],shoulderwarm:["band",["Resistance Band"]],
- skater:["kw",[]],latbounds:["kw",[]],boxjump:["kw",["Box"]],boxvar:["kw",["Box (niedrig und hoch)"]],depth:["kw",["Box"]],
- explsplit:["kw",["Bank oder Erhöhung (optional)"]],bsqjump:["kw",["Bank oder Erhöhung"]],hillsprint:["kw",["Hang / Steigung"]],sprints:["kw",[]],
+ skater:["kw",[]],latbounds:["kw",[]],boxjump:["kw",["Box"]],boxvar:["kw",["Box"]],depth:["kw",["Box"]],
+ explsplit:["kw",["?Bank"]],bsqjump:["kw",["Bank"]],hillsprint:["kw",["Hang"]],sprints:["kw",[]],
  mbchest:["gew",["Medizinball","Wand"]],
- squat:["gew",["Langhantel","Rack"]],rdl:["gew",["Langhantel oder Kurzhanteln"]],deadlift:["gew",["Langhantel","Gewichtsscheiben"]],trapbar:["gew",["Trap Bar (Hex Bar)","Gewichtsscheiben"]],splitsq:["gew",["Kurzhanteln","Bank"]],
- hipthrust:["gew",["Landmine","Langhantel","Bank"]],latlunge:["gew",["Landmine, Kettlebell oder Kurzhantel"]],
- calf:["kw gew",["Stufe / Erhöhung","Kurzhantel (optional)"]],hamiso:["kw",["Bank"]],nordic:["kw",["Sprossenwand oder Partner","Matte"]],
- bench:["gew",["Langhantel oder Kurzhanteln","Bank"]],incline:["gew",["Kurzhanteln","Schrägbank"]],
- pullup:["kw band",["Klimmzugstange","Band zur Unterstützung (optional)"]],pullupw:["gew",["Klimmzugstange","Gewichtsgürtel oder Kurzhantel"]],
+ squat:["gew",["Langhantel","Rack"]],deadlift:["gew",["Langhantel"]],trapbar:["gew",["Trap Bar"]],rdl:["gew",["Langhantel|Kurzhanteln"]],splitsq:["gew",["Kurzhanteln"]],
+ hipthrust:["gew",["Landmine","Langhantel","Bank"]],latlunge:["gew",["Landmine|Kettlebell|Kurzhanteln"]],
+ calf:["kw gew",["Erhöhung","?Kurzhanteln"]],hamiso:["kw",["Bank"]],nordic:["kw",["Sprossenwand|Partner","Matte"]],
+ bench:["gew",["Langhantel|Kurzhanteln","Bank"]],incline:["gew",["Kurzhanteln","Schrägbank"]],
+ pullup:["kw band",["Klimmzugstange","?Resistance Band"]],pullupw:["gew",["Klimmzugstange","Gewichtsgürtel|Kurzhanteln"]],
  pushup:["kw",[]],lmpress:["gew",["Landmine","Langhantel"]],lmpressst:["gew",["Landmine","Langhantel"]],
- row1:["gew",["Kurzhantel","Bank"]],rowchest:["gew",["Rudermaschine oder Langhantel"]],dips:["kw gew",["Barren / Dipstation","Zusatzgewicht (optional)"]],
- flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],facepull:["band gew",["Kabelzug oder Resistance Band"]],
- pallof:["band gew",["Kabelzug oder Resistance Band"]],chop:["gew band",["Kabelzug oder Resistance Band"]],birddog:["kw",["Matte"]],
- lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Resistance Band oder Kabelzug","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
- rollout:["kw",["Gymnastikball"]],plank:["kw",["Matte"]],copenhagen:["kw",["Bank / Erhöhung"]],
+ row1:["gew",["Kurzhanteln","Bank"]],rowchest:["gew",["Rudermaschine|Langhantel"]],dips:["kw gew",["Dipstation","?Gewichtsgürtel"]],
+ flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],facepull:["band gew",["Kabelzug|Resistance Band"]],
+ pallof:["band gew",["Kabelzug|Resistance Band"]],chop:["gew band",["Kabelzug|Resistance Band"]],birddog:["kw",["Matte"]],
+ lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Kabelzug|Resistance Band","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
+ rollout:["kw",["Gymnastikball"]],plank:["kw",["Matte"]],copenhagen:["kw",["Bank"]],
  flutter:["kw",["Matte"]],dslr:["kw",["Matte"]],scissor:["kw",["Matte"]],bottomup:["kw",["Matte"]],bicycle:["kw",["Matte"]],spiderman:["kw",["Matte"]],lowerabs:["kw",["Matte"]]
 };
 Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
@@ -493,7 +494,8 @@ function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function loadOf(id){const e=exById(id);return (e&&e.l)||[]}
 function matOf(id){const e=exById(id);return (e&&e.m)||[]}
-function matLine(id){return matOf(id).join(", ")}
+function fmtMat(m){const opt=m[0]==="?";return m.replace(/^\?/,"").split("|").join(" oder ")+(opt?" (optional)":"")}
+function matLine(id){return matOf(id).map(fmtMat).join(", ")}
 function focOf(e){return e.f||CAT2FOC[e.k]||[]}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
@@ -566,7 +568,9 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
     renderProgress();
   }
 }
-function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if(!/optional/i.test(m)&&!out.includes(m))out.push(m)}));return out}
+function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if(m[0]==="?")return;const f=fmtMat(m);if(!out.includes(f))out.push(f)}));
+  /* «A oder B» weglassen, wenn A oder B ohnehin gebraucht wird */
+  return out.filter(f=>!(f.includes(" oder ")&&f.split(" oder ").some(x=>out.includes(x))))}
 function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
   el.innerHTML=`<div class="progline"><span class="eyebrow">Fortschritt</span><span><b>${t.done}</b> von ${t.plan} Sätzen${t.plan&&t.done>=t.plan?" · fertig 💪":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${t.plan}" aria-valuenow="${t.done}" aria-label="Erledigte Sätze"><i style="width:${pct}%"></i></div>`}
@@ -590,7 +594,7 @@ function renderItems(focusSel){
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${esc(it.n)}<span class="idose">${esc(dose(it))}</span>${matOf(it.id).length?`<span class="mat">${esc(matOf(it.id).join(", "))}</span>`:""}${vidLinks(it.v)}</div></div>
+        <div class="iname">${esc(it.n)}<span class="idose">${esc(dose(it))}</span>${matLine(it.id)?`<span class="mat">${esc(matLine(it.id))}</span>`:""}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${setsHTML(it)}
     </div>`;
@@ -642,7 +646,7 @@ function renderLib(){
 /* Text */
 function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
   L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
-  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(matOf(it.id).length)L.push("    Material: "+matOf(it.id).join(", "));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
+  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(matLine(it.id))L.push("    Material: "+matLine(it.id));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
   return L.join("\n")}
 function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);const L=[];
   const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
@@ -839,7 +843,7 @@ async function buildPDF(){
   let y=34;
   if(c.h){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);const l=doc.splitTextToSize(T(c.h),W-2*M);doc.text(l,M,y);y+=l.length*4.4+3}
   const hasPic=pics.some(Boolean);
-  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(matOf(it.id).length?"\nMaterial: "+T(matOf(it.id).join(", ")):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
+  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(matLine(it.id)?"\nMaterial: "+T(matLine(it.id)):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
   doc.autoTable({head:[["","","Übung","Sätze","Wdh / Zeit","Gewicht / Band","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
     styles:{font:"helvetica",fontSize:9,cellPadding:2.4,textColor:INK,lineColor:LINE,lineWidth:.2,valign:"middle",overflow:"linebreak"},
     headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7.5},
