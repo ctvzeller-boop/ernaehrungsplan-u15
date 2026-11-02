@@ -288,7 +288,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </header>
 
   <div class="banner" id="shareBanner" role="status" hidden>
-    <span>Du hast eine Einheit von deinem Coach erhalten. Sie ist jetzt unter deinen Einheiten gespeichert.</span>
+    <span id="shareBannerText">Du hast eine Einheit von deinem Coach erhalten. Sie ist jetzt unter deinen Einheiten gespeichert.</span>
     <button type="button" id="undoImport">Wieder entfernen</button>
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
   </div>
@@ -935,12 +935,30 @@ async function importCode(code,fromPaste){
   if(known&&state.sessions.some(s=>s.id===known)){state.active=known;if(fromPaste)state.mode="train";save();renderAll();if(fromPaste)flash("Einheit geöffnet");return true}
   try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
     const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal,opt])=>({u:uid(),id,opt:!!opt,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
-    state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
+    /* Gleiche Einheit schon vorhanden (gleicher Name und Athlet)? Dann aktualisieren statt doppelt anlegen. */
+    const norm=x=>String(x||"").trim().toLowerCase();const importedIds=Object.values(state.imported);
+    const old=state.sessions.find(o=>norm(o.t)===norm(s.t)&&norm(o.a)===norm(s.a)&&(norm(s.a)||importedIds.includes(o.id)));
+    const txt=document.getElementById("shareBannerText"),undo=document.getElementById("undoImport");
+    if(old){
+      replacedBackup=JSON.parse(JSON.stringify(old));
+      /* laufende, noch nicht abgeschlossene Sätze behalten */
+      const pool={};old.items.forEach(it=>{if((it.log||[]).length)(pool[it.id]=pool[it.id]||[]).push(it.log)});
+      s.items.forEach(it=>{const l=pool[it.id];if(l&&l.length)it.log=l.shift()});
+      old.h=s.h;old.items=s.items;old.a=s.a||old.a;
+      state.active=old.id;state.imported[code]=old.id;importedId=null;state.mode="train";save();renderAll();
+      txt.textContent=`«${old.t}» wurde vom Coach aktualisiert. Deine bisherigen Werte im Verlauf bleiben erhalten.`;undo.textContent="Alte Version zurückholen";
+    }else{
+      replacedBackup=null;
+      state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
+      txt.textContent="Du hast eine Einheit von deinem Coach erhalten. Sie ist jetzt unter deinen Einheiten gespeichert.";undo.textContent="Wieder entfernen";
+    }
     document.getElementById("shareBanner").hidden=false;return true
   }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
 }
 function codeFrom(str){const m=String(str||"").match(/#e=([zb][A-Za-z0-9_-]+)/);return m?m[1]:null}
+let replacedBackup=null;
 document.getElementById("undoImport").addEventListener("click",()=>{
+  if(replacedBackup){const i=state.sessions.findIndex(x=>x.id===replacedBackup.id);if(i>=0)state.sessions[i]=replacedBackup;replacedBackup=null;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Alte Version wiederhergestellt");return}
   state.sessions=state.sessions.filter(s=>s.id!==importedId);if(!state.sessions.length)state.sessions.push(fromTpl(TPL[0]));
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();document.getElementById("shareBanner").hidden=true;flash("Geteilte Einheit entfernt")});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
