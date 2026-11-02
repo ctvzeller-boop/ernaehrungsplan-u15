@@ -115,6 +115,11 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .de{display:block;font-family:var(--body);font-weight:500;font-size:.82rem;color:var(--muted);text-transform:none;letter-spacing:0;line-height:1.3;margin-top:1px}
 .modalbox h3 .de{font-size:.95rem}
+.goalpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.goalpick .eyebrow{margin-right:2px}
+.goalpick button{padding:5px 12px;border-radius:999px;font-size:.85rem}
+.goalpick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.goaltag{font-weight:700;color:var(--c,var(--accent))}
 .howto summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;padding:2px 0;min-height:32px;display:flex;align-items:center}
 .howto .note{white-space:pre-line;margin:4px 0 0;font-size:.9rem;color:var(--ink);background:var(--bg);border-radius:8px;padding:10px 12px}
 .mus{display:block;font-weight:500;font-size:.8rem;color:var(--c,var(--accent));margin-top:3px}
@@ -534,6 +539,18 @@ function matLine(id){return matOf(id).map(fmtMat).join(", ")}
 function focOf(e){return e.f||CAT2FOC[e.k]||[]}
 function nameHTML(n){const m=/^(.*?)\s\((.*)\)$/.exec(n||"");return m?`${esc(m[1])}<span class="de">${esc(m[2])}</span>`:esc(n)}
 function howtoHTML(id){const e=exById(id);return e&&e.b?`<details class="howto"><summary>Ausführung</summary><p class="note">${esc(e.b)}</p></details>`:""}
+/* Trainingsziel pro Kraftübung: Maximalkraft oder Volumen setzt Sätze, Wdh, Pause und RIR */
+const GOALS={max:{n:"Maximalkraft",s:"4",w:"4–6",p:"2–3 Min.",r:"2"},vol:{n:"Volumen",s:"3",w:"8–12",p:"90 s",r:"1–2"}};
+const NOGOAL=["nordic","calf","hamiso"];
+/* Isolationsübungen: Maximalkraft macht hier keinen Sinn, nur Volumen */
+const NOMAX=["flies","latraise","facepull"];
+function goalable(it){const e=exById(it.id);if(!e||NOGOAL.includes(it.id))return false;const f=focOf(e);return (f.includes("kraftb")||f.includes("kraftob"))&&!isTime(e)}
+function perSide(w){const m=/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein))\b.*$/i.exec(w||"");return m?" "+m[0].trim():""}
+function applyGoal(it,g){const e=exById(it.id);if(!e)return;
+  if(!g){Object.assign(it,{s:e.s,w:e.w,p:e.p,r:e.r});it.goal="";return}
+  const G=GOALS[g];Object.assign(it,{s:G.s,w:G.w+perSide(e.w),p:G.p,r:G.r,goal:g})}
+function goalHTML(it){if(!goalable(it))return "";const g=it.goal||"";
+  return `<div class="goalpick" role="group" aria-label="Trainingsziel ${esc(it.n)}"><span class="eyebrow">Ziel</span>${[["","Standard"],["max","Maximalkraft"],["vol","Volumen"]].filter(([k])=>!(k==="max"&&NOMAX.includes(it.id))).map(([k,n])=>`<button type="button" data-goal="${k}" aria-pressed="${g===k}">${n}</button>`).join("")}</div>`}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
@@ -595,7 +612,8 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
       <div class="field"><label class="small" for="sTitle">Einheit</label><input type="text" id="sTitle" data-sf="t" value="${esc(c.t)}" placeholder="z. B. Oberkörper Kraft"></div>
       <div class="field"><label class="small" for="sAth">Athlet/in</label><input type="text" id="sAth" data-sf="a" value="${esc(c.a)}" placeholder="Name"></div>
       <div class="field full"><label class="small" for="sNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label><textarea id="sNotes" data-sf="h" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen">${esc(c.h)}</textarea></div>
-    </div><div class="summary" id="summary" style="margin-top:10px"></div>`;
+    </div><div class="summary" id="summary" style="margin-top:10px"></div>
+    <div class="goalpick" id="goalAll" role="group" aria-label="Alle Kraftübungen" style="margin-top:10px"><span class="eyebrow">Alle Kraftübungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="">Standard</button></div>`;
     renderSummary();
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
@@ -632,7 +650,7 @@ function renderItems(focusSel){
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}<span class="idose">${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
+        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${howtoHTML(it.id)}
       ${setsHTML(it)}
@@ -645,6 +663,7 @@ function renderItems(focusSel){
           <button type="button" class="iconbtn" data-act="down" aria-label="${esc(it.n)} nach unten"${i===c.items.length-1?" disabled":""}>↓</button>
           <button type="button" class="iconbtn" data-act="rm" aria-label="${esc(it.n)} entfernen">×</button>
         </div></div>
+      ${goalHTML(it)}
       <div class="params">
         <label>Sätze<input type="text" data-f="s" value="${esc(it.s)}"></label>
         <label>Wdh / Zeit<input type="text" data-f="w" value="${esc(it.w)}"></label>
@@ -702,7 +721,7 @@ document.getElementById("sessHead").addEventListener("input",e=>{const f=e.targe
 document.getElementById("search").addEventListener("input",e=>{filter.q=e.target.value;renderLib()});
 document.getElementById("items").addEventListener("input",e=>{
   const f=e.target.dataset.f;if(!f||f==="ss")return;const box=e.target.closest("[data-u]");
-  const it=cur().items.find(x=>x.u===box.dataset.u);it[f]=e.target.value;save();renderText()});
+  const it=cur().items.find(x=>x.u===box.dataset.u);it[f]=e.target.value;if(["s","w","p","r"].includes(f)&&it.goal){it.goal="";const gp=box.querySelector(".goalpick");if(gp)gp.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.goal==="")))}save();renderText()});
 document.getElementById("items").addEventListener("change",e=>{
   if(e.target.dataset.f!=="ss")return;const u=e.target.closest("[data-u]").dataset.u;
   cur().items.find(x=>x.u===u).ss=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=ss]`);renderText()});
@@ -717,6 +736,9 @@ document.addEventListener("click",e=>{
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
   const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
   if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
+  const gb=t.closest("[data-goal]");if(gb){const g=gb.dataset.goal;
+    if(gb.closest("#goalAll")){let n=0;cur().items.forEach(it=>{if(goalable(it)&&!(g==="max"&&NOMAX.includes(it.id))){applyGoal(it,g);n++}});save();renderItems();renderText();flash(n?`${n} Kraftübungen auf ${g?GOALS[g].n:"Standard"} gesetzt`:"Keine Kraftübungen in dieser Einheit");return}
+    const u=gb.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);applyGoal(it,g);save();renderItems(`[data-u="${u}"] [data-goal="${g}"]`);renderText();return}
   const lb=t.closest("[data-load]");if(lb){const k=lb.dataset.load;filter.load=filter.load.includes(k)?filter.load.filter(x=>x!==k):filter.load.concat(k);renderLoads();renderLib();return}
   const fb=t.closest("[data-foc]");if(fb){const k=fb.dataset.foc;filter.foc=filter.foc.includes(k)?filter.foc.filter(x=>x!==k):filter.foc.concat(k);renderCats();renderLib();return}
   const ab=t.closest("[data-add]");if(ab){const e2=exById(ab.dataset.add);cur().items.push(itemFrom(e2,false));save();renderItems();renderLib();renderBar();renderText();flash(`„${e2.n}“ hinzugefügt`);
@@ -834,7 +856,7 @@ function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
 async function encodeSess(){const c=cur();
-  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss,kg})=>[id,n,k,s,w,p,r,b,v,ss?1:0,kg||""])}));
+  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss,kg,goal})=>[id,n,k,s,w,p,r,b,v,ss?1:0,kg||"",goal||""])}));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data)}
 async function decodeSess(code){let bytes=unb64url(code.slice(1));if(code[0]==="z")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));return JSON.parse(new TextDecoder().decode(bytes))}
@@ -852,7 +874,7 @@ async function importCode(code,fromPaste){
   const known=state.imported[code];
   if(known&&state.sessions.some(s=>s.id===known)){state.active=known;if(fromPaste)state.mode="train";save();renderAll();if(fromPaste)flash("Einheit geöffnet");return true}
   try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
-    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg])=>({u:uid(),id,n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
+    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal])=>({u:uid(),id,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
     state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
     document.getElementById("shareBanner").hidden=false;return true
   }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
