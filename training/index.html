@@ -157,7 +157,15 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hentry .htab{margin:4px 0 10px;width:100%}
 .hentry .htab th{white-space:normal;width:45%}
 .chartwrap{position:relative}
-.chart{width:100%;max-width:520px;height:auto;display:block;touch-action:pan-y}
+.chart{width:100%;height:auto;display:block;touch-action:pan-y}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;margin:2px 0 4px}
+.lg{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}
+.lg b{font-variant-numeric:tabular-nums}.lg em{font-style:normal;font-weight:700;font-size:.8rem}.lg em.up{color:var(--ok)}.lg em.down{color:var(--less)}
+.lg small{color:var(--muted);font-size:.72rem}
+.sw{display:inline-block;width:16px;height:4px;border-radius:2px;align-self:center}
+.sw.cs1{background:var(--accent)}.sw.cs2{background:#FF2E88}.sw.cs3{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)}
+.chart .cl.cs2{stroke:#FF2E88}.chart .cd.cs2{fill:#FF2E88}
+.chart .cl.cs3{stroke:var(--muted);stroke-dasharray:8 6}.chart .cd.cs3{fill:var(--muted)}
 .chart .ct{font:600 24px var(--body);fill:var(--muted)}
 .chart .cdiff{font:700 22px var(--body)}.chart .cdiff.up{fill:var(--ok)}.chart .cdiff.down{fill:var(--less)}
 .chart .cy{font:22px var(--body);fill:var(--muted);font-variant-numeric:tabular-nums}
@@ -167,7 +175,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .chart .cv{font:700 30px var(--body);fill:var(--ink);font-variant-numeric:tabular-nums}
 .chart .cx{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
 .chart .hz{fill:transparent;cursor:crosshair}
-.ctip{background:var(--accent-soft);border-radius:8px;padding:5px 9px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0;max-width:520px}
+.ctip{background:var(--accent-soft);border-radius:8px;padding:5px 9px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0}
 .ctip span{color:var(--muted)}.ctip span b{color:var(--ink)}
 .minispark{flex:none;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 6px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
 .minispark span{font-size:.72rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -883,27 +891,26 @@ function seriesFor(id){return histFor(id).slice().reverse().map(h=>{const r=h.lo
   return {d:h.d,kg:bestKg(h.log),reps:r.length?Math.round(10*r.reduce((a,b)=>a+b,0)/r.length)/10:null,sets:h.log.length}})}
 function chartHTML(id){const S=seriesFor(id);if(!S.length)return "";
   const e=EXBY[id]||{};const time=isTime(e);
-  const rows=[["kg","Gewicht","kg"],["reps",time?"Ø Zeit":"Ø Wdh",time?"s":""],["sets","Sätze",""]].filter(([k])=>S.some(x=>x[k]!==null));
-  /* kompakt: links Name + letzter Wert, rechts kleine Kurve; gemeinsame Datumsachse */
-  const W=640,L=CL,R=CR,RH=74,TOP=6,H=TOP+rows.length*RH+30;
+  const rows=[["kg","Gewicht","kg","cs1"],["reps",time?"Ø Zeit":"Ø Wdh",time?"s":"","cs2"],["sets","Sätze","","cs3"]].filter(([k])=>S.some(x=>x[k]!==null));
+  /* eine breite Grafik, alle drei Kurven übereinander; jede Kurve auf ihren eigenen Bereich skaliert, echte Werte in der Legende und beim Antippen */
+  const W=640,L=CL,R=CR,TOP=10,PH=150,H=TOP+PH+34;
   const t0=S[0].d,t1=S[S.length-1].d;const X=d=>S.length===1?(L+(W-R))/2:L+(d-t0)/(t1-t0)*(W-R-L);
-  const nice=v=>Math.round(v*10)/10;let g="";
-  rows.forEach(([k,lab,unit],ri)=>{const y0=TOP+ri*RH;const vals=S.map(x=>x[k]).filter(v=>v!==null);
-    let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1}
-    const Y=v=>y0+RH-16-(v-mn)/(mx-mn)*(RH-30);
-    const lastV=[...S].reverse().find(x=>x[k]!==null)[k],firstV=S.find(x=>x[k]!==null)[k];const diff=nice(lastV-firstV);
-    g+=`<text class="ct" x="0" y="${y0+28}">${lab}</text><text class="cv" x="0" y="${y0+58}">${nice(lastV)}${unit?" "+unit:""}${S.length>1&&diff!==0?`<tspan class="cdiff ${diff>0?"up":"down"}" dx="10">${diff>0?"+":""}${diff}</tspan>`:""}</text>`;
-    g+=`<line class="cg" x1="${L}" x2="${W-R}" y1="${y0+RH-6}" y2="${y0+RH-6}"/>`;
+  const nice=v=>Math.round(v*10)/10;let g="",leg="";
+  [0,.5,1].forEach(f=>{g+=`<line class="cg" x1="${L}" x2="${W-R}" y1="${TOP+f*PH}" y2="${TOP+f*PH}"/>`});
+  rows.forEach(([k,lab,unit,cls])=>{const vals=S.map(x=>x[k]).filter(v=>v!==null);
+    let mn=Math.min(...vals),mx=Math.max(...vals);const flat=mn===mx;
+    const Y=v=>flat?TOP+PH/2:TOP+PH*.08+(1-(v-mn)/(mx-mn))*PH*.84;
     const pts=S.map(x=>x[k]===null?null:[X(x.d),Y(x[k])]).filter(Boolean);
-    if(pts.length>1)g+=`<polyline class="cl" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
-    pts.forEach(p=>{g+=`<circle class="cd" cx="${p[0]}" cy="${p[1]}" r="6"/>`});
-  });
-  const yb=TOP+rows.length*RH+22;
+    if(pts.length>1)g+=`<polyline class="cl ${cls}" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
+    pts.forEach(p=>{g+=`<circle class="cd ${cls}" cx="${p[0]}" cy="${p[1]}" r="5.5"/>`});
+    const lastV=[...S].reverse().find(x=>x[k]!==null)[k],firstV=S.find(x=>x[k]!==null)[k];const diff=nice(lastV-firstV);
+    leg+=`<span class="lg"><i class="sw ${cls}"></i>${lab} <b>${nice(lastV)}${unit?" "+unit:""}</b>${S.length>1&&diff!==0?` <em class="${diff>0?"up":"down"}">${diff>0?"+":""}${diff}</em>`:""}<small>${nice(mn)}–${nice(mx)}</small></span>`});
+  const yb=TOP+PH+26;
   g+=`<text class="cy" x="${L}" y="${yb}" text-anchor="start">${fmtDate(t0)}</text>`;if(S.length>1)g+=`<text class="cy" x="${W-R}" y="${yb}" text-anchor="end">${fmtDate(t1)}</text>`;
-  const cols=S.map((x,i)=>{const a=i?(X(S[i-1].d)+X(x.d))/2:L-10,b=i<S.length-1?(X(x.d)+X(S[i+1].d))/2:W;return `<rect class="hz" x="${a}" y="0" width="${Math.max(8,b-a)}" height="${H}" data-ci="${i}"/>`}).join("");
-  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="ctip" aria-live="polite">Tippe auf die Kurve für die Werte eines Tages.</div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP}" y2="${TOP+rows.length*RH}" visibility="hidden"/>${cols}</svg>
+  const cols=S.map((x,i)=>{const a=i?(X(S[i-1].d)+X(x.d))/2:0,b=i<S.length-1?(X(x.d)+X(S[i+1].d))/2:W;return `<rect class="hz" x="${a}" y="0" width="${Math.max(8,b-a)}" height="${H}" data-ci="${i}"/>`}).join("");
+  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="legend">${leg}</div><div class="ctip" aria-live="polite">Tippe auf die Grafik für die Werte.</div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP}" y2="${TOP+PH}" visibility="hidden"/>${cols}</svg>
     <details class="ctable"><summary>Als Tabelle</summary><table class="htab"><thead><tr><th>Datum</th>${rows.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${S.slice().reverse().map(x=>`<tr><td>${fmtDateY(x.d)}</td>${rows.map(([k,,u])=>`<td>${x[k]===null?"–":x[k]+(u==="kg"?" kg":"")}</td>`).join("")}</tr>`).join("")}</tbody></table></details></div>`}
-const CL=230,CR=14;
+const CL=14,CR=14;
 function chartTip(wrap,i){const id=wrap.dataset.ex;const S=seriesFor(id);const x=S[i];if(!x)return;const tip=wrap.querySelector(".ctip");const svg=wrap.querySelector("svg");
   const r=svg.querySelector(`[data-ci="${i}"]`);const cx=svg.querySelectorAll(".cd");
   const line=svg.querySelector(".cx");const W=640,L=CL,R=CR;const t0=S[0].d,t1=S[S.length-1].d;const X=S.length===1?(L+(W-R))/2:L+(x.d-t0)/(t1-t0)*(W-R-L);
