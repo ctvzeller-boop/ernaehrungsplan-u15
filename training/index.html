@@ -164,6 +164,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .lg small{color:var(--muted);font-size:.72rem}
 .sw{display:inline-block;width:16px;height:4px;border-radius:2px;align-self:center}
 .sw.cs1{background:var(--accent)}.sw.cs2{background:#FF2E88}.sw.cs3{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)}
+.chart .cv1{font:600 20px var(--body);fill:var(--ink)}
 .chart .cl.cs2{stroke:#FF2E88}.chart .cd.cs2{fill:#FF2E88}
 .chart .cl.cs3{stroke:var(--muted);stroke-dasharray:8 6}.chart .cd.cs3{fill:var(--muted)}
 .chart .ct{font:600 24px var(--body);fill:var(--muted)}
@@ -897,18 +898,21 @@ function chartHTML(id){const S=seriesFor(id);if(!S.length)return "";
   const t0=S[0].d,t1=S[S.length-1].d;const X=d=>S.length===1?(L+(W-R))/2:L+(d-t0)/(t1-t0)*(W-R-L);
   const nice=v=>Math.round(v*10)/10;let g="",leg="";
   [0,.5,1].forEach(f=>{g+=`<line class="cg" x1="${L}" x2="${W-R}" y1="${TOP+f*PH}" y2="${TOP+f*PH}"/>`});
-  rows.forEach(([k,lab,unit,cls])=>{const vals=S.map(x=>x[k]).filter(v=>v!==null);
+  rows.forEach(([k,lab,unit,cls],ri)=>{const vals=S.map(x=>x[k]).filter(v=>v!==null);
     let mn=Math.min(...vals),mx=Math.max(...vals);const flat=mn===mx;
-    const Y=v=>flat?TOP+PH/2:TOP+PH*.08+(1-(v-mn)/(mx-mn))*PH*.84;
+    /* gleichbleibende Werte (z. B. erst ein Training): jede Kurve auf eigener Höhe, damit sich die Punkte nicht verdecken */
+    const lane=TOP+PH*(rows.length===1?.5:.18+ri*(.64/(rows.length-1)));
+    const Y=v=>flat?lane:TOP+PH*.08+(1-(v-mn)/(mx-mn))*PH*.84;
     const pts=S.map(x=>x[k]===null?null:[X(x.d),Y(x[k])]).filter(Boolean);
     if(pts.length>1)g+=`<polyline class="cl ${cls}" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
     pts.forEach(p=>{g+=`<circle class="cd ${cls}" cx="${p[0]}" cy="${p[1]}" r="5.5"/>`});
+    if(S.length===1&&pts[0])g+=`<text class="cv1" x="${pts[0][0]+14}" y="${pts[0][1]+6}">${lab} ${nice(vals[0])}${unit?" "+unit:""}</text>`;
     const lastV=[...S].reverse().find(x=>x[k]!==null)[k],firstV=S.find(x=>x[k]!==null)[k];const diff=nice(lastV-firstV);
-    leg+=`<span class="lg"><i class="sw ${cls}"></i>${lab} <b>${nice(lastV)}${unit?" "+unit:""}</b>${S.length>1&&diff!==0?` <em class="${diff>0?"up":"down"}">${diff>0?"+":""}${diff}</em>`:""}<small>${nice(mn)}–${nice(mx)}</small></span>`});
+    leg+=`<span class="lg"><i class="sw ${cls}"></i>${lab} <b>${nice(lastV)}${unit?" "+unit:""}</b>${S.length>1&&diff!==0?` <em class="${diff>0?"up":"down"}">${diff>0?"+":""}${diff}</em>`:""}${flat?"":`<small>${nice(mn)}–${nice(mx)}</small>`}</span>`});
   const yb=TOP+PH+26;
   g+=`<text class="cy" x="${L}" y="${yb}" text-anchor="start">${fmtDate(t0)}</text>`;if(S.length>1)g+=`<text class="cy" x="${W-R}" y="${yb}" text-anchor="end">${fmtDate(t1)}</text>`;
   const cols=S.map((x,i)=>{const a=i?(X(S[i-1].d)+X(x.d))/2:0,b=i<S.length-1?(X(x.d)+X(S[i+1].d))/2:W;return `<rect class="hz" x="${a}" y="0" width="${Math.max(8,b-a)}" height="${H}" data-ci="${i}"/>`}).join("");
-  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="legend">${leg}</div><div class="ctip" aria-live="polite">Tippe auf die Grafik für die Werte.</div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP}" y2="${TOP+PH}" visibility="hidden"/>${cols}</svg>
+  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="legend">${leg}</div>${S.length===1?`<p class="hint">Erst 1 Training gespeichert – ab dem 2. Training siehst du hier den Verlauf.</p>`:""}<div class="ctip" aria-live="polite">Tippe auf die Grafik für die Werte.</div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP}" y2="${TOP+PH}" visibility="hidden"/>${cols}</svg>
     <details class="ctable"><summary>Als Tabelle</summary><table class="htab"><thead><tr><th>Datum</th>${rows.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${S.slice().reverse().map(x=>`<tr><td>${fmtDateY(x.d)}</td>${rows.map(([k,,u])=>`<td>${x[k]===null?"–":x[k]+(u==="kg"?" kg":"")}</td>`).join("")}</tr>`).join("")}</tbody></table></details></div>`}
 const CL=14,CR=14;
 function chartTip(wrap,i){const id=wrap.dataset.ex;const S=seriesFor(id);const x=S[i];if(!x)return;const tip=wrap.querySelector(".ctip");const svg=wrap.querySelector("svg");
