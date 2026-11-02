@@ -169,6 +169,10 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .chart .hz{fill:transparent;cursor:crosshair}
 .ctip{background:var(--accent-soft);border-radius:8px;padding:5px 9px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0;max-width:520px}
 .ctip span{color:var(--muted)}.ctip span b{color:var(--ink)}
+.minispark{flex:none;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 6px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.minispark span{font-size:.72rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.minispark[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.bigchart{margin-top:4px}
 .chartdet>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;padding:4px 0;min-height:32px;display:flex;align-items:center}
 .chartdet[open]>summary{margin-bottom:2px}
 .ctable summary{cursor:pointer;color:var(--accent);font-size:.88rem;font-weight:600;padding:6px 0}
@@ -761,6 +765,13 @@ function fmtDateY(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-dig
 function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg):"")}
 function lastHTML(it){const l=lastFor(it.id);if(!l)return "";
   return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span></div>`}
+/* kleine Verlaufskurve rechts neben der Übung; Tipp darauf zeigt den grossen Verlauf */
+function miniSpark(id){const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kg!==null)?"kg":"reps";
+  const v=S.map(x=>x[k]);const nums=v.filter(x=>x!==null);if(!nums.length)return "";
+  const W=96,H=40,P=5;let mn=Math.min(...nums),mx=Math.max(...nums);if(mn===mx){mn-=1;mx+=1}
+  const X=i=>S.length===1?W/2:P+i*(W-2*P)/(S.length-1),Y=x=>H-P-(x-mn)/(mx-mn)*(H-2*P);
+  const pts=v.map((x,i)=>x===null?null:[X(i),Y(x)]).filter(Boolean);const last=pts[pts.length-1];const lv=nums[nums.length-1];
+  return `<button type="button" class="minispark" data-spark="${esc(id)}" aria-expanded="false" aria-label="Verlauf vergrössern"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${pts.length>1?`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`:""}<circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="var(--accent)"/></svg><span>${k==="kg"?`${Math.round(lv*10)/10} kg`:`Ø ${lv}`}</span></button>`}
 function chartDetails(id,open){return histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
 /* Gewicht vom letzten Mal: gleicher Satz, sonst letzter Satz mit Gewicht; zuerst abgeschlossene Trainings, dann offene Sätze in anderen Einheiten */
 function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&l[idx].kg)return l[idx].kg;const w=[...l].reverse().find(x=>x.kg);if(w)return w.kg}
@@ -932,8 +943,8 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <h2 class="stitle">${esc(x.t||"Training")}</h2>
       <div class="summary"><span><b>${x.items.length}</b> Übungen</span><span><b>${n}</b> Sätze</span></div>
       <div class="items">${x.items.map(y=>{const e=EXBY[y.id]||{n:y.n,k:"eigen"};const fake={w:y.w};
-        return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div></div>
-          <div class="sets">${y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div>${chartDetails(y.id,true)}</div>`}).join("")}</div>
+        return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div>${miniSpark(y.id)}</div>
+          <div class="sets">${y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
       <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
     </div>`;
 }
@@ -957,6 +968,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",e=>{
   const t=e.target;
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
+  const sp=t.closest("[data-spark]");if(sp){const item=sp.closest(".item");const big=item&&item.querySelector(".bigchart");if(big){const open=big.hidden;if(open&&!big.innerHTML)big.innerHTML=chartHTML(sp.dataset.spark);big.hidden=!open;sp.setAttribute("aria-expanded",String(open))}return}
   const hsl=t.closest("[data-hsel]");if(hsl){statSel=+hsl.dataset.hsel;renderStats();const d=document.getElementById("statDetail");if(d&&innerWidth<900)d.scrollIntoView({block:"start",behavior:"smooth"});return}
   const hs=t.closest("[data-hsend]");if(hs){copyOrShare(histEntryText(hist()[+hs.dataset.hsend]),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;const icon=hd.classList.contains("hbtn");if(!icon)hd.textContent="Wirklich löschen?";else{hd.title="Nochmals tippen zum Löschen";flash("Nochmals auf den Mülleimer tippen zum Löschen")}hd.classList.add("warn");setTimeout(()=>{hd._arm=false;if(!icon)hd.textContent=hd.dataset.label||"Löschen";hd.classList.remove("warn")},4000);return}
