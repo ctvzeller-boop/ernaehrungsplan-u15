@@ -157,16 +157,17 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hentry .htab{margin:4px 0 10px;width:100%}
 .hentry .htab th{white-space:normal;width:45%}
 .chartwrap{position:relative}
-.chart{width:100%;height:auto;display:block;touch-action:pan-y}
-.chart .ct{font:700 22px var(--body);fill:var(--ink)}
-.chart .cy{font:19px var(--body);fill:var(--muted);font-variant-numeric:tabular-nums}
+.chart{width:100%;max-width:520px;height:auto;display:block;touch-action:pan-y}
+.chart .ct{font:600 24px var(--body);fill:var(--muted)}
+.chart .cdiff{font:700 22px var(--body)}.chart .cdiff.up{fill:var(--ok)}.chart .cdiff.down{fill:var(--less)}
+.chart .cy{font:22px var(--body);fill:var(--muted);font-variant-numeric:tabular-nums}
 .chart .cg{stroke:var(--line);stroke-width:1}
 .chart .cl{fill:none;stroke:var(--accent);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
 .chart .cd{fill:var(--accent);stroke:var(--surface);stroke-width:3}
-.chart .cv{font:700 20px var(--body);fill:var(--ink)}
+.chart .cv{font:700 30px var(--body);fill:var(--ink);font-variant-numeric:tabular-nums}
 .chart .cx{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
 .chart .hz{fill:transparent;cursor:crosshair}
-.ctip{background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem;display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0}
+.ctip{background:var(--accent-soft);border-radius:8px;padding:5px 9px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0;max-width:520px}
 .ctip span{color:var(--muted)}.ctip span b{color:var(--ink)}
 .chartdet>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;padding:4px 0;min-height:32px;display:flex;align-items:center}
 .chartdet[open]>summary{margin-bottom:2px}
@@ -851,31 +852,30 @@ function seriesFor(id){return histFor(id).slice().reverse().map(h=>{const r=h.lo
   return {d:h.d,kg:bestKg(h.log),reps:r.length?Math.round(10*r.reduce((a,b)=>a+b,0)/r.length)/10:null,sets:h.log.length}})}
 function chartHTML(id){const S=seriesFor(id);if(!S.length)return "";
   const e=EXBY[id]||{};const time=isTime(e);
-  const rows=[["kg","Gewicht","kg"],["reps",time?"Ø Zeit pro Satz":"Ø Wdh pro Satz",time?"s":""],["sets","Sätze",""]].filter(([k])=>S.some(x=>x[k]!==null));
-  const W=640,L=64,R=24,PH=110,GAP=62,TOP=40,H=TOP+rows.length*(PH+GAP)+8;
+  const rows=[["kg","Gewicht","kg"],["reps",time?"Ø Zeit":"Ø Wdh",time?"s":""],["sets","Sätze",""]].filter(([k])=>S.some(x=>x[k]!==null));
+  /* kompakt: links Name + letzter Wert, rechts kleine Kurve; gemeinsame Datumsachse */
+  const W=640,L=CL,R=CR,RH=74,TOP=6,H=TOP+rows.length*RH+30;
   const t0=S[0].d,t1=S[S.length-1].d;const X=d=>S.length===1?(L+(W-R))/2:L+(d-t0)/(t1-t0)*(W-R-L);
-  let g="";
-  rows.forEach(([k,lab,unit],ri)=>{const y0=TOP+ri*(PH+GAP);const vals=S.map(x=>x[k]).filter(v=>v!==null);
-    let mn=Math.floor(Math.min(...vals)),mx=Math.ceil(Math.max(...vals));if(mn===mx){mn=Math.max(0,mn-1);mx=mx+1}
-    const Y=v=>y0+PH-(v-mn)/(mx-mn)*PH;
-    const nice=v=>Math.round(v*10)/10;
-    g+=`<text class="ct" x="0" y="${y0-18}">${lab}${unit?` (${unit})`:""}</text>`;
-    (mx-mn>=2?[mn,Math.round((mn+mx)/2),mx]:[mn,mx]).forEach(v=>{g+=`<line class="cg" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="cy" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${nice(v)}</text>`});
+  const nice=v=>Math.round(v*10)/10;let g="";
+  rows.forEach(([k,lab,unit],ri)=>{const y0=TOP+ri*RH;const vals=S.map(x=>x[k]).filter(v=>v!==null);
+    let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1}
+    const Y=v=>y0+RH-16-(v-mn)/(mx-mn)*(RH-30);
+    const lastV=[...S].reverse().find(x=>x[k]!==null)[k],firstV=S.find(x=>x[k]!==null)[k];const diff=nice(lastV-firstV);
+    g+=`<text class="ct" x="0" y="${y0+28}">${lab}</text><text class="cv" x="0" y="${y0+58}">${nice(lastV)}${unit?" "+unit:""}${S.length>1&&diff!==0?`<tspan class="cdiff ${diff>0?"up":"down"}" dx="10">${diff>0?"+":""}${diff}</tspan>`:""}</text>`;
+    g+=`<line class="cg" x1="${L}" x2="${W-R}" y1="${y0+RH-6}" y2="${y0+RH-6}"/>`;
     const pts=S.map(x=>x[k]===null?null:[X(x.d),Y(x[k])]).filter(Boolean);
     if(pts.length>1)g+=`<polyline class="cl" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
-    pts.forEach(p=>{g+=`<circle class="cd" cx="${p[0]}" cy="${p[1]}" r="6.5"/>`});
-    const last=S[S.length-1][k];if(last!==null){const p=pts[pts.length-1];g+=`<text class="cv" x="${Math.min(p[0],W-R)}" y="${p[1]-14}" text-anchor="${S.length>1?"end":"middle"}">${nice(last)}${unit==="kg"?" kg":""}</text>`}
+    pts.forEach(p=>{g+=`<circle class="cd" cx="${p[0]}" cy="${p[1]}" r="6"/>`});
   });
-  // x-Achse (Datum) unter dem letzten Panel
-  const yb=TOP+rows.length*(PH+GAP)-GAP+30;const ticks=S.length<=6?S.map(x=>x.d):[t0,t0+(t1-t0)/2,t1];
-  ticks.forEach((d,i)=>{const last=i===ticks.length-1&&ticks.length>1;g+=`<text class="cy" x="${last?W-2:X(d)}" y="${yb}" text-anchor="${last?"end":"middle"}">${fmtDate(d)}</text>`});
-  // Hover-/Tipp-Zonen
+  const yb=TOP+rows.length*RH+22;
+  g+=`<text class="cy" x="${L}" y="${yb}" text-anchor="start">${fmtDate(t0)}</text>`;if(S.length>1)g+=`<text class="cy" x="${W-R}" y="${yb}" text-anchor="end">${fmtDate(t1)}</text>`;
   const cols=S.map((x,i)=>{const a=i?(X(S[i-1].d)+X(x.d))/2:L-10,b=i<S.length-1?(X(x.d)+X(S[i+1].d))/2:W;return `<rect class="hz" x="${a}" y="0" width="${Math.max(8,b-a)}" height="${H}" data-ci="${i}"/>`}).join("");
-  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="ctip" aria-live="polite">Tippe auf einen Punkt.</div><svg class="chart" viewBox="0 0 ${W} ${H+16}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP-4}" y2="${H-20}" visibility="hidden"/>${cols}</svg>
+  return `<div class="chartwrap" data-ex="${esc(id)}"><div class="ctip" aria-live="polite">Tippe auf die Kurve für die Werte eines Tages.</div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht, Wiederholungen und Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP}" y2="${TOP+rows.length*RH}" visibility="hidden"/>${cols}</svg>
     <details class="ctable"><summary>Als Tabelle</summary><table class="htab"><thead><tr><th>Datum</th>${rows.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${S.slice().reverse().map(x=>`<tr><td>${fmtDateY(x.d)}</td>${rows.map(([k,,u])=>`<td>${x[k]===null?"–":x[k]+(u==="kg"?" kg":"")}</td>`).join("")}</tr>`).join("")}</tbody></table></details></div>`}
+const CL=230,CR=14;
 function chartTip(wrap,i){const id=wrap.dataset.ex;const S=seriesFor(id);const x=S[i];if(!x)return;const tip=wrap.querySelector(".ctip");const svg=wrap.querySelector("svg");
   const r=svg.querySelector(`[data-ci="${i}"]`);const cx=svg.querySelectorAll(".cd");
-  const line=svg.querySelector(".cx");const W=640,L=64,R=24;const t0=S[0].d,t1=S[S.length-1].d;const X=S.length===1?(L+(W-R))/2:L+(x.d-t0)/(t1-t0)*(W-R-L);
+  const line=svg.querySelector(".cx");const W=640,L=CL,R=CR;const t0=S[0].d,t1=S[S.length-1].d;const X=S.length===1?(L+(W-R))/2:L+(x.d-t0)/(t1-t0)*(W-R-L);
   line.setAttribute("x1",X);line.setAttribute("x2",X);line.setAttribute("visibility","visible");
   const time=isTime(EXBY[id]||{});
   tip.innerHTML=`<b>${fmtDateY(x.d)}</b>${x.kg!==null?`<span>Gewicht <b>${x.kg} kg</b></span>`:""}${x.reps!==null?`<span>${time?"Ø Zeit":"Ø Wdh"} <b>${x.reps}</b></span>`:""}<span>Sätze <b>${x.sets}</b></span>`;
