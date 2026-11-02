@@ -119,6 +119,10 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .goalpick .eyebrow{margin-right:2px}
 .goalpick button{padding:5px 12px;border-radius:999px;font-size:.85rem}
 .goalpick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.item.optidle{opacity:.55;background:var(--bg);border-style:dashed}
+.item.optidle:focus-within,.item.optidle:hover{opacity:.85}
+body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
+.opttag{font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -448,6 +452,8 @@ const EX=[
  ["dips","Dips (Barrenstütz)","ober","3","6","2 Min.","2","",[YS("_HxxBada6Jw")]],
  ["dipsw","Weighted Dips (Dips mit Zusatzgewicht)","ober","4","4–6","2–3 Min.","2","Gewicht mit Dip-Gürtel oder Kurzhantel zwischen den Füssen. Kontrolliert ablassen, bis die Oberarme etwa parallel zum Boden sind, Schultern unten und hinten. Erst mit Zusatzgewicht, wenn 3 × 10 saubere Dips ohne Gewicht gehen. Nie bis zum Versagen.",[YS("_HxxBada6Jw")]],
  ["flies","Dumbbell Chest Flies (Fliegende mit Kurzhanteln)","ober","2–3","10–12","90–120 s","0–1","",["https://www.youtube.com/watch?v=4meHGUe0SUk"]],
+ ["curls","Dumbbell Biceps Curls (Bizeps-Curls mit Kurzhanteln)","ober","3","10–12","60–90 s","1–2","Ellbogen eng am Körper und fix, nur der Unterarm bewegt sich. Hoch bis die Kurzhantel auf Schulterhöhe ist, oben kurz anspannen, langsam ablassen bis die Arme fast gestreckt sind. Kein Schwung aus dem Oberkörper.",[]],
+ ["pushdown","Cable Triceps Pushdowns (Trizepsdrücken am Kabelzug)","ober","3","10–15","60 s","1–2","Mit Seil oder Stange am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind, unten kurz anspannen (beim Seil die Enden leicht auseinanderziehen), kontrolliert zurück bis etwa 90° im Ellbogen.",[]],
  ["latraise","Lateral Raises (Seitheben)","ober","2–3","10–15","60 s","1–2","",[Y("pOmbQuGeHf8")]],
  ["facepull","Face Pulls or Band Pull-Aparts (Face Pulls oder Band auseinanderziehen)","ober","3","15","60 s","","",[YS("1s-0WtJMsu8")]],
 
@@ -490,7 +496,7 @@ const MAT={
  pullup:["kw band",["Klimmzugstange","?Resistance Band"]],pullupw:["gew",["Klimmzugstange","Gewichtsgürtel|Kurzhanteln"]],
  pushup:["kw",[]],lmpress:["gew",["Landmine","Langhantel"]],lmpressst:["gew",["Landmine","Langhantel"]],
  row1:["gew",["Kurzhanteln","Bank"]],rowchest:["gew",["Rudermaschine|Langhantel"]],dips:["kw",["Dipstation"]],dipsw:["gew",["Dipstation","Gewichtsgürtel|Kurzhanteln"]],
- flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],facepull:["band gew",["Kabelzug|Resistance Band"]],
+ flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],curls:["gew",["Kurzhanteln"]],pushdown:["gew",["Kabelzug"]],facepull:["band gew",["Kabelzug|Resistance Band"]],
  pallof:["band gew",["Kabelzug|Resistance Band"]],chop:["gew band",["Kabelzug|Resistance Band"]],birddog:["kw",["Matte"]],
  lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Kabelzug|Resistance Band","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
  rollout:["kw",["Gymnastikball"]],plank:["kw",["Matte"]],copenhagen:["kw",["Bank"]],
@@ -514,7 +520,7 @@ const MUS={
  pullup:"Latissimus, Bizeps, oberer Rücken",pullupw:"Latissimus, Bizeps, oberer Rücken",pushup:"Brust, Trizeps, vordere Schulter",
  lmpress:"Schulter, Trizeps, obere Brust",lmpressst:"Schulter, Trizeps, obere Brust",
  row1:"Latissimus, oberer Rücken, Bizeps",rowchest:"oberer Rücken, Latissimus, Bizeps",dips:"Trizeps, Brust, vordere Schulter",dipsw:"Trizeps, Brust, vordere Schulter",
- flies:"Brust, vordere Schulter",latraise:"seitliche Schulter",facepull:"hintere Schulter, oberer Rücken, Rotatorenmanschette",
+ flies:"Brust, vordere Schulter",latraise:"seitliche Schulter",curls:"Bizeps, Unterarme",pushdown:"Trizeps",facepull:"hintere Schulter, oberer Rücken, Rotatorenmanschette",
  pallof:"Rumpf, schräge Bauchmuskeln",chop:"schräge Bauchmuskeln, Rumpf, Schulter",birddog:"Rumpf, unterer Rücken, Gesäss",
  lmrot:"schräge Bauchmuskeln, Rumpf, Gesäss, Schulter",sprow:"seitlicher Rumpf, schräge Bauchmuskeln, oberer Rücken",
  mbrot:"schräge Bauchmuskeln, Rumpf, Gesäss",rollout:"gerade Bauchmuskeln, Rumpf, Schulter",plank:"gerade Bauchmuskeln, Rumpf",
@@ -560,7 +566,7 @@ function howtoHTML(id){const e=exById(id);return e&&e.b?`<details class="howto">
 const GOALS={max:{n:"Maximalkraft",s:"4",w:"4–6",p:"2–3 Min.",r:"2"},vol:{n:"Volumen",s:"3",w:"8–12",p:"90 s",r:"1–2"}};
 const NOGOAL=["nordic","calf","hamiso"];
 /* Isolationsübungen: Maximalkraft macht hier keinen Sinn, nur Volumen */
-const NOMAX=["flies","latraise","facepull"];
+const NOMAX=["flies","latraise","facepull","curls","pushdown"];
 function goalable(it){const e=exById(it.id);if(!e||NOGOAL.includes(it.id))return false;const f=focOf(e);return (f.includes("kraftb")||f.includes("kraftob"))&&!isTime(e)}
 function perSide(w){const m=/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein))\b.*$/i.exec(w||"");return m?" "+m[0].trim():""}
 function applyGoal(it,g){const e=exById(it.id);if(!e)return;
@@ -596,7 +602,7 @@ function isTime(it){return /\d\s*(s|Sek|Min)\b/i.test(it.w||"")}
 function unitOf(it){const m=/\d\s*(s|Sek\.?|Min\.?)(?=\s|$|\/)/i.exec(it.w||"");return m?m[1]:""}
 function planShort(it){return String(it.w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").replace(/\s*Sprünge?$/,"").trim()||"✓"}
 function setVal(it,e){const v=(e.v||"").trim();if(!v)return planShort(it);const u=unitOf(it);return u&&/^\d+([.,]\d+)?$/.test(v)?`${v} ${u}`:v}
-function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
+function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;if(it.opt&&!d)return;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
 
 /* Bilder: eigenes Bild > Bilder aus dem PDF > Vorschaubild des Videos */
 function ytId(u){const m=/(?:youtu\.be\/|shorts\/|[?&]v=)([A-Za-z0-9_-]{11})/.exec(u||"");return m?m[1]:null}
@@ -664,10 +670,10 @@ function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
   if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?"Diese Einheit ist noch leer.":"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
   else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
-    const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}`;
+    const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
+        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${howtoHTML(it.id)}
       ${setsHTML(it)}
@@ -691,6 +697,7 @@ function renderItems(focusSel){
       <div class="ifoot">
         <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
         ${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
+        <label class="sslink"><input type="checkbox" data-f="opt"${it.opt?" checked":""}> Optional</label>
       </div>
       ${howtoHTML(it.id)}
     </div>`}).join("");
@@ -722,12 +729,12 @@ function renderLib(){
 /* Text */
 function planText(c){c=c||cur();const lab=labels(c.items);const L=[];
   L.push((c.t||"Trainingseinheit")+(c.a?" – "+c.a:""));if(c.h)L.push(c.h);L.push("");
-  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}`);const d=dose(it);if(d)L.push("    "+d);if(musOf(it.id))L.push("    Muskeln: "+musOf(it.id));if(matLine(it.id))L.push("    Material: "+matLine(it.id));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
+  c.items.forEach((it,i)=>{L.push(`${lab[i]}  ${it.n}${it.opt?" (optional)":""}`);const d=dose(it);if(d)L.push("    "+d);if(musOf(it.id))L.push("    Muskeln: "+musOf(it.id));if(matLine(it.id))L.push("    Material: "+matLine(it.id));if(it.b)L.push("    "+it.b);(it.v||[]).forEach(u=>L.push("    Video: "+u))});
   return L.join("\n")}
 function resultText(c){c=c||cur();const lab=labels(c.items);const t=totals(c);const L=[];
   const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
   c.items.forEach((it,i)=>{const log=it.log||[];const sym={ok:"✓",less:"↓",more:"🔥"};
-    L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):"– nicht gemacht"))});
+    L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
   return L.join("\n")}
 function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
 function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
@@ -737,10 +744,11 @@ function changed(){save();renderBar();renderSummary();renderText()}
 document.getElementById("sessHead").addEventListener("input",e=>{const f=e.target.dataset.sf;if(!f)return;cur()[f]=e.target.value;changed()});
 document.getElementById("search").addEventListener("input",e=>{filter.q=e.target.value;renderLib()});
 document.getElementById("items").addEventListener("input",e=>{
-  const f=e.target.dataset.f;if(!f||f==="ss")return;const box=e.target.closest("[data-u]");
+  const f=e.target.dataset.f;if(!f||f==="ss"||f==="opt")return;const box=e.target.closest("[data-u]");
   const it=cur().items.find(x=>x.u===box.dataset.u);it[f]=e.target.value;if(["s","w","p","r"].includes(f)&&it.goal){it.goal="";const gp=box.querySelector(".goalpick");if(gp)gp.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.goal==="")))}save();renderText()});
 document.getElementById("items").addEventListener("change",e=>{
-  if(e.target.dataset.f!=="ss")return;const u=e.target.closest("[data-u]").dataset.u;
+  const ff=e.target.dataset.f;if(ff==="opt"){const u=e.target.closest("[data-u]").dataset.u;cur().items.find(x=>x.u===u).opt=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=opt]`);renderText();return}
+  if(ff!=="ss")return;const u=e.target.closest("[data-u]").dataset.u;
   cur().items.find(x=>x.u===u).ss=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=ss]`);renderText()});
 document.addEventListener("change",e=>{
   if(e.target.id==="tplPick"&&e.target.value!==""){const s=fromTpl(TPL[+e.target.value]);state.sessions.push(s);state.active=s.id;save();renderAll();flash(`Vorlage „${s.t}“ geladen`)}
@@ -873,7 +881,7 @@ function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
 async function encodeSess(){const c=cur();
-  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss,kg,goal})=>[id,n,k,s,w,p,r,b,v,ss?1:0,kg||"",goal||""])}));
+  const data=new TextEncoder().encode(JSON.stringify({t:c.t,a:c.a,h:c.h,i:c.items.map(({id,n,k,s,w,p,r,b,v,ss,kg,goal,opt})=>[id,n,k,s,w,p,r,b,v,ss?1:0,kg||"",goal||"",opt?1:0])}));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data)}
 async function decodeSess(code){let bytes=unb64url(code.slice(1));if(code[0]==="z")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));return JSON.parse(new TextDecoder().decode(bytes))}
@@ -891,7 +899,7 @@ async function importCode(code,fromPaste){
   const known=state.imported[code];
   if(known&&state.sessions.some(s=>s.id===known)){state.active=known;if(fromPaste)state.mode="train";save();renderAll();if(fromPaste)flash("Einheit geöffnet");return true}
   try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
-    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal])=>({u:uid(),id,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
+    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal,opt])=>({u:uid(),id,opt:!!opt,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
     state.sessions.push(s);state.active=s.id;state.imported[code]=s.id;importedId=s.id;state.mode="train";save();renderAll();
     document.getElementById("shareBanner").hidden=false;return true
   }catch(e){flash("Die geteilte Einheit konnte nicht gelesen werden.");return false}
@@ -923,7 +931,7 @@ async function buildPDF(){
   let y=34;
   if(c.h){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);const l=doc.splitTextToSize(T(c.h),W-2*M);doc.text(l,M,y);y+=l.length*4.4+3}
   const hasPic=pics.some(Boolean);
-  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(musOf(it.id)?"\nMuskeln: "+T(musOf(it.id)):"")+(matLine(it.id)?"\nMaterial: "+T(matLine(it.id)):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
+  const body=c.items.map((it,i)=>[lab[i],"",T(it.n)+(it.opt?" (optional)":"")+(musOf(it.id)?"\nMuskeln: "+T(musOf(it.id)):"")+(matLine(it.id)?"\nMaterial: "+T(matLine(it.id)):"")+(it.b?"\n"+T(it.b):""),T(it.s),T(it.w),T(kgTxt(it.kg)),T(it.p),T(it.r),(it.v&&it.v.length)?"Video":""]);
   doc.autoTable({head:[["","","Übung","Sätze","Wdh / Zeit","Gewicht / Band","Pause","RIR",""]].map(r=>r.map(T)),body,startY:y,margin:{left:M,right:M,bottom:16},theme:"grid",
     styles:{font:"helvetica",fontSize:9,cellPadding:2.4,textColor:INK,lineColor:LINE,lineWidth:.2,valign:"middle",overflow:"linebreak"},
     headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7.5},
