@@ -115,6 +115,8 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .ex summary .dose{display:block;font-weight:400;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .de{display:block;font-family:var(--body);font-weight:500;font-size:.82rem;color:var(--muted);text-transform:none;letter-spacing:0;line-height:1.3;margin-top:1px}
 .modalbox h3 .de{font-size:.95rem}
+.howto summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;padding:2px 0;min-height:32px;display:flex;align-items:center}
+.howto .note{white-space:pre-line;margin:4px 0 0;font-size:.9rem;color:var(--ink);background:var(--bg);border-radius:8px;padding:10px 12px}
 .mus{display:block;font-weight:500;font-size:.8rem;color:var(--c,var(--accent));margin-top:3px}
 .mus::before{content:"Muskeln: ";color:var(--muted)}
 .mat::before{content:"Material: "}
@@ -430,7 +432,7 @@ const EX=[
  ["pallof","Pallof Press (Anti-Rotations-Drücken)","rumpf","2–3","10 / Seite","60 s","","Anti-Rotation: Becken und Oberkörper bleiben ruhig.",[Y("ecfx4bkhQTE")]],
  ["chop","Half-Kneeling Cable Chop (Holzhacker im Halbkniestand)","rumpf","2","8 / Seite","60 s","","",[YS("EzoMXce9M-k")]],
  ["birddog","Bird Dog, Knees Hovering (Vierfüsslerstand diagonal, Knie in der Luft)","rumpf","2","6–8 / Seite","60 s","","Oberkörper und Becken möglichst stabil halten.",[Y("Q6-U-Rd5A80")]],
- ["lmrot","Landmine Rotation (Rotation mit Landmine)","rumpf","3","6–8 / Seite","60–90 s","","Aus Hüfte und Füssen drehen, hinteren Fuss mitdrehen wie beim Schuss.\nRippen über dem Becken, unterer Rücken verdreht sich nicht.\nArme lang, am Umkehrpunkt abbremsen – das Bremsen ist das Zweikampftraining.\nLeicht beginnen: zuerst Kontrolle, dann Gewicht.",[Y("e5DP6961WEk")]],
+ ["lmrot","Landmine Rotation (Rotation mit Landmine)","rumpf","3","6–8 / Seite","60–90 s","","Technik Landmine Rotation:\n• Aus Hüfte und Füssen drehen – hinteren Fuss mitdrehen wie beim Schuss.\n• Rippen über dem Becken, unterer Rücken verdreht sich nicht.\n• Arme lang, am Umkehrpunkt abbremsen – das Bremsen ist das Zweikampftraining.\n• Leicht beginnen: zuerst Kontrolle, dann Gewicht.",[Y("e5DP6961WEk")]],
  ["sprow","Side Plank Row (Seitstütz mit Rudern)","rumpf","3","10 / Seite","60 s","","Rumpf stabil halten.",[YS("eJQy9nifij0")]],
  ["mbrot","Medicine Ball Rotational Throw (Medizinball-Rotationswurf an die Wand)","rumpf","3","5 / Seite","60 s","","Explosiv rotieren, aus dem Rumpf arbeiten. Auch im Ausfallschritt oder kniend möglich.",[YS("02c2YLgF8iE")]],
  ["rollout","Stability Ball Plank Roll-out (Rollout auf dem Gymnastikball)","rumpf","2","10–12","60–90 s","","",[Y("VOPq6iXol4k")]],
@@ -531,6 +533,7 @@ function infoHTML(id){const mu=musOf(id),ma=matLine(id);return (mu?`<span class=
 function matLine(id){return matOf(id).map(fmtMat).join(", ")}
 function focOf(e){return e.f||CAT2FOC[e.k]||[]}
 function nameHTML(n){const m=/^(.*?)\s\((.*)\)$/.exec(n||"");return m?`${esc(m[1])}<span class="de">${esc(m[2])}</span>`:esc(n)}
+function howtoHTML(id){const e=exById(id);return e&&e.b?`<details class="howto"><summary>Ausführung</summary><p class="note">${esc(e.b)}</p></details>`:""}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
@@ -631,6 +634,7 @@ function renderItems(focusSel){
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
         <div class="iname">${nameHTML(it.n)}<span class="idose">${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
+      ${howtoHTML(it.id)}
       ${setsHTML(it)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
@@ -652,6 +656,7 @@ function renderItems(focusSel){
         <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
         ${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
       </div>
+      ${howtoHTML(it.id)}
     </div>`}).join("");
   renderSummary();renderProgress();
   if(focusSel){const f=el.querySelector(focusSel);if(f)f.focus()}
