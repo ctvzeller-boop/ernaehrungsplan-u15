@@ -786,14 +786,13 @@ function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,
 function lastHTML(it){if(isSimple(it))return "";const l=lastFor(it.id);if(!l)return "";
   return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span></div>`}
 /* kleine Verlaufskurve rechts neben der Übung; Tipp darauf zeigt den grossen Verlauf */
-function miniSpark(id){if(isSimpleId(id))return "";const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kg!==null)?"kg":"rep";
-  const v=S.map(x=>x[k]);const nums=v.filter(x=>x!==null);if(!nums.length)return "";
-  const W=96,H=40,P=5;let mn=Math.min(...nums),mx=Math.max(...nums);if(mn===mx){mn-=1;mx+=1}
-  const X=i=>S.length===1?W/2:P+i*(W-2*P)/(S.length-1),Y=x=>H-P-(x-mn)/(mx-mn)*(H-2*P);
-  const pts=v.map((x,i)=>x===null?null:[X(i),Y(x),x]);let segs="";
-  for(let q=1;q<pts.length;q++){const a=pts[q-1],b=pts[q];if(a&&b)segs+=`<line class="seg ${trendCls(a[2],b[2])}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="stroke-width:2.5"/>`}
-  const lp=[...pts].reverse().find(Boolean);const lv=nums[nums.length-1];
-  return `<button type="button" class="minispark" data-spark="${esc(id)}" aria-expanded="false" aria-label="Verlauf vergrössern"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${segs}<circle cx="${lp[0]}" cy="${lp[1]}" r="3.5" fill="var(--ink)"/></svg><span>Ø ${Math.round(lv*10)/10}${k==="kg"?" kg":""}</span></button>`}
+function miniSpark(id){if(isSimpleId(id))return "";const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kgs.some(v=>v!==null))?"kgs":"reps";
+  const v=S.flatMap(x=>x[k]).filter(x=>x!==null);if(!v.length)return "";
+  const W=96,H=40,P=5;let mn=Math.min(...v),mx=Math.max(...v);if(mn===mx){mn-=1;mx+=1}
+  const X=i=>v.length===1?W/2:P+i*(W-2*P)/(v.length-1),Y=x=>H-P-(x-mn)/(mx-mn)*(H-2*P);let segs="";
+  for(let q=1;q<v.length;q++)segs+=`<line class="seg ${trendCls(v[q-1],v[q])}" x1="${X(q-1)}" y1="${Y(v[q-1])}" x2="${X(q)}" y2="${Y(v[q])}" style="stroke-width:2.5"/>`;
+  const lv=v[v.length-1];
+  return `<button type="button" class="minispark" data-spark="${esc(id)}" aria-expanded="false" aria-label="Verlauf vergrössern"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${segs}<circle cx="${X(v.length-1)}" cy="${Y(lv)}" r="3.5" fill="var(--ink)"/></svg><span>${Math.round(lv*10)/10}${k==="kgs"?" kg":""}</span></button>`}
 function chartDetails(id,open){return !isSimpleId(id)&&histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
 /* Gewicht vom letzten Mal: gleicher Satz, sonst letzter Satz mit Gewicht; zuerst abgeschlossene Trainings, dann offene Sätze in anderen Einheiten */
 function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&l[idx].kg)return l[idx].kg;const w=[...l].reverse().find(x=>x.kg);if(w)return w.kg}
@@ -931,18 +930,16 @@ function chartHTML(id){const S=seriesFor(id);if(!S.length)return "";
     const last=[...S].reverse().find(x=>x[ak]!==null);
     g+=`<text class="ct" x="0" y="${y0-12}">${lab}${unit?` (${unit})`:""}</text>${last?`<text class="cv" x="${CW-CR}" y="${y0-12}" text-anchor="end">Ø ${nice(last[ak])}${unit?" "+unit:""}</text>`:""}`;
     [mn,mx].forEach(v=>{g+=`<line class="cg" x1="${CL}" x2="${CW-CR}" y1="${Y(v)}" y2="${Y(v)}"/><text class="cy" x="${CL-8}" y="${Y(v)+6}" text-anchor="end">${nice(v)}</text>`});
-    /* Durchschnittslinie, Abschnitte gefärbt: grün steigt, rot sinkt, blau gleich */
-    const av=S.map(x=>x[ak]===null?null:[X(x.d),Y(x[ak]),x[ak]]);
-    for(let q=1;q<av.length;q++){const a=av[q-1],b=av[q];if(a&&b)g+=`<line class="seg ${trendCls(a[2],b[2])}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`}
-    /* einzelne Sätze als Punkte, um das Trainingsdatum gruppiert */
-    S.forEach(x=>{const n=x[k].length;x[k].forEach((v,si)=>{if(v===null)return;const dx=n>1?(si-(n-1)/2)*spread:0;
-      g+=`<circle class="sd st-${x.log[si].st}" cx="${X(x.d)+dx}" cy="${Y(v)}" r="5"/>`})});
-    av.forEach(p=>{if(p)g+=`<rect class="am" x="${p[0]-9}" y="${p[1]-1.5}" width="18" height="3" rx="1.5"/>`});
+    /* alle Sätze als Punkte (um das Trainingsdatum gruppiert), Linie verbindet jeden Satz der Reihe nach:
+       grün = steigt, rot = sinkt, blau = gleich */
+    const pts=[];S.forEach(x=>{const n=x[k].length;x[k].forEach((v,si)=>{if(v===null)return;const dx=n>1?(si-(n-1)/2)*spread:0;pts.push([X(x.d)+dx,Y(v),v,x.log[si].st])})});
+    for(let q=1;q<pts.length;q++){const a=pts[q-1],b=pts[q];g+=`<line class="seg ${trendCls(a[2],b[2])}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`}
+    pts.forEach(p=>{g+=`<circle class="sd st-${p[3]}" cx="${p[0]}" cy="${p[1]}" r="5"/>`});
   });
   const yb=H-6;g+=`<text class="cy" x="${CL}" y="${yb}" text-anchor="start">${fmtDate(S[0].d)}</text>`;if(S.length>1)g+=`<text class="cy" x="${CW-CR}" y="${yb}" text-anchor="end">${fmtDate(S[S.length-1].d)}</text>`;
   const cols=S.map((x,i)=>{const a=i?(X(S[i-1].d)+X(x.d))/2:0,b=i<S.length-1?(X(x.d)+X(S[i+1].d))/2:CW;return `<rect class="hz" x="${a}" y="0" width="${Math.max(8,b-a)}" height="${H}" data-ci="${i}"/>`}).join("");
   return `<div class="chartwrap" data-ex="${esc(id)}">${S.length===1?`<p class="hint">Erst 1 Training gespeichert – ab dem 2. Training siehst du hier den Verlauf.</p>`:""}<div class="ctip" aria-live="polite">Tippe auf ein Training für alle Sätze.</div><svg class="chart" viewBox="0 0 ${CW} ${H}" role="img" aria-label="Verlauf ${esc(e.n||id)}: Gewicht und Wiederholungen aller Sätze pro Training">${g}<line class="cx" x1="0" x2="0" y1="${TOP-6}" y2="${H-26}" visibility="hidden"/>${cols}</svg>
-    <p class="hint chartkey"><span><i class="k tup"></i>steigt</span><span><i class="k tdown"></i>sinkt</span><span><i class="k tflat"></i>gleich</span><span>Linie = Durchschnitt pro Training</span><span>Punkte = einzelne Sätze (orange = mehr, rot = weniger geschafft)</span></p>
+    <p class="hint chartkey"><span><i class="k tup"></i>steigt</span><span><i class="k tdown"></i>sinkt</span><span><i class="k tflat"></i>gleich</span><span>Linie verbindet alle Sätze</span><span>Punkte = einzelne Sätze (orange = mehr, rot = weniger geschafft)</span></p>
     <details class="ctable"><summary>Als Tabelle</summary><table class="htab"><thead><tr><th>Datum</th><th>Sätze</th></tr></thead><tbody>${S.slice().reverse().map(x=>`<tr><td>${fmtDateY(x.d)}</td><td>${x.log.map(z=>esc(setTxt(z,x.w))).join(" · ")}</td></tr>`).join("")}</tbody></table></details></div>`}
 function chartTip(wrap,i){const id=wrap.dataset.ex;const S=seriesFor(id);const x=S[i];if(!x)return;const tip=wrap.querySelector(".ctip");const svg=wrap.querySelector("svg");
   const X=chartX(S)(x.d);const line=svg.querySelector(".cx");line.setAttribute("x1",X);line.setAttribute("x2",X);line.setAttribute("visibility","visible");
