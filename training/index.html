@@ -185,8 +185,9 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hsel{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:none;background:none;padding:10px 6px;font-weight:500;overflow-wrap:anywhere}
 .hsel .hdate{font-size:.8rem;min-width:0}.hsel .htitle{font-size:1rem}.hsel .hcount{font-size:.8rem}
 .hacts{display:flex;gap:4px;flex:none;padding-right:4px}
-.hbtn{padding:6px 10px;font-size:.8rem;border-radius:999px}
+.hbtn{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:999px;color:var(--accent)}
 .hbtn.del{color:var(--warn)}
+.hbtn.del.warn{background:var(--warn);color:#fff;border-color:var(--warn)}
 .best td{font-weight:700;font-variant-numeric:tabular-nums}.best .bd{color:var(--muted);font-weight:500;padding-left:12px}
 .best th{white-space:normal}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
@@ -925,7 +926,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
     ${bestRows.length?`<div class="card"><h2>Bestwerte</h2><table class="htab best"><tbody>${bestRows.map(([id,b])=>{const e=EXBY[id];return `<tr><th scope="row">${esc(e?e.n.split(" (")[0]:id)}</th><td>${esc(kgTxt(String(b.k)))}</td><td class="bd">${fmtDate(b.d)}</td></tr>`}).join("")}</tbody></table></div>`:""}
     <div class="card"><h2>Absolvierte Trainings</h2>
       <div class="hlist" role="list">${H.map(({x,i})=>{let c=0;x.items.forEach(y=>c+=y.log.length);const dl=new Date(x.d).toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"2-digit"});
-      return `<div role="listitem" class="hrow${i===statSel?" sel":""}"><button type="button" class="hsel" data-hsel="${i}" aria-pressed="${i===statSel}"><span class="hdate">${dl}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${c} ${c===1?"Satz":"Sätze"}</span></button><span class="hacts"><button type="button" class="hbtn" data-hsend="${i}" aria-label="Training vom ${dl} an Coach senden" title="An Coach senden">Senden</button><button type="button" class="hbtn del" data-hdel="${i}" data-label="Löschen" aria-label="Training vom ${dl} löschen" title="Löschen">Löschen</button></span></div>`}).join("")}</div></div>
+      return `<div role="listitem" class="hrow${i===statSel?" sel":""}"><button type="button" class="hsel" data-hsel="${i}" aria-pressed="${i===statSel}"><span class="hdate">${dl}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${c} ${c===1?"Satz":"Sätze"}</span></button><span class="hacts"><button type="button" class="hbtn" data-hsend="${i}" aria-label="Training vom ${dl} an Coach senden" title="An Coach senden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button type="button" class="hbtn del" data-hdel="${i}" aria-label="Training vom ${dl} löschen" title="Löschen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></span></div>`}).join("")}</div></div>
     <div class="card" id="statDetail">
       <div class="eyebrow">${new Date(x.d).toLocaleDateString("de-CH",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})} · ${new Date(x.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}</div>
       <h2 class="stitle">${esc(x.t||"Training")}</h2>
@@ -958,7 +959,7 @@ document.addEventListener("click",e=>{
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
   const hsl=t.closest("[data-hsel]");if(hsl){statSel=+hsl.dataset.hsel;renderStats();const d=document.getElementById("statDetail");if(d&&innerWidth<900)d.scrollIntoView({block:"start",behavior:"smooth"});return}
   const hs=t.closest("[data-hsend]");if(hs){copyOrShare(histEntryText(hist()[+hs.dataset.hsend]),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
-  const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;hd.textContent=hd.classList.contains("hbtn")?"Sicher?":"Wirklich löschen?";hd.classList.add("warn");setTimeout(()=>{hd._arm=false;hd.textContent=hd.dataset.label||"Löschen";hd.classList.remove("warn")},4000);return}
+  const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;const icon=hd.classList.contains("hbtn");if(!icon)hd.textContent="Wirklich löschen?";else{hd.title="Nochmals tippen zum Löschen";flash("Nochmals auf den Mülleimer tippen zum Löschen")}hd.classList.add("warn");setTimeout(()=>{hd._arm=false;if(!icon)hd.textContent=hd.dataset.label||"Löschen";hd.classList.remove("warn")},4000);return}
     hist().splice(+hd.dataset.hdel,1);statSel=null;save();renderAll();flash("Training gelöscht");return}
   if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
