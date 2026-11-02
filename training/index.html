@@ -292,7 +292,9 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .setbox.ok{background:var(--ok)}
 .setbox.less{background:var(--less)}
 .setbox.more{background:var(--more)}
-.setbox.todo{background:transparent;border:2px dashed var(--line);color:var(--muted);cursor:default;font-size:1rem}
+.setbox.todo{background:transparent;border:2px dashed var(--line);color:var(--muted);cursor:pointer;font-size:1rem}
+.setbox.todo.next{border:2px solid var(--ink);color:var(--ink);background:var(--surface)}
+.setbox.todo:hover{border-color:var(--accent);color:var(--ink)}
 .setbox .fire{font-size:1rem}
 .setbox .sv{display:inline-flex;align-items:center;gap:2px}
 .setbox small{font-family:var(--body);font-size:.72rem;font-weight:600;opacity:.92;margin-top:2px}
@@ -815,10 +817,11 @@ function setsHTML(it){
   if(isSimple(it))return simpleSetsHTML(it);
   const log=it.log||[],p=plannedSets(it);
   const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
-  const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">${esc(planShort(it))}</span>`).join("");
-  const n=log.length+1;const extra=p&&log.length>=p;
+  /* offene Sätze sind selbst die Buttons: Antippen öffnet den nächsten Satz */
+  const n=log.length+1;
+  const todo=Array.from({length:Math.max(0,p-log.length)},(_,j)=>`<button type="button" class="setbox todo${j===0?" next":""}" data-log="1"${j?` tabindex="-1"`:""} aria-label="Satz ${n} eintragen (Plan ${esc(planShort(it))})">${esc(planShort(it))}</button>`).join("");
   const addrm=`<button type="button" class="setbox addset" data-addset="1" aria-label="Satz hinzufügen">＋ Satz</button>${(it.xs||0)>0&&p>log.length?`<button type="button" class="setbox addset" data-rmset="1" aria-label="Zusätzlichen Satz entfernen">−</button>`:""}`;
-  return `<div class="sets">${boxes}${todo}${addrm}<button type="button" class="setbtn${extra?" extra":""}" data-log="1">${extra?"＋ Zusätzlicher Satz":`✓ Satz ${n}${p?" von "+p:""} erledigt`}</button></div>`;
+  return `<div class="sets">${boxes}${todo}${addrm}</div>`;
 }
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
