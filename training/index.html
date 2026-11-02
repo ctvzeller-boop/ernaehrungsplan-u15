@@ -211,6 +211,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hbtn.del.warn{background:var(--warn);color:#fff;border-color:var(--warn)}
 .best td{font-weight:700;font-variant-numeric:tabular-nums}.best .bd{color:var(--muted);font-weight:500;padding-left:12px}
 .best th{white-space:normal}
+.donetag{font-weight:700;color:var(--ok);padding:8px 4px}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -781,10 +782,10 @@ function lastFor(id){return histFor(id)[0]||null}
 function fmtDate(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit"})}
 function fmtDateY(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"2-digit"})}
 function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg):"")}
-function lastHTML(it){const l=lastFor(it.id);if(!l)return "";
+function lastHTML(it){if(isSimple(it))return "";const l=lastFor(it.id);if(!l)return "";
   return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span></div>`}
 /* kleine Verlaufskurve rechts neben der Übung; Tipp darauf zeigt den grossen Verlauf */
-function miniSpark(id){const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kg!==null)?"kg":"rep";
+function miniSpark(id){if(isSimpleId(id))return "";const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kg!==null)?"kg":"rep";
   const v=S.map(x=>x[k]);const nums=v.filter(x=>x!==null);if(!nums.length)return "";
   const W=96,H=40,P=5;let mn=Math.min(...nums),mx=Math.max(...nums);if(mn===mx){mn-=1;mx+=1}
   const X=i=>S.length===1?W/2:P+i*(W-2*P)/(S.length-1),Y=x=>H-P-(x-mn)/(mx-mn)*(H-2*P);
@@ -792,7 +793,7 @@ function miniSpark(id){const S=seriesFor(id);if(S.length<1)return "";const k=S.s
   for(let q=1;q<pts.length;q++){const a=pts[q-1],b=pts[q];if(a&&b)segs+=`<line class="seg ${trendCls(a[2],b[2])}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="stroke-width:2.5"/>`}
   const lp=[...pts].reverse().find(Boolean);const lv=nums[nums.length-1];
   return `<button type="button" class="minispark" data-spark="${esc(id)}" aria-expanded="false" aria-label="Verlauf vergrössern"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${segs}<circle cx="${lp[0]}" cy="${lp[1]}" r="3.5" fill="var(--ink)"/></svg><span>Ø ${Math.round(lv*10)/10}${k==="kg"?" kg":""}</span></button>`}
-function chartDetails(id,open){return histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
+function chartDetails(id,open){return !isSimpleId(id)&&histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
 /* Gewicht vom letzten Mal: gleicher Satz, sonst letzter Satz mit Gewicht; zuerst abgeschlossene Trainings, dann offene Sätze in anderen Einheiten */
 function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&l[idx].kg)return l[idx].kg;const w=[...l].reverse().find(x=>x.kg);if(w)return w.kg}
   for(const se of state.sessions)for(const x of se.items){if(x===it||x.id!==it.id)continue;const w=[...(x.log||[])].reverse().find(y=>y.kg);if(w)return w.kg}
@@ -802,7 +803,15 @@ function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
   hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
+/* Aufwärmen & Mobilität: nur «erledigt», keine Werte und keine Stats */
+function isSimpleId(id){const e=exById(id);return !!e&&e.k==="warm"}
+function isSimple(it){return isSimpleId(it.id)||it.k==="warm"}
+function simpleSetsHTML(it){const log=it.log||[],p=Math.max(1,plannedSets(it));const done=log.length>=p;
+  const boxes=log.map((e,j)=>`<button type="button" class="setbox ok" data-edit="${j}" aria-label="Erledigt. Zum Rückgängigmachen tippen">✓</button>`).join("");
+  const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">✓</span>`).join("");
+  return `<div class="sets">${p>1?boxes+todo:""}${done?`<span class="donetag">✓ Erledigt</span>${p<=1?`<button type="button" class="linkbtn" data-edit="0">Rückgängig</button>`:""}`:`<button type="button" class="setbtn" data-log="1">✓ ${p>1?`Runde ${log.length+1} von ${p} erledigt`:"Erledigt"}</button>`}</div>`}
 function setsHTML(it){
+  if(isSimple(it))return simpleSetsHTML(it);
   const log=it.log||[],p=plannedSets(it);
   const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
   const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">${esc(planShort(it))}</span>`).join("");
@@ -958,7 +967,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
       <div class="kpi"><b>${sets}</b><span>Sätze</span></div>
       <div class="kpi"><b>${fire}</b><span>🔥 mehr geschafft</span></div></div>
-    ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{cnt[y.id]=(cnt[y.id]||0)+1}));
+    ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{if(!isSimpleId(y.id))cnt[y.id]=(cnt[y.id]||0)+1}));
       /* am häufigsten gemachte Übung zuerst (bei Gleichstand die zuletzt gemachte) */
       const ids=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);if(!ids.length)return "";
       if(!chartEx||!ids.includes(chartEx))chartEx=ids[0];
@@ -973,7 +982,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="summary"><span><b>${x.items.length}</b> Übungen</span><span><b>${n}</b> Sätze</span></div>
       <div class="items">${x.items.map(y=>{const e=EXBY[y.id]||{n:y.n,k:"eigen"};const fake={w:y.w};
         return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div>${miniSpark(y.id)}</div>
-          <div class="sets">${y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
+          <div class="sets">${isSimpleId(y.id)?`<span class="donetag">✓ Erledigt</span>`:y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
       <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
     </div>`;
 }
@@ -1005,6 +1014,8 @@ document.addEventListener("click",e=>{
   if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
   const rs=t.closest("[data-rmset]");if(rs){const u=rs.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=Math.max(0,(it.xs||0)-1);save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();return}
+  const lgS=t.closest("[data-log]");if(lgS){const it=cur().items.find(x=>x.u===lgS.closest("[data-u]").dataset.u);if(it&&isSimple(it)){(it.log=it.log||[]).push({st:"ok"});save();renderItems(`[data-u="${it.u}"] [data-edit]`);renderBar();flash("Erledigt ✓");return}}
+  const edS=t.closest("[data-edit]");if(edS){const it=cur().items.find(x=>x.u===edS.closest("[data-u]").dataset.u);if(it&&isSimple(it)){it.log.splice(+edS.dataset.edit,1);save();renderItems(`[data-u="${it.u}"] [data-log]`);renderBar();flash("Rückgängig gemacht");return}}
   const lg=t.closest("[data-log]");if(lg){openLog(lg.closest("[data-u]").dataset.u,null,lg);return}
   const ed=t.closest("[data-edit]");if(ed){openLog(ed.closest("[data-u]").dataset.u,+ed.dataset.edit,ed);return}
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
