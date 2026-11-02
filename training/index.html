@@ -123,6 +123,16 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .item.optidle:focus-within,.item.optidle:hover{opacity:.85}
 body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .opttag{font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.lasttime{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:.88rem;background:var(--bg);border-radius:8px;padding:8px 10px}
+.lasttime span:last-child{display:flex;flex-wrap:wrap;gap:4px 10px;font-variant-numeric:tabular-nums}
+.lt-ok{color:var(--ok)}.lt-less{color:var(--less)}.lt-more{color:var(--more)}
+.lasttime b{font-weight:700}
+.histbox{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.spark{width:100%;max-width:360px;height:auto}
+.spark text{font-size:10px;fill:var(--muted);font-family:var(--body)}
+.htab{border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+.htab th{text-align:left;color:var(--muted);font-weight:600;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top}
+.htab td{padding:3px 0;font-weight:600}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -269,7 +279,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="eyebrow">Unihockey · Athletik</div>
       <h1>Trainingseinheit</h1>
       <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
-      <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt». Dein Fortschritt bleibt auf diesem Gerät gespeichert.</p>
+      <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt» und am Schluss auf «Training abschliessen». So siehst du beim nächsten Mal, was du letztes Mal geschafft hast.</p>
     </div>
     <div class="modes" role="group" aria-label="Ansicht">
       <button type="button" data-mode="train" aria-pressed="false">Training</button>
@@ -304,8 +314,9 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       </div>
       <div class="items" id="items"></div>
       <div class="toolbar train-only">
-        <button class="primary" id="resultBtn" type="button">Ergebnis an Coach senden</button>
-        <button id="resetLogBtn" type="button">Neues Training starten</button>
+        <button class="primary" id="finishBtn" type="button">✓ Training abschliessen &amp; speichern</button>
+        <button id="resultBtn" type="button">Ergebnis an Coach senden</button>
+        <button id="resetLogBtn" type="button">Sätze zurücksetzen</button>
         <span class="status" role="status"></span>
       </div>
     </section>
@@ -659,6 +670,19 @@ function renderSummary(){const el=document.getElementById("summary");if(!el)retu
   el.innerHTML=c.items.length?`<span><b>${c.items.length}</b> Übungen</span><span><b>${groups}</b> Blöcke</span><span><b>${vids}</b> mit Video</span>${onlyKw?`<span>✓ alles mit Körpergewicht möglich</span>`:""}${mats.length?`<span style="flex-basis:100%">Material: <b>${esc(mats.join(", "))}</b></span>`:""}`:"";}
 
 /* Einheit: Übungen */
+/* Verlauf: abgeschlossene Trainings, pro Übung abrufbar */
+function hist(){return state.hist||(state.hist=[])}
+function histFor(id){const out=[];hist().forEach(h=>h.items.forEach(x=>{if(x.id===id&&x.log&&x.log.length)out.push({d:h.d,t:h.t,log:x.log,w:x.w})}));return out.sort((a,b)=>b.d-a.d)}
+function lastFor(id){return histFor(id)[0]||null}
+function fmtDate(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit"})}
+function fmtDateY(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"2-digit"})}
+function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg):"")}
+function lastHTML(it){const l=lastFor(it.id);if(!l)return "";
+  return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span><button type="button" class="linkbtn" data-show="${esc(it.id)}" style="margin-left:auto">Verlauf</button></div>`}
+function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
+function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,w:it.w,log:it.log.map(e=>Object.assign({},e))}));
+  if(!items.length){flash("Noch keine Sätze erfasst.");return}
+  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>it.log=[]);save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`)}
 function setsHTML(it){
   const log=it.log||[],p=plannedSets(it);
   const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
@@ -676,6 +700,7 @@ function renderItems(focusSel){
         <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
       ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${howtoHTML(it.id)}
+      ${lastHTML(it)}
       ${setsHTML(it)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
@@ -781,8 +806,9 @@ armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",
   const name=cur().t;state.sessions=state.sessions.filter(s=>s.id!==state.active);
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
-armed(document.getElementById("resetLogBtn"),"Neues Training starten","Alle Sätze zurücksetzen?",()=>{
-  cur().items.forEach(it=>it.log=[]);save();renderAll();flash("Bereit für das nächste Training")});
+armed(document.getElementById("resetLogBtn"),"Sätze zurücksetzen","Ohne Speichern löschen?",()=>{
+  cur().items.forEach(it=>it.log=[]);save();renderAll();flash("Sätze gelöscht")});
+armed(document.getElementById("finishBtn"),"✓ Training abschliessen & speichern","Jetzt abschliessen? Nochmals tippen",finishTraining);
 document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>{i.u=uid();i.log=[]});
   state.sessions.push(c);state.active=c.id;save();renderAll();flash("Einheit dupliziert")});
 function copyOrShare(txt,okMsg,title){
@@ -805,8 +831,9 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   document.getElementById("logValLbl").textContent=time?"Zeit":"Wiederholungen";
   const inp=document.getElementById("logVal");inp.value=e?e.v||"":"";inp.placeholder=planShort(it);inp.inputMode=time?"text":"numeric";
   const lastKg=[...log].reverse().find(x=>x.kg);const kgIn=document.getElementById("logKg");
-  kgIn.value=e?e.kg||"":(lastKg?lastKg.kg:(it.kg||"")).toString().replace(/\s*kg$/i,"");const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
-  document.getElementById("logHint").textContent=`Beides optional. Leer lassen = ${planShort(it)} wie im Plan; Gewicht in kg oder Bandstärke (z. B. «rot»), nur wenn verwendet.`;
+  const prev=lastFor(it.id);const pIdx=idx==null?log.length:idx;const pSet=prev?(prev.log[pIdx]||prev.log[prev.log.length-1]):null;
+  kgIn.value=e?e.kg||"":(lastKg?lastKg.kg:(pSet&&pSet.kg)||(it.kg||"")).toString().replace(/\s*kg$/i,"");const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
+  document.getElementById("logHint").textContent=(pSet?`Letztes Mal (${fmtDate(prev.d)}), Satz ${Math.min(pIdx,prev.log.length-1)+1}: ${setTxt(pSet,prev.w)}. `:"")+`Leer lassen = ${planShort(it)} wie im Plan.`;
   logModal.querySelectorAll("[data-st]").forEach(b=>b.setAttribute("aria-pressed",String(!!e&&e.st===b.dataset.st)));
   document.getElementById("logDel").hidden=!e;
   logModal.hidden=false;(e?logModal.querySelector(`[data-st="${e.st}"]`):logModal.querySelector('[data-st="ok"]')).focus();
@@ -853,10 +880,18 @@ function openEx(id,from){exOpen=id;if(from)exReturn=from;const e=exInfo(id);cons
    ${musOf(id)?`<div class="matlist"><b>Muskeln:</b> ${esc(musOf(id))}</div>`:""}
    ${matLine(id)?`<div class="matlist"><b>Material:</b> ${esc(matLine(id))}</div>`:""}
    ${e.b?`<p class="note">${esc(e.b)}</p>`:""}
+   ${histHTML(id)}
    <div class="mrow">${vidLinks(e.v)}
      <label class="filebtn"><button type="button" tabindex="-1">${im.k==="own"?"Anderes Bild wählen":"Eigenes Bild hochladen"}</button><input type="file" accept="image/*" id="exImgFile" aria-label="Eigenes Bild für ${esc(e.n)} hochladen"></label>
      ${im.k==="own"?`<button type="button" class="linkbtn" id="exImgDel">Eigenes Bild entfernen</button>`:""}</div>`;
   exModal.hidden=false;exModal.querySelector(".modalclose").focus()}
+function histHTML(id){const h=histFor(id);if(!h.length)return "";
+  const pts=h.slice(0,12).reverse().map(x=>bestKg(x.log));const nums=pts.filter(x=>x!==null);
+  let spark="";if(nums.length>=2){const mn=Math.min(...nums),mx=Math.max(...nums),W=300,H=60,P=7,R=52;const xs=i=>P+i*(W-R-P)/(pts.length-1);const ys=v=>mx===mn?H/2:H-P-(v-mn)*(H-2*P)/(mx-mn);
+    const d=pts.map((v,i)=>v===null?null:[xs(i),ys(v)]).filter(Boolean);
+    spark=`<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Höchstes Gewicht pro Training, von ${mn} bis ${mx} kg"><polyline points="${d.map(p=>p.join(",")).join(" ")}" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${d.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--ok)"/>`).join("")}<text x="${W-2}" y="${ys(mx)+4}" text-anchor="end">${mx} kg</text>${mx!==mn?`<text x="${W-2}" y="${ys(mn)+4}" text-anchor="end">${mn} kg</text>`:""}</svg>`}
+  return `<div class="histbox"><div class="eyebrow">Verlauf (${h.length} Trainings)</div>${spark}
+    <table class="htab"><tbody>${h.slice(0,10).map(x=>`<tr><th scope="row">${fmtDateY(x.d)}</th><td>${x.log.map(e=>`<span class="lt-${e.st}">${esc(setTxt(e,x.w))}</span>`).join(" · ")}</td></tr>`).join("")}</tbody></table></div>`}
 function closeEx(){exModal.hidden=true;exOpen=null;if(exReturn&&document.body.contains(exReturn))exReturn.focus()}
 exModal.addEventListener("click",e=>{if(e.target===exModal||e.target.closest("[data-close]")){closeEx();return}
   if(e.target.id==="exImgDel"){const id=exOpen;delete state.imgs[id];save();rerenderImgs();openEx(id);flash("Eigenes Bild entfernt")}});
