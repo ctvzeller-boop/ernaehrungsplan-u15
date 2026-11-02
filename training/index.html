@@ -120,6 +120,12 @@ body[data-mode="train"] .main{grid-template-columns:minmax(0,1fr);grid-template-
 .goalpick button{padding:5px 12px;border-radius:999px;font-size:.85rem}
 .goalpick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
+.cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
+@media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
+.cmp th,.cmp td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+.cmp thead th{font-family:var(--display);font-size:1.05rem;border-bottom:2px solid var(--ink)}
+.cmp tbody th{color:var(--muted);font-weight:600;width:28%}
+.cmp tr:last-child th,.cmp tr:last-child td{border-bottom:none}
 .howto summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;padding:2px 0;min-height:32px;display:flex;align-items:center}
 .howto .note{white-space:pre-line;margin:4px 0 0;font-size:.9rem;color:var(--ink);background:var(--bg);border-radius:8px;padding:10px 12px}
 .mus{display:block;font-weight:500;font-size:.8rem;color:var(--c,var(--accent));margin-top:3px}
@@ -331,8 +337,15 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <p><b>RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes bis zum Muskelversagen noch möglich gewesen wären. RIR 0 = bis zum Versagen, RIR 2 = zwei wären noch drin gewesen.</p>
       <p><b>Superset</b>: Übungen mit gleichem Buchstaben (A1, A2) abwechselnd ausführen: 1. Satz A1, dann 1. Satz A2, dann 2. Satz A1 usw.</p>
       <p><b>/ Seite</b>: Wiederholungen oder Zeit pro Seite bzw. pro Bein.</p>
-      <p><b>Maximalkraft</b> (4 × 4–6, 2–3 Min. Pause, RIR 2): <b>schweres Gewicht</b>, mit dem nur 4–6 saubere Wiederholungen möglich sind (ca. 80–85 % vom Maximum). Ziel: mehr Kraft, ohne viel Muskelmasse aufzubauen – das Nervensystem lernt, mehr Muskelfasern gleichzeitig einzusetzen. Lange Pausen, damit jeder Satz mit voller Kraft gelingt.</p>
-      <p><b>Volumen</b> (3 × 8–12, 90 s Pause, RIR 1–2): <b>mittleres Gewicht</b>, mit dem 8–12 Wiederholungen gehen (ca. 65–75 % vom Maximum). Ziel: Muskelaufbau und eine gute Basis für späteres Maximalkrafttraining. Kürzere Pausen, die Muskeln dürfen gut ermüden.</p>
+      <table class="cmp">
+        <thead><tr><th scope="col"></th><th scope="col">Maximalkraft</th><th scope="col">Volumen</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Gewicht</th><td>schwer, ca. 80–85 % vom Maximum</td><td>mittel, ca. 65–75 % vom Maximum</td></tr>
+          <tr><th scope="row">Wieder&shy;holungen</th><td>4–6</td><td>8–12</td></tr>
+          <tr><th scope="row">Pause</th><td>lang, 2–3 Min.</td><td>kürzer, ca. 90 s</td></tr>
+          <tr><th scope="row">Ziel</th><td>mehr Kraft ohne viel zusätzliche Muskelmasse. Das Nervensystem lernt, mehr Muskelfasern gleichzeitig einzusetzen.</td><td>Muskelaufbau und eine Basis für späteres Maximal&shy;kraft&shy;training</td></tr>
+        </tbody>
+      </table>
       <p><b>Gewicht wählen</b>: So schwer, dass die vorgegebenen Wiederholungen mit dem angegebenen RIR sauber gehen. Gehen mehr Wiederholungen als vorgegeben (🔥), beim nächsten Training etwas mehr Gewicht nehmen.</p>
       <p class="train-only"><button type="button" class="linkbtn" id="pasteLinkBtn" style="padding:0">Link vom Coach einfügen</button></p>
     </div>
