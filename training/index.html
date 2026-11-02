@@ -76,6 +76,7 @@ button.primary{background:var(--accent);border-color:var(--accent);color:var(--s
 button:hover{border-color:var(--accent)}
 button:disabled{opacity:.45;cursor:default}
 button.warn{border-color:var(--warn);color:var(--warn)}
+button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 .iconbtn{padding:6px 11px;font-size:1rem;line-height:1.2}
 .linkbtn{padding:4px;font-size:.88rem;font-weight:500;border:none;background:none;color:var(--accent);text-decoration:underline;cursor:pointer}
 .status{font-size:.88rem;color:var(--muted);align-self:center;min-height:1.2em}
@@ -1034,16 +1035,16 @@ document.addEventListener("click",e=>{
     save();renderItems();renderText();const u=box.dataset.u;const b=document.querySelector(`[data-u="${u}"] [data-act="${a}"]:not([disabled])`)||document.querySelector(`[data-u="${u}"] [data-act=rm]`);if(b)b.focus();return}
   const rc=t.closest("[data-rmc]");if(rc){const id=rc.dataset.rmc;state.custom=state.custom.filter(c=>c.id!==id);if(state.imgs)delete state.imgs[id];save();renderCustom();renderCats();renderLib();return}
 });
-function armed(btn,label,confirmLabel,fn){btn.addEventListener("click",()=>{
-  if(!btn._arm){btn._arm=true;btn.textContent=confirmLabel;btn.classList.add("warn");btn._t=setTimeout(()=>{btn._arm=false;btn.textContent=label;btn.classList.remove("warn")},4000);return}
-  clearTimeout(btn._t);btn._arm=false;btn.textContent=label;btn.classList.remove("warn");fn()})}
+function armed(btn,label,confirmLabel,fn,cls){cls=cls||"warn";btn.addEventListener("click",()=>{
+  if(!btn._arm){btn._arm=true;btn.textContent=confirmLabel;btn.classList.add(cls);btn._t=setTimeout(()=>{btn._arm=false;btn.textContent=label;btn.classList.remove(cls)},4000);return}
+  clearTimeout(btn._t);btn._arm=false;btn.textContent=label;btn.classList.remove(cls);fn()})}
 armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",()=>{
   const name=cur().t;state.sessions=state.sessions.filter(s=>s.id!==state.active);
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
 armed(document.getElementById("resetLogBtn"),"Sätze zurücksetzen","Ohne Speichern löschen?",()=>{
   cur().items.forEach(it=>{it.log=[];it.xs=0});save();renderAll();flash("Sätze gelöscht")});
-armed(document.getElementById("finishBtn"),"✓ Training abschliessen & speichern","Jetzt abschliessen? Nochmals tippen",finishTraining);
+armed(document.getElementById("finishBtn"),"✓ Training abschliessen & speichern","✓ Nochmals tippen zum Abschliessen",finishTraining,"confirm");
 document.getElementById("dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(cur()));c.id=uid();c.t=(c.t||"Einheit")+" (Kopie)";c.items.forEach(i=>{i.u=uid();i.log=[]});
   state.sessions.push(c);state.active=c.id;save();renderAll();flash("Einheit dupliziert")});
 function copyOrShare(txt,okMsg,title){
