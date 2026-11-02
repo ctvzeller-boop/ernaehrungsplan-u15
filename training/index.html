@@ -273,6 +273,12 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .setbox .sv{display:inline-flex;align-items:center;gap:2px}
 .setbox small{font-family:var(--body);font-size:.72rem;font-weight:600;opacity:.92;margin-top:2px}
 .logfields{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px}
+.kgrow{display:flex;gap:6px;align-items:stretch}
+.kgrow input{flex:1;min-width:0}
+.unitsw{display:flex;flex-direction:column;gap:3px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
+.unitsw button{padding:3px 8px;font-size:.8rem;border:none;border-radius:6px;background:none;min-height:24px}
+.unitsw button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+#kgConv{min-height:1em}
 #logKg{font-size:1.4rem;font-family:var(--display);font-weight:700;text-align:center;padding:10px}
 .setbtn{margin-left:auto;min-height:44px;padding:8px 16px;background:var(--ink);color:var(--surface);border-color:var(--ink);font-size:1rem}
 .setbtn.extra{background:var(--surface);color:var(--ink);border-color:var(--line)}
@@ -462,7 +468,9 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       </div>
       <div class="field">
         <label class="small" for="logKg" id="logKgLbl">Gewicht / Band</label>
-        <input type="text" id="logKg" autocomplete="off" inputmode="decimal" enterkeyhint="done">
+        <div class="kgrow"><input type="text" id="logKg" autocomplete="off" inputmode="decimal" enterkeyhint="done">
+          <div class="unitsw" role="group" aria-label="Einheit"><button type="button" data-unit="kg" aria-pressed="true">kg</button><button type="button" data-unit="lbs" aria-pressed="false">lbs</button></div></div>
+        <span class="hint" id="kgConv"></span>
       </div>
     </div>
     <p class="hint" id="logHint"></p>
@@ -666,6 +674,11 @@ function labels(items){
   return out.map(([g,n])=>{const L=g<26?String.fromCharCode(65+g):"Z"+g;return size[g]>1?L+n:L});
 }
 function vidLinks(v){return (v||[]).map((u,i)=>`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">▶ Video${v.length>1?" "+(i+1):""}</a>`).join(" ")}
+const LB=0.45359237;
+function r1(x){return Math.round(x*10)/10}
+function numOf(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*$/.exec(String(v||""));return m?parseFloat(m[1].replace(",",".")):null}
+/* «50 lbs» / «50 lb» im Text direkt in kg umrechnen */
+function lbsToKgTxt(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*(lbs?|pfund)\s*$/i.exec(String(v||""));return m?String(r1(parseFloat(m[1].replace(",","."))*LB)):v}
 function kgTxt(k){k=String(k||"").trim();return !k?"":/^\d+([.,]\d+)?$/.test(k)?k+" kg":k}
 function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
 
@@ -791,7 +804,7 @@ function renderItems(focusSel){
       <div class="params">
         <label>Sätze<input type="text" data-f="s" value="${esc(it.s)}"></label>
         <label>Wdh / Zeit<input type="text" data-f="w" value="${esc(it.w)}"></label>
-        <label>Gewicht / Band<input type="text" data-f="kg" value="${esc(it.kg||"")}" placeholder="kg oder Band"></label>
+        <label>Gewicht (kg) / Band<input type="text" data-f="kg" value="${esc(it.kg||"")}" placeholder="kg, «50 lbs» oder Band"></label>
         <label>Pause<input type="text" data-f="p" value="${esc(it.p)}"></label>
         <label>RIR<input type="text" data-f="r" value="${esc(it.r)}"></label>
       </div>
@@ -933,6 +946,7 @@ document.getElementById("items").addEventListener("input",e=>{
   const f=e.target.dataset.f;if(!f||f==="ss"||f==="opt")return;const box=e.target.closest("[data-u]");
   const it=cur().items.find(x=>x.u===box.dataset.u);it[f]=e.target.value;if(["s","w","p","r"].includes(f)&&it.goal){it.goal="";const gp=box.querySelector(".goalpick");if(gp)gp.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.goal==="")))}save();renderText()});
 document.getElementById("items").addEventListener("change",e=>{
+  if(e.target.dataset.f==="kg"){const nv=lbsToKgTxt(e.target.value);if(nv!==e.target.value){e.target.value=nv;const it=cur().items.find(x=>x.u===e.target.closest("[data-u]").dataset.u);it.kg=nv;save();renderText();flash(`In kg umgerechnet: ${nv} kg`)}return}
   const ff=e.target.dataset.f;if(ff==="opt"){const u=e.target.closest("[data-u]").dataset.u;cur().items.find(x=>x.u===u).opt=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=opt]`);renderText();return}
   if(ff!=="ss")return;const u=e.target.closest("[data-u]").dataset.u;
   cur().items.find(x=>x.u===u).ss=e.target.checked;save();renderItems(`[data-u="${u}"] [data-f=ss]`);renderText()});
@@ -1002,7 +1016,9 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   const prev=lastFor(it.id);const pIdx=idx==null?log.length:idx;const pSet=prev?(prev.log[pIdx]||prev.log[prev.log.length-1]):null;
   const same=(()=>{const h=histFor(it.id)[0];return h&&h.log[pIdx]&&h.log[pIdx].kg?h.log[pIdx].kg:""})();
   const sug=same||(lastKg?lastKg.kg:"")||prevKg(it,pIdx)||it.kg||"";
-  kgIn.value=String(e?(e.kg||sug):sug).replace(/\s*kg$/i,"");const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
+  let pre=String(e?(e.kg||sug):sug).replace(/\s*kg$/i,"");
+  if(state.unit==="lbs"&&numOf(pre)!==null)pre=String(Math.round(numOf(pre)/LB*2)/2);
+  kgIn.value=pre;setUnitUI();const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
   document.getElementById("logHint").textContent=(pSet?`Letztes Mal (${fmtDate(prev.d)}), Satz ${Math.min(pIdx,prev.log.length-1)+1}: ${setTxt(pSet,prev.w)}. `:"")+`Leer lassen = ${planShort(it)} wie im Plan.`;
   logModal.querySelectorAll("[data-st]").forEach(b=>b.setAttribute("aria-pressed",String(!!e&&e.st===b.dataset.st)));
   document.getElementById("logDel").hidden=!e;
@@ -1014,12 +1030,17 @@ logModal.addEventListener("click",e=>{
   if(e.target===logModal||e.target.closest("[data-close]")){closeLog();return}
   const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
   const sb=e.target.closest("[data-st]");
-  if(sb){const entry={st:sb.dataset.st,v:document.getElementById("logVal").value.trim(),kg:document.getElementById("logKg").value.trim().replace(/\s*kg$/i,"")};if(!entry.kg)delete entry.kg;
+  if(sb){const entry={st:sb.dataset.st,v:document.getElementById("logVal").value.trim(),kg:(()=>{let v=lbsToKgTxt(document.getElementById("logKg").value.trim().replace(/\s*kg$/i,""));if(state.unit==="lbs"&&numOf(v)!==null)v=String(r1(numOf(v)*LB));return v})()};if(!entry.kg)delete entry.kg;
     if(logCtx.idx==null)it.log.push(entry);else it.log[logCtx.idx]=entry;
     save();renderItems();renderBar();closeLog();
     flash(entry.st==="more"?"Stark! 🔥":entry.st==="less"?"Gespeichert – nächstes Mal klappt’s.":"Satz gespeichert ✓");return}
   if(e.target.id==="logDel"){it.log.splice(logCtx.idx,1);save();renderItems();renderBar();closeLog();flash("Satz gelöscht")}
 });
+function setUnitUI(){const u=state.unit==="lbs"?"lbs":"kg";document.querySelectorAll("[data-unit]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.unit===u)));
+  const v=numOf(document.getElementById("logKg").value);document.getElementById("kgConv").textContent=u==="lbs"&&v!==null?`= ${r1(v*LB)} kg (wird in kg gespeichert)`:""}
+document.querySelector(".unitsw").addEventListener("click",e=>{const b=e.target.closest("[data-unit]");if(!b)return;const nu=b.dataset.unit;const old=state.unit==="lbs"?"lbs":"kg";if(nu===old)return;
+  const inp=document.getElementById("logKg");const v=numOf(inp.value);if(v!==null)inp.value=String(nu==="lbs"?Math.round(v/LB*2)/2:r1(v*LB));state.unit=nu;save();setUnitUI();inp.focus()});
+document.getElementById("logKg").addEventListener("input",setUnitUI);
 document.getElementById("logVal").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("logKg").focus()}});
 document.getElementById("logKg").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();logModal.querySelector('[data-st="ok"]').click()}});
 
