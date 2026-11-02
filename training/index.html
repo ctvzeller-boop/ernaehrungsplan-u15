@@ -144,6 +144,16 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .addcoach{align-self:flex-start;border:2px dashed var(--accent);color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:10px 14px}
 .warnbanner{background:var(--c-beine-bg);border-color:var(--c-beine)}
 .warnbanner span{display:block;font-size:.9rem;margin-top:2px}
+.hentry{border-top:1px solid var(--line);padding:4px 0}
+.hentry summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:8px 0;list-style:none}
+.hentry summary::-webkit-details-marker{display:none}
+.hentry summary::before{content:"▸";color:var(--muted)}
+.hentry[open] summary::before{content:"▾"}
+.hdate{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;min-width:9ch}
+.htitle{font-weight:600;flex:1;min-width:0}
+.hcount{color:var(--muted);font-size:.88rem}
+.hentry .htab{margin:4px 0 10px;width:100%}
+.hentry .htab th{white-space:normal;width:45%}
 .goaltag{font-weight:700;color:var(--c,var(--accent))}
 .cmp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.88rem;line-height:1.35;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media (max-width:520px){.cmp{font-size:.8rem}.cmp th,.cmp td{padding:7px 4px}.cmp thead th{font-size:.95rem}.cmp tbody th{width:26%}}
@@ -350,6 +360,11 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="libscroll" id="lib"></div>
     </aside>
   </div>
+
+  <section class="card" id="histCard" aria-labelledby="histTitle">
+    <h2 id="histTitle">Absolvierte Trainings</h2>
+    <div id="histList"></div>
+  </section>
 
   <div class="lower">
     <div class="card edit-only">
@@ -687,7 +702,7 @@ function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if
   return out.filter(f=>!(f.includes(" oder ")&&f.split(" oder ").some(x=>out.includes(x))))}
 function doneCardHTML(){const c=cur();if(c.items.some(it=>(it.log||[]).length))return "";const h=lastSessHist(c);if(!h||Date.now()-h.d>36*3600e3)return "";
   let n=0;h.items.forEach(x=>n+=x.log.length);
-  return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · im Verlauf bei jeder Übung</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
+  return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · unten unter «Absolvierte Trainings»</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
 function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
   const dc=document.getElementById("doneSlot");if(dc)dc.innerHTML=doneCardHTML();
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
@@ -801,7 +816,17 @@ function histResultText(c,h){const lab=labels(c.items);const sym={ok:"✓",less:
     L.push("   "+(x?x.log.map(e=>`${sym[e.st]} ${setTxt(e,x.w)}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
   return L.join("\n")}
 function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
-function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
+/* Übersicht aller abgeschlossenen Trainings */
+function histEntryText(h){const sym={ok:"✓",less:"↓",more:"🔥"};const L=[];let n=0;h.items.forEach(x=>n+=x.log.length);
+  L.push(`${h.t||"Training"} (${new Date(h.d).toLocaleDateString("de-CH")})`);L.push(`${n} Sätze erledigt`);L.push("");
+  h.items.forEach(x=>{const e=EXBY[x.id];L.push(`${e?e.n:x.n}`);L.push("   "+x.log.map(z=>`${sym[z.st]} ${setTxt(z,x.w)}`).join("  |  "))});return L.join("\n")}
+function renderHist(){const el=document.getElementById("histList");if(!el)return;const h=hist().map((x,i)=>[x,i]).sort((a,b)=>b[0].d-a[0].d);
+  if(!h.length){el.innerHTML=`<p class="empty">Noch keine Trainings abgeschlossen. Nach dem Training unten in der Einheit auf «✓ Training abschliessen &amp; speichern» tippen.</p>`;return}
+  el.innerHTML=h.map(([x,i])=>{let n=0;x.items.forEach(y=>n+=y.log.length);const dt=new Date(x.d);
+    return `<details class="hentry"><summary><span class="hdate">${dt.toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"2-digit"})}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${n} Sätze</span></summary>
+      <table class="htab"><tbody>${x.items.map(y=>{const e=EXBY[y.id];return `<tr><th scope="row">${esc((e?e.n:y.n).split(" (")[0])}</th><td>${y.log.map(z=>`<span class="lt-${z.st}">${esc(setTxt(z,y.w))}</span>`).join(" · ")}</td></tr>`}).join("")}</tbody></table>
+      <div class="mrow"><button type="button" data-hsend="${i}">An Coach senden</button><button type="button" class="linkbtn" data-hdel="${i}">Löschen</button></div></details>`}).join("");}
+function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderHist();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
 
 /* Events */
@@ -820,6 +845,9 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",e=>{
   const t=e.target;
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
+  const hs=t.closest("[data-hsend]");if(hs){copyOrShare(histEntryText(hist()[+hs.dataset.hsend]),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
+  const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;hd.textContent="Wirklich löschen?";hd.classList.add("warn");setTimeout(()=>{hd._arm=false;hd.textContent="Löschen";hd.classList.remove("warn")},4000);return}
+    hist().splice(+hd.dataset.hdel,1);save();renderAll();flash("Training aus dem Verlauf gelöscht");return}
   if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
   const rs=t.closest("[data-rmset]");if(rs){const u=rs.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=Math.max(0,(it.xs||0)-1);save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();return}
