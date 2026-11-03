@@ -133,6 +133,10 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .likegroups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
 .likegroup{display:flex;flex-direction:column;gap:8px;min-width:0}
 .likegroup h3{font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em}
+.chip .favbtn{padding:0 4px 0 0;color:var(--muted);font-size:1.05rem}
+.chip.fav{background:var(--t-intensiv-bg)}
+.chip.fav .favbtn,.favbtn[aria-pressed="true"]{color:var(--t-intensiv)}
+.chip:has(.favbtn){padding-left:6px}
 .chip.off{background:transparent;border:1px dashed var(--line);color:var(--muted);text-decoration:line-through}
 .chip.meat{opacity:.55}
 .sharebanner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
@@ -371,7 +375,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ×, um ein Gericht auszublenden, das du nicht magst. Es verschwindet dann aus allen Auswahllisten und aus «Woche automatisch füllen».</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -537,6 +541,7 @@ function load(){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function isMeat(cat,name){return OPTIONS[cat].some(o=>o.n===name&&o.m)}
 function isHidden(name){return (state.hidden||[]).includes(name)}
+function isFav(name){return !!name&&(state.fav||[]).includes(name)}
 function optionsFor(cat){return OPTIONS[cat].filter(o=>!(state.veg&&o.m)&&!isHidden(o.n)).concat((state.custom[cat]||[]).map(n=>({n,custom:true})))}
 function detailFor(cat,name){const o=optionsFor(cat).find(x=>x.n===name);return o&&o.d?o.d:""}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
@@ -658,8 +663,13 @@ document.addEventListener("input",e=>{
 document.addEventListener("click",e=>{
   const tab=e.target.closest("[data-tab]");
   if(tab){activeDay=tab.dataset.tab;renderTabs();renderTable();return}
+  const fb=e.target.closest("[data-fav]");
+  if(fb){const n=fb.dataset.fav,on=!isFav(n),inLikes=!!fb.closest("#likeGroups"),fid=fb.id;
+    state.fav=on?(state.fav||[]).concat([n]):(state.fav||[]).filter(x=>x!==n);save();renderLikes();renderTable();
+    const again=fid?document.getElementById(fid):[...document.querySelectorAll("#likeGroups [data-fav]")].find(b=>b.dataset.fav===n);if(again&&(fid||inLikes))again.focus();
+    flash(on?`„${n}“ ist jetzt ein Favorit`:`„${n}“ ist kein Favorit mehr`);return}
   const hb=e.target.closest("[data-hide]");
-  if(hb){const n=hb.dataset.hide;state.hidden=(state.hidden||[]).concat([n]);save();renderLikes();renderTable();flash(`„${n}“ ausgeblendet`);return}
+  if(hb){const n=hb.dataset.hide;state.hidden=(state.hidden||[]).concat([n]);state.fav=(state.fav||[]).filter(x=>x!==n);save();renderLikes();renderTable();flash(`„${n}“ ausgeblendet`);return}
   const ub=e.target.closest("[data-unhide]");
   if(ub){const n=ub.dataset.unhide;state.hidden=(state.hidden||[]).filter(x=>x!==n);save();renderLikes();renderTable();flash(`„${n}“ wieder eingeblendet`);return}
   const rb=e.target.closest("[data-recipe]");
@@ -712,7 +722,7 @@ function likeGroups(){
 function renderLikes(){
   document.getElementById("likeGroups").innerHTML=likeGroups().map(([title,list])=>{
     const on=list.filter(o=>!isHidden(o.n)),off=list.filter(o=>isHidden(o.n));
-    return `<div class="likegroup"><h3>${title} <span class="empty">(${on.length})</span></h3><div class="chips">${on.map(o=>`<span class="chip${state.veg&&o.m?" meat":""}">${esc(o.n)}<button type="button" data-hide="${esc(o.n)}" aria-label="${esc(o.n)} ausblenden">×</button></span>`).join("")||`<span class="empty">Alles ausgeblendet.</span>`}</div>${off.length?`<div class="eyebrow">Ausgeblendet</div><div class="chips">${off.map(o=>`<span class="chip off">${esc(o.n)}<button type="button" data-unhide="${esc(o.n)}" aria-label="${esc(o.n)} wieder einblenden">+</button></span>`).join("")}</div>`:""}</div>`}).join("");
+    return `<div class="likegroup"><h3>${title} <span class="empty">(${on.length}${on.filter(o=>isFav(o.n)).length?` · ${on.filter(o=>isFav(o.n)).length} ♥`:""})</span></h3><div class="chips">${on.slice().sort((a,b)=>isFav(b.n)-isFav(a.n)).map(o=>`<span class="chip${state.veg&&o.m?" meat":""}${isFav(o.n)?" fav":""}"><button type="button" class="favbtn" data-fav="${esc(o.n)}" aria-pressed="${isFav(o.n)}" aria-label="${esc(o.n)} als Favorit">${isFav(o.n)?"♥":"♡"}</button>${esc(o.n)}<button type="button" data-hide="${esc(o.n)}" aria-label="${esc(o.n)} ausblenden">×</button></span>`).join("")||`<span class="empty">Alles ausgeblendet.</span>`}</div>${off.length?`<div class="eyebrow">Ausgeblendet</div><div class="chips">${off.map(o=>`<span class="chip off">${esc(o.n)}<button type="button" data-unhide="${esc(o.n)}" aria-label="${esc(o.n)} wieder einblenden">+</button></span>`).join("")}</div>`:""}</div>`}).join("");
 }
 
 /* Rezepte */
@@ -977,7 +987,7 @@ function autoFill(){
       let pool=c.filter(n=>!(sk==="abend"&&n===d.s.mittag));if(!pool.length)pool=c;
       let pick;
       if((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel"))pick=pool[0];
-      else{const min=Math.min(...pool.map(n=>used[n]||0));const best=pool.filter(n=>(used[n]||0)===min);pick=best[Math.floor(Math.random()*best.length)]}
+      else{const eff=n=>(used[n]||0)-(isFav(n)?1:0);const min=Math.min(...pool.map(eff));const best=pool.filter(n=>eff(n)===min);pick=best[Math.floor(Math.random()*best.length)]}
       d.s[sk]=pick;used[pick]=(used[pick]||0)+1;
     })});
   save();renderTable();renderText();
@@ -988,7 +998,9 @@ function reroll(k,sk,btnId){
   let pool=c.filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
   if(!pool.length)pool=c.filter(n=>n!==cur);
   if(!pool.length){flash("Keine weitere passende Option.");return}
-  d.s[sk]=pool[Math.floor(Math.random()*pool.length)];save();renderTable();renderText();
+  const wsum=pool.reduce((a,n)=>a+(isFav(n)?3:1),0);let r=Math.random()*wsum,pick=pool[pool.length-1];
+  for(const n of pool){r-=isFav(n)?3:1;if(r<0){pick=n;break}}
+  d.s[sk]=pick;save();renderTable();renderText();
   const b=document.getElementById(btnId);if(b)b.focus();
 }
 let autoArmed=false;
@@ -1067,7 +1079,7 @@ function renderToday(){
       <div class="tlhead"><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
       <div class="tlrow"><select id="hsel-${sk}" data-day="${k}" data-slot="${sk}" class="${v?"":"none"}" aria-label="${esc(slotName(sk))}">
         <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}
-      </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button></div>
+      </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button>${v?`<button type="button" class="iconbtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}</div>
       ${warn}${hint}
       ${info||rec?`<div class="tlactions">${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}${rec?`<button type="button" class="linkbtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>`:""}
     </div></li>`;
