@@ -1832,8 +1832,8 @@ function buildPDF(){
   let ly=doc.lastAutoTable.finalY+7;const colW=(W-2*M)/Object.keys(TYPES).length;
   Object.entries(TYPES).forEach(([k,t],i)=>{const x=M+i*colW;
     doc.setFillColor(...STRONG[k]);doc.roundedRect(x,ly-2.8,3.2,3.2,.6,.6,"F");
-    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(...INK);doc.text(T(t.n),x+5,ly);
-    doc.setFont("helvetica","normal");doc.setFontSize(7.6);doc.setTextColor(...MUTED);doc.text(T(t.h),x+5,ly+3.8)});
+    doc.setFont("helvetica","bold");doc.setFontSize(7.6);doc.setTextColor(...INK);const nl=doc.splitTextToSize(T(t.n),colW-8);doc.text(nl,x+5,ly);
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(doc.splitTextToSize(T(t.h),colW-8),x+5,ly+3.4*nl.length+0.6)});
 
   // recipes
   const used=[];DAYS.forEach(([k])=>SLOTS.forEach(([sk])=>{const r=recipeFor(sk,state.plan[k].s[sk]);if(r&&!used.includes(r))used.push(r)}));
