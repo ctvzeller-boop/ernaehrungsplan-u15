@@ -62,7 +62,6 @@ button{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;cursor:po
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 button:hover{border-color:var(--accent)}
 button.warn{border-color:var(--t-intensiv);color:var(--t-intensiv)}
-.status{font-size:.85rem;color:var(--muted);align-self:center}
 
 /* Teller-Legende */
 .plates{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
@@ -107,7 +106,7 @@ thead th{background:var(--bg)}
 @media (max-width:520px){#typemenu{grid-template-columns:1fr}.tm-types{border-right:none;border-bottom:1px solid var(--line)}
   #typemenu.sheet{left:0;right:0;bottom:0;top:auto;max-width:none;border-radius:16px 16px 0 0;box-shadow:0 -10px 40px rgba(10,25,40,.3);padding-bottom:env(safe-area-inset-bottom,0px);max-height:85vh;overflow:auto}
   .toolbar{display:grid;grid-template-columns:1fr 1fr}
-  .toolbar #shareBtn{grid-column:1/-1}
+  .toolbar #autoBtn{grid-column:1/-1}
   .toolbar .status{grid-column:1/-1}
   .headctl{width:100%}.namefield{flex:1}
 }
@@ -193,6 +192,102 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
   col.slotcol{width:104px}
   .addrow{grid-template-columns:1fr}
 }
+/* Navigation */
+.mainnav{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+.mainnav a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600}
+.mainnav a:hover{color:var(--ink);background:var(--bg)}
+.mainnav a[aria-current="page"]{background:var(--accent);color:var(--surface)}
+.mainnav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mainnav a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.view{display:flex;flex-direction:column;gap:18px}
+#view-heute{width:100%;max-width:760px;margin:0 auto}
+.hint{margin:0;color:var(--muted);font-size:.88rem;max-width:70ch}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:600;font-size:.9rem;z-index:70;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center}
+.toast:empty{display:none}
+.likeshead{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+
+/* Heute */
+.daynav{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.daynav-title{text-align:center;flex:1;min-width:0}
+.daynav-title h2{font-size:2rem;text-transform:none;letter-spacing:.01em}
+.roundbtn{width:44px;height:44px;border-radius:50%;padding:0;font-size:1.5rem;line-height:1;display:grid;place-items:center;flex:none}
+.hero{--c:var(--line);--cbg:var(--surface);background:var(--cbg);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center}
+.hero[data-t="spiel"]{--c:var(--t-spiel);--cbg:var(--t-spiel-bg)}.hero[data-t="intensiv"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
+.hero[data-t="mittel"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}.hero[data-t="leicht"]{--c:var(--t-leicht);--cbg:var(--t-leicht-bg)}
+.hero .hicon{grid-row:span 2;width:56px;height:56px;border-radius:14px;background:var(--surface);display:grid;place-items:center}
+.hero h3{font-size:1.6rem;line-height:1.05}
+.hero p{margin:0;color:var(--muted)}
+.hero .hmeta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.hero .typebtn{width:auto;background:var(--surface);border-left-width:0;border:1px solid var(--line);padding:6px 10px;font-size:.88rem}
+.pill{display:inline-block;background:var(--surface);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:600}
+.banner{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--t-spiel);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.banner h3{font-size:1.35rem;text-transform:none}
+.banner ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.banner .count{font-family:var(--display);font-weight:700;font-size:1.25rem;color:var(--t-spiel)}
+.streaks{display:flex;flex-wrap:wrap;gap:8px}
+.streaks:empty{display:none}
+.streak{display:flex;align-items:baseline;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.88rem}
+.streak b{font-family:var(--display);font-size:1.25rem;color:var(--t-leicht)}
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.tl{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:start}
+.tltime{font-family:var(--display);font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums;padding-top:10px;text-align:right;color:var(--ink)}
+.tltime small{display:block;font-family:var(--body);font-weight:500;font-size:.7rem;color:var(--muted)}
+.tlbody{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tl.done .tlbody{border-color:var(--t-leicht);box-shadow:inset 4px 0 0 var(--t-leicht)}
+.tlhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tlhead .eyebrow{font-size:.75rem}
+.tlrow{display:flex;gap:6px;align-items:center}
+.tlrow select{flex:1;font-weight:600}
+.iconbtn{padding:6px 9px;font-size:1rem;line-height:1;flex:none}
+.tlactions{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.tlhint{margin:0;font-size:.82rem;color:var(--muted)}
+.tlhint.warn{color:var(--t-intensiv);font-weight:600}
+details.info{font-size:.82rem;color:var(--muted)}
+details.info summary{cursor:pointer;color:var(--accent);font-weight:500;list-style:none;display:inline}
+details.info summary::-webkit-details-marker{display:none}
+details.info[open] summary{margin-bottom:4px;display:block}
+.tick{display:inline-flex;align-items:center;cursor:pointer}
+.tick input{position:absolute;opacity:0;width:1px;height:1px}
+.tick span{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:600;color:var(--muted);background:var(--surface)}
+.tick span::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;box-sizing:border-box}
+.tick input:checked+span{background:var(--t-leicht);border-color:var(--t-leicht);color:var(--surface)}
+.tick input:checked+span::before{background:var(--surface);border-color:var(--surface);box-shadow:inset 0 0 0 3px var(--t-leicht)}
+.tick input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.tick input:disabled+span{opacity:.45;cursor:not-allowed}
+.tl.session .tlbody{--c:var(--t-mittel);background:var(--bg);border-style:dashed;border-left:5px solid var(--c);flex-direction:row;align-items:center;gap:10px}
+.tl.session[data-t="spiel"] .tlbody{--c:var(--t-spiel)}.tl.session[data-t="intensiv"] .tlbody{--c:var(--t-intensiv)}.tl.session[data-t="leicht"] .tlbody{--c:var(--t-leicht)}
+.tl.session b{font-family:var(--display);font-size:1.15rem}
+.tl.sleepitem .tlbody{--c:var(--t-leicht);flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+.tl.sleepitem[data-level="orange"] .tlbody{--c:var(--t-mittel)}.tl.sleepitem[data-level="rot"] .tlbody{--c:var(--t-intensiv)}
+.tl.sleepitem .ndur{margin-top:0}
+.water{gap:12px}
+.glasses{display:grid;grid-template-columns:repeat(8,minmax(0,44px));gap:6px}
+.glass{width:100%;height:48px;padding:0;display:grid;place-items:center;border-radius:8px}
+.glass svg{width:24px;height:30px}
+.glass .gfill{fill:transparent}
+.glass[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.glass[aria-pressed="true"] .gfill{fill:var(--accent)}
+.glass:disabled{opacity:.45;cursor:not-allowed}
+.cellrow{display:flex;gap:4px;align-items:center}
+.cellrow select{flex:1;min-width:0}
+.cellrow .iconbtn{padding:5px 7px;font-size:.9rem}
+.recipesteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+
+@media (max-width:760px){
+  .mainnav{position:fixed;left:0;right:0;bottom:0;top:auto;border-radius:0;border-width:1px 0 0;padding:4px max(6px,env(safe-area-inset-left,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-right,0px));box-shadow:0 -4px 16px rgba(10,25,40,.08)}
+  .mainnav a{flex-direction:column;gap:2px;font-size:.72rem;padding:6px 4px}
+  .mainnav svg{width:22px;height:22px}
+  .wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  header{align-items:center}
+  header .namefield{flex:1 1 100%;width:100%}
+  .brand{min-width:0}
+  .brand h1{overflow-wrap:anywhere}
+  .daynav-title h2{font-size:1.6rem}
+  h1{font-size:1.75rem}
+  .tl{grid-template-columns:50px minmax(0,1fr);gap:8px}
+  .tltime{font-size:1.1rem}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -203,17 +298,20 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
       <div>
       <div class="eyebrow">CZ Nutrition · Unihockey U15</div>
       <h1>Ernährungswoche</h1>
-      <p class="lead">Wähle pro Tag die Belastung und für jede Mahlzeit eine Option. Die Woche ist mit einem Beispiel vorausgefüllt; deine Auswahl bleibt in diesem Browser gespeichert.</p>
       </div>
     </div>
-    <div class="headctl">
-    <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
     <div class="namefield">
       <label class="small" for="athlete">Athlet/in</label>
       <input type="text" id="athlete" placeholder="Name">
     </div>
-    </div>
   </header>
+
+  <nav class="mainnav" aria-label="Bereiche">
+    <a href="#heute" data-nav="heute"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Heute</span></a>
+    <a href="#woche" data-nav="woche"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/></svg><span>Woche</span></a>
+    <a href="#gerichte" data-nav="gerichte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8.5 7.5c0-1.2 1.2-1.6 1.2-3M12.5 7.5c0-1.2 1.2-1.6 1.2-3"/></svg><span>Gerichte</span></a>
+    <a href="#trainer" data-nav="trainer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg><span>Trainer</span></a>
+  </nav>
 
   <div class="sharebanner" id="shareBanner" role="status" hidden>
     <span id="shareBannerText">Du siehst einen geteilten Plan. Du kannst ihn anpassen, Änderungen bleiben in deinem Browser gespeichert.</span>
@@ -221,66 +319,104 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
   </div>
 
-  <section class="plates" aria-label="Teller nach Tagestyp" id="plates"></section>
-
-  <div class="toolbar">
-    <button class="primary" id="shareBtn" type="button">Plan als Link teilen</button>
-    <button id="copyBtn" type="button">Plan als Text kopieren</button>
-    <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
-    <button id="resetBtn" type="button">Beispielwoche wiederherstellen</button>
-    <button id="clearBtn" type="button">Plan leeren</button>
-    <span class="status" id="status" role="status"></span>
-  </div>
-
-  <div id="typemenu" role="dialog" aria-label="Tagestyp wählen" hidden></div>
-
-  <div class="daytabs" id="daytabs" role="group" aria-label="Tag wählen"></div>
-
-  <div class="tablewrap">
-    <table id="week"></table>
-  </div>
-
-  <section class="card sleep" aria-labelledby="sleepTitle">
-    <h2 id="sleepTitle">Schlafrechner</h2>
-    <p class="sleepintro">Trage in der Zeile «Schlaf» unter jedem Tag ein, wann du am Abend schlafen gehst und wann du am nächsten Morgen aufstehen musst. Tippe auf eine Nacht, um hier die Erklärung zu sehen.</p>
-    <p class="sleepavg" id="sleepAvg"></p>
-    <div class="sleepresult" id="sleepResult" data-level="gruen" aria-live="polite">
-      <div class="eyebrow" id="sleepNight"></div>
-      <div class="sleepnum"><span id="sleepHours"></span><span class="sleeptag" id="sleepTag"></span></div>
-      <div class="sleepmeter" aria-hidden="true"><div class="sleepfill" id="sleepFill"></div><span class="mark m7">7 h</span><span class="mark m8">8 h</span></div>
-      <p id="sleepText"></p>
-      <p class="sleephint" id="sleepHint"></p>
+  <!-- HEUTE -->
+  <section class="view" id="view-heute" aria-label="Heute">
+    <div class="daynav">
+      <button type="button" class="roundbtn" data-hday="-1" aria-label="Vorheriger Tag">‹</button>
+      <div class="daynav-title"><div class="eyebrow" id="hDateSub"></div><h2 id="hDate">Heute</h2></div>
+      <button type="button" class="roundbtn" data-hday="1" aria-label="Nächster Tag">›</button>
     </div>
+    <div id="hBanner"></div>
+    <div id="hHero"></div>
+    <div class="streaks" id="hStreaks"></div>
+    <ol class="timeline" id="hTimeline"></ol>
+    <div class="card water" id="hWater"></div>
   </section>
 
-  <div class="lower">
-    <div class="card likes">
-      <h2>Alle Gerichte</h2>
-      <p class="empty">Tippe auf ×, um ein Gericht auszublenden, das du nicht magst. Es verschwindet dann aus allen Auswahllisten.</p>
-      <div id="likeGroups" class="likegroups"></div>
+  <!-- WOCHE -->
+  <section class="view" id="view-woche" aria-label="Wochenplan" hidden>
+    <section class="plates" aria-label="Tagestypen" id="plates"></section>
+
+    <div class="toolbar">
+      <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
+      <button id="shareBtn" type="button">Plan als Link teilen</button>
+      <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
+    </div>
+    <p class="hint">Tipp: Schreib bei «Notizen» die Zeiten, z. B. «Training 18:00–19:30». Dann rechnet die Heute-Ansicht aus, wann du essen solltest.</p>
+
+    <div class="daytabs" id="daytabs" role="group" aria-label="Tag wählen"></div>
+
+    <div class="tablewrap">
+      <table id="week"></table>
     </div>
 
+    <section class="card sleep" aria-labelledby="sleepTitle">
+      <h2 id="sleepTitle">Schlafrechner</h2>
+      <p class="sleepintro">Trag in der Zeile «Schlaf» ein, wann du schlafen gehst und wann du am nächsten Morgen aufstehst. Tippe auf eine Nacht für die Erklärung.</p>
+      <p class="sleepavg" id="sleepAvg"></p>
+      <div class="sleepresult" id="sleepResult" data-level="gruen" aria-live="polite">
+        <div class="eyebrow" id="sleepNight"></div>
+        <div class="sleepnum"><span id="sleepHours"></span><span class="sleeptag" id="sleepTag"></span></div>
+        <div class="sleepmeter" aria-hidden="true"><div class="sleepfill" id="sleepFill"></div><span class="mark m7">7 h</span><span class="mark m8">8 h</span></div>
+        <p id="sleepText"></p>
+        <p class="sleephint" id="sleepHint"></p>
+      </div>
+    </section>
+  </section>
+
+  <!-- GERICHTE -->
+  <section class="view" id="view-gerichte" aria-label="Gerichte" hidden>
+    <div class="card likes">
+      <div class="likeshead">
+        <h2>Alle Gerichte</h2>
+        <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
+      </div>
+      <p class="empty">Tippe auf ×, um ein Gericht auszublenden, das du nicht magst. Es verschwindet dann aus allen Auswahllisten und aus «Woche automatisch füllen».</p>
+      <div id="likeGroups" class="likegroups"></div>
+    </div>
     <div class="card">
       <h2>Rezepte</h2>
       <div class="recipelist" id="recipeList"></div>
     </div>
+  </section>
 
-    <div class="card">
-      <h2>Eigene Option hinzufügen</h2>
-      <div class="addrow">
-        <select id="addCat" aria-label="Mahlzeit"></select>
-        <input type="text" id="addText" placeholder="z. B. Rührei mit Vollkornbrot">
-        <button class="primary" id="addBtn" type="button">Hinzufügen</button>
+  <!-- TRAINER -->
+  <section class="view" id="view-trainer" aria-label="Für Trainer" hidden>
+    <p class="hint">Hier sind die Funktionen, mit denen du als Trainer Pläne vorbereitest und verschickst.</p>
+    <div class="lower">
+      <div class="card">
+        <h2>Plan verschicken</h2>
+        <p>Der Link enthält die ganze Woche. Der Spieler öffnet ihn und kann den Plan danach selbst anpassen.</p>
+        <div class="toolbar">
+          <button class="primary" id="shareBtn2" type="button">Plan als Link teilen</button>
+          <button id="copyBtn" type="button">Plan als Text kopieren</button>
+        </div>
+        <textarea id="planText" readonly aria-label="Plan als Text"></textarea>
       </div>
-      <div class="chips" id="customChips"></div>
+      <div class="card">
+        <h2>Eigene Option hinzufügen</h2>
+        <div class="addrow">
+          <select id="addCat" aria-label="Mahlzeit"></select>
+          <input type="text" id="addText" placeholder="z. B. Rührei mit Vollkornbrot">
+          <button class="primary" id="addBtn" type="button">Hinzufügen</button>
+        </div>
+        <div class="chips" id="customChips"></div>
+      </div>
+      <div class="card">
+        <h2>Plan zurücksetzen</h2>
+        <p>Beide Buttons fragen zuerst nach. Name, ausgeblendete Gerichte und abgehakte Mahlzeiten bleiben erhalten.</p>
+        <div class="toolbar">
+          <button id="resetBtn" type="button">Beispielwoche wiederherstellen</button>
+          <button id="clearBtn" type="button">Plan leeren</button>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <div class="card">
-      <h2>Text für Eltern oder Athlet/in</h2>
-      <textarea id="planText" readonly aria-label="Plan als Text"></textarea>
-    </div>
-  </div>
+  <div id="typemenu" role="dialog" aria-label="Tagestyp wählen" hidden></div>
 </div>
+
+<div class="toast" id="status" role="status" aria-live="polite"></div>
 
 <div id="recipeModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="recipeTitle">
@@ -347,9 +483,9 @@ const BIRCHER_SNACK={n:"Protein-Birchermüesli (kleine Portion)",r:"Protein-Birc
 ["znueni","vor","nach"].forEach(k=>OPTIONS[k].unshift(BIRCHER_SNACK));
 const NONE="";
 const RECIPES={
-  "Protein-Birchermüesli":{z:["Magerquark oder Skyr","Haferflocken","Apfel, geraffelt","Banane, geschnitten","Weitere saisonale Früchte","Eine Handvoll Nüsse","Zimt, Honig oder Datteln"],a:"Alles mischen und mit Zimt, Honig oder Datteln verfeinern und süssen."},
-  "Pfannen-Oats":{z:["Haferflocken","Wasser","Gefrorene Beeren oder Banane","Honig","Skyr"],a:"Haferflocken in der Pfanne mit Wasser erhitzen, gefrorene Beeren oder Banane und Honig untermischen. Zusammen mit Skyr essen."},
-  "Proteinshake":{z:["1–2 Bananen (können auch gefroren sein)","Magerquark","Peanut Butter","Datteln","Nach Belieben Beeren","Optional Proteinpulver"],a:"Alles mit Stabmixer oder Nutribullet mixen. Proteinpulver ist nicht nötig, Magerquark hat schon viel Protein."}
+  "Protein-Birchermüesli":{z:["Magerquark oder Skyr","Haferflocken","Apfel, geraffelt","Banane, geschnitten","Weitere saisonale Früchte","Eine Handvoll Nüsse","Zimt, Honig oder Datteln"],a:"Alles mischen und mit Zimt, Honig oder Datteln verfeinern und süssen.",st:["Magerquark oder Skyr und Haferflocken in eine Schüssel geben.","Apfel dazuraffeln, Banane schneiden und mit den anderen Früchten dazugeben.","Nüsse darüberstreuen.","Mit Zimt, Honig oder Datteln abschmecken."]},
+  "Pfannen-Oats":{z:["Haferflocken","Wasser","Gefrorene Beeren oder Banane","Honig","Skyr"],a:"Haferflocken in der Pfanne mit Wasser erhitzen, gefrorene Beeren oder Banane und Honig untermischen. Zusammen mit Skyr essen.",st:["Haferflocken mit Wasser in eine Pfanne geben.","Unter Rühren erhitzen, bis es cremig wird.","Gefrorene Beeren oder Banane und Honig untermischen.","Zusammen mit Skyr essen."]},
+  "Proteinshake":{z:["1–2 Bananen (können auch gefroren sein)","Magerquark","Peanut Butter","Datteln","Nach Belieben Beeren","Optional Proteinpulver"],a:"Alles mit Stabmixer oder Nutribullet mixen. Proteinpulver ist nicht nötig, Magerquark hat schon viel Protein.",st:["Bananen, Magerquark, Peanut Butter und Datteln in den Mixbecher geben.","Nach Belieben Beeren dazugeben.","Mit Stabmixer oder Nutribullet cremig mixen.","Proteinpulver ist nicht nötig, Magerquark hat schon viel Protein."]}
 };
 function recipeFor(cat,name){if(!name)return null;const o=OPTIONS[cat].find(x=>x.n===name);return o&&o.r&&RECIPES[o.r]?o.r:null}
 const TZ=[["morgen","Morgentraining"],["nachmittag","Nachmittagstraining"],["abend","Abendtraining"]];
@@ -419,7 +555,8 @@ function renderTabs(){
     `<button type="button" data-tab="${k}" aria-pressed="${k===activeDay}">${s}</button>`).join("");
 }
 
-function renderTable(){
+function renderTable(){renderWeekTable();if(typeof renderToday==="function")renderToday()}
+function renderWeekTable(){
   const t=document.getElementById("week");
   let h=`<colgroup><col class="slotcol">${DAYS.map(([k])=>`<col class="daycol${k===activeDay?" active":""}">`).join("")}</colgroup>`;
   h+=`<thead><tr><th class="slot" scope="col"><span class="eyebrow">Mahlzeit</span></th>`;
@@ -428,7 +565,7 @@ function renderTable(){
     h+=`<th scope="col" data-day="${k}" class="${k===activeDay?"active":""}"><span class="dayname">${n}</span>
       <button type="button" class="typebtn" id="typebtn-${k}" data-t="${d.t}" data-typemenu="${k}" aria-haspopup="dialog" aria-expanded="${menu.day===k}" aria-label="Tagestyp ${n}: ${typeName(d)||"nicht gewählt"}"><span>${typeName(d)||"Tagestyp wählen"}</span><span class="caret">▾</span></button>
       ${tzNames(d).length?`<div class="tzchips">${tzNames(d).map(x=>`<span class="tzchip">${x}</span>`).join("")}</div>`:""}
-      <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen" aria-label="Notizen ${n}">
+      <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen, z. B. 18:00–19:30" aria-label="Notizen ${n}">
       ${d.t&&TYPES[d.t]?`<div class="platehint">${TYPES[d.t].h}</div>`:""}</th>`;
   });
   h+=`</tr></thead><tbody>`;
@@ -439,12 +576,12 @@ function renderTable(){
       const opts=optionsFor(sk);
       const known=val===NONE||opts.some(o=>o.n===val);
       h+=`<td data-day="${k}" class="${k===activeDay?"active":""}">
-        <select id="sel-${k}-${sk}" data-day="${k}" data-slot="${sk}" class="${val===NONE?"none":""}" aria-label="${sn} ${n}">
+        <div class="cellrow"><select id="sel-${k}-${sk}" data-day="${k}" data-slot="${sk}" class="${val===NONE?"none":""}" aria-label="${sn} ${n}">
           <option value=""${val===NONE?" selected":""}>– keine –</option>
           ${opts.map(o=>`<option value="${esc(o.n)}"${o.n===val?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}
           ${known?"":`<option value="${esc(val)}" selected>${esc(val)}</option>`}
-        </select>
-        ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:detailFor(sk,val)?`<div class="detail">${esc(detailFor(sk,val))}</div>`:""}
+        </select><button type="button" class="iconbtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button></div>
+        ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:detailFor(sk,val)?`<details class="info detail"><summary>Info</summary>${esc(detailFor(sk,val))}</details>`:""}
         ${recipeFor(sk,val)?`<button type="button" class="linkbtn" data-recipe="${esc(recipeFor(sk,val))}">Rezept ansehen</button>`:""}
       </td>`;
     });
@@ -493,6 +630,8 @@ function flash(msg){const s=document.getElementById("status");s.textContent=msg;
 
 document.addEventListener("change",e=>{
   const el=e.target;
+  if(el.dataset.train){renderToday();return}
+  if(el.dataset.tick){const lg=ensureLog(dkey(hDate));if(el.dataset.tick==="sleep")lg.s=el.checked;else lg.m[el.dataset.tick]=el.checked;pruneLog();save();renderToday();const a=document.getElementById(el.id);if(a)a.focus();return}
   if(el.id==="vegToggle"){state.veg=el.checked;save();renderTable();renderText();renderLikes();return}
   if(el.dataset.slot){state.plan[el.dataset.day].s[el.dataset.slot]=el.value;save();renderTable();renderText();
     const again=document.getElementById(el.id);if(again)again.focus()}
@@ -514,7 +653,7 @@ document.addEventListener("click",e=>{
   const rb=e.target.closest("[data-recipe]");
   if(rb){openRecipe(rb.dataset.recipe,rb);return}
   const trig=e.target.closest("[data-typemenu]");
-  if(trig){const k=trig.dataset.typemenu;if(menu.day===k){closeMenu(true)}else{menu.day=k;menu.sub=state.plan[k].t||null;renderTable();renderMenu();const f=document.querySelector("#typemenu [aria-pressed=true]")||document.querySelector("#typemenu .tm-type");if(f)f.focus()}return}
+  if(trig){const k=trig.dataset.typemenu;if(menu.day===k){closeMenu(true)}else{menu.day=k;menu.tid=trig.id;menu.sub=state.plan[k].t||null;renderTable();renderMenu();const f=document.querySelector("#typemenu [aria-pressed=true]")||document.querySelector("#typemenu .tm-type");if(f)f.focus()}return}
   const tt=e.target.closest("[data-tmtype]");
   if(tt){const d=state.plan[menu.day];d.t=tt.dataset.tmtype;menu.sub=d.t;save();renderTable();renderText();renderMenu();const b=document.getElementById("tm-"+d.t);if(b)b.focus();return}
   if(e.target.closest("[data-tmclose]")){closeMenu(true);return}
@@ -532,7 +671,7 @@ document.getElementById("addBtn").addEventListener("click",()=>{
 document.getElementById("addText").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addBtn").click()});
 document.getElementById("copyBtn").addEventListener("click",()=>{
   const txt=planText();
-  const fallback=()=>{const ta=document.getElementById("planText");ta.focus();ta.select();flash("Text markiert – jetzt kopieren.")};
+  const fallback=()=>{const ta=document.getElementById("planText");ta.value=txt;ta.focus();ta.select();flash("Text markiert – jetzt kopieren.")};
   try{navigator.clipboard.writeText(txt).then(()=>flash("Plan kopiert"),fallback)}catch(err){fallback()}
 });
 let clearArmed=false;
@@ -568,7 +707,7 @@ function renderLikes(){
 const recipeModal=document.getElementById("recipeModal");let recipeReturn=null;
 function renderRecipeList(){document.getElementById("recipeList").innerHTML=Object.entries(RECIPES).map(([n,r])=>`<button type="button" data-recipe="${esc(n)}">${esc(n)}<span>${r.z.length} Zutaten</span></button>`).join("")}
 function openRecipe(name,from){const r=RECIPES[name];if(!r)return;recipeReturn=from||null;
-  document.getElementById("recipeBody").innerHTML=`<div class="eyebrow">Rezept</div><h3 id="recipeTitle">${esc(name)}</h3><div class="eyebrow">Zutaten</div><ul>${r.z.map(z=>`<li>${esc(z)}</li>`).join("")}</ul><div class="eyebrow">Zubereitung</div><p>${esc(r.a)}</p>`;
+  document.getElementById("recipeBody").innerHTML=`<div class="eyebrow">Rezept</div><h3 id="recipeTitle">${esc(name)}</h3><div class="eyebrow">Zutaten</div><ul>${r.z.map(z=>`<li>${esc(z)}</li>`).join("")}</ul><div class="eyebrow">Zubereitung</div>${r.st?`<ol class="recipesteps">${r.st.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p>${esc(r.a)}</p>`}`;
   recipeModal.hidden=false;recipeModal.querySelector(".modalclose").focus()}
 function closeRecipe(){recipeModal.hidden=true;if(recipeReturn&&document.body.contains(recipeReturn))recipeReturn.focus()}
 recipeModal.addEventListener("click",e=>{if(e.target===recipeModal||e.target.closest("[data-close-recipe]"))closeRecipe()});
@@ -601,7 +740,7 @@ function previewSub(tk){
 function positionMenu(){
   if(window.innerWidth<=520){menuEl.classList.add("sheet");menuEl.style.left="";menuEl.style.top="";return}
   menuEl.classList.remove("sheet");
-  const trig=document.getElementById("typebtn-"+menu.day);
+  const trig=document.getElementById(menu.tid||("typebtn-"+menu.day));
   if(!trig||!trig.offsetParent){closeMenu(false);return}
   const r=trig.getBoundingClientRect();const w=menuEl.offsetWidth,h=menuEl.offsetHeight;
   let left=Math.max(16,Math.min(r.left,window.innerWidth-w-16));
@@ -610,7 +749,7 @@ function positionMenu(){
 }
 function closeMenu(focusTrigger){
   if(!menu.day)return;const k=menu.day;menu.day=null;menu.sub=null;menuEl.hidden=true;
-  const t=document.getElementById("typebtn-"+k);if(t){t.setAttribute("aria-expanded","false");if(focusTrigger)t.focus()}
+  const t=document.getElementById(menu.tid||("typebtn-"+k));menu.tid=null;if(t){t.setAttribute("aria-expanded","false");if(focusTrigger)t.focus()}
 }
 menuEl.addEventListener("pointerover",e=>{const b=e.target.closest("[data-tmtype]");if(b&&e.pointerType==="mouse"&&!menuEl.classList.contains("sheet"))previewSub(b.dataset.tmtype)});
 menuEl.addEventListener("focusin",e=>{const b=e.target.closest("[data-tmtype]");if(b)previewSub(b.dataset.tmtype)});
@@ -684,7 +823,7 @@ document.addEventListener("input",e=>{
   const nt=nightOf(k);const cell=el.closest(".sleepcell");cell.dataset.level=nt?nt.level:"rot";
   document.getElementById("dur-"+k).textContent=nt?fmtShort(nt.dur):"–";
   const w=matchWarnings();DAYS.forEach(([d])=>{const x=document.getElementById("warn-"+d);if(x)x.textContent=w[d]?`Vor dem Matchday am ${w[d].join(" und ")}: mind. 8 h`:""});
-  selectNight(k);renderSleepAvg();renderSleepDetail();
+  selectNight(k);renderSleepAvg();renderSleepDetail();renderToday();
 });
 document.getElementById("week").addEventListener("click",e=>{const c=e.target.closest(".sleepcell");if(c)selectNight(c.dataset.night)});
 document.getElementById("week").addEventListener("focusin",e=>{const c=e.target.closest(".sleepcell");if(c)selectNight(c.dataset.night)});
@@ -708,7 +847,7 @@ async function decodePlan(code){
 function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&!/claude\.ai$/.test(l.hostname)&&!/claudeusercontent|claude\.site/.test(l.hostname)?l.origin+l.pathname:SITE}
 document.getElementById("shareBtn").addEventListener("click",async()=>{
   let link;try{link=baseUrl()+"#plan="+await encodePlan()}catch(e){flash("Link konnte nicht erstellt werden.");return}
-  const fallback=()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select();flash("Link unten markiert – jetzt kopieren.")};
+  const fallback=()=>{location.hash="#trainer";setTimeout(()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select()},60);flash("Link im Feld markiert – jetzt kopieren.")};
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
 });
 let beforeImport=null;
@@ -730,6 +869,222 @@ document.getElementById("undoImport").addEventListener("click",()=>{
   renderAll();renderLikes();document.getElementById("shareBanner").hidden=true;flash("Vorheriger Plan wiederhergestellt");
 });
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
+
+/* ---------- Datum, Log, Serien ---------- */
+const MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function wkey(d){return DAYS[(d.getDay()+6)%7][0]}
+function nextKey(k){return DAYS[(DAYS.findIndex(x=>x[0]===k)+1)%7][0]}
+function getLog(dk){return (state.log&&state.log[dk])||{m:{},w:0}}
+function ensureLog(dk){state.log=state.log||{};if(!state.log[dk])state.log[dk]={m:{},w:0};return state.log[dk]}
+function pruneLog(){if(!state.log)return;const lim=dkey(addDays(new Date(),-150));Object.keys(state.log).forEach(k=>{if(k<lim)delete state.log[k]})}
+let hDate=startOfDay(new Date());
+function streak(test,applies){
+  let d=startOfDay(new Date()),n=0;
+  if(!test(dkey(d)))d=addDays(d,-1);
+  for(let i=0;i<150;i++){if(!applies||applies(d)){if(test(dkey(d)))n++;else break}d=addDays(d,-1)}
+  return n;
+}
+function isSportDay(d){const p=state.plan[wkey(d)];return p&&sessionsOf(p).some(x=>!x.rec)}
+
+/* ---------- Zeiten aus Training, Spiel und Schlaf ---------- */
+const DEF_START={morgen:570,nachmittag:840,abend:1110,recovery:600};
+function sessionsOf(d){
+  if(!d||!d.t)return [];
+  const o=timeOpts(d);if(!o)return [];
+  const sel=d[o.f]||[],rec=d.t==="leicht";
+  if(rec&&!sel.length)return [];
+  const dur=rec?60:90,found=[],re=/(\d{1,2})[:.](\d{2})(?:\s*(?:–|-|bis)\s*(\d{1,2})[:.](\d{2}))?/g;let m;
+  while((m=re.exec(String(d.tr||"")))){if(+m[1]>23||+m[2]>59)continue;const st=+m[1]*60+ +m[2];let en=m[3]?+m[3]*60+ +m[4]:st+dur;if(en<=st)en=st+dur;found.push({s:st,e:en})}
+  const list=found.length?found:sel.map(k=>({s:DEF_START[k],e:DEF_START[k]+dur,guess:true}));
+  list.sort((a,b)=>a.s-b.s);
+  const word=d.t==="spiel"?"spiel":"training";
+  return list.map(x=>Object.assign({},x,{rec,label:rec?"Active Recovery Session":(x.s<720?"Morgen":x.s<1020?"Nachmittags":"Abend")+word}));
+}
+function planTimes(k,wake){
+  const d=state.plan[k],S=sessionsOf(d),sport=S.filter(x=>!x.rec);
+  const T={fruehstueck:Math.max(wake+15,360),znueni:600,mittag:735,vor:960,abend:1110,nach:1230},H={},L={};
+  const within=t=>S.find(x=>t>x.s-30&&t<x.e);
+  const what=d.t==="spiel"?"Spiel":"Training";
+  // Znüni
+  const z=within(T.znueni);
+  if(z){const pre=z.s-60;if(pre>=T.fruehstueck+45){T.znueni=pre;H.znueni="Kleiner Snack ca. 1 h vor dem Start."}else T.znueni=z.e+20}
+  // Mittagessen
+  const mm=within(T.mittag);
+  if(mm)T.mittag=mm.e+30;
+  else{const nx=sport.find(x=>x.s>T.mittag&&x.s-T.mittag<120);
+    if(nx){const prev=sport.filter(x=>x.e<=nx.s&&x!==nx).pop();T.mittag=Math.max(nx.s-150,prev?prev.e+20:0,660);H.mittag="Etwa 2–3 h vor dem "+what+": genug Kohlenhydrate, nicht zu fettig."}}
+  if(sport.length){
+    const first=sport[0],last=sport[sport.length-1];
+    const gap=first.s-T.fruehstueck;
+    if(gap>0&&gap<150)H.fruehstueck=gap<=75?{w:1,t:"Nur noch wenig Zeit bis zum Start: lieber etwas Leichtes, z. B. Zopf oder Banane."}:"Etwa 2 h vor dem Start: normal frühstücken, nichts Schweres.";
+    if(sport.length>=2&&d.t==="spiel"){T.vor=sport[0].e+10;L.vor="Zwischen den Spielen";H.vor="Kleine Portionen und regelmässig Wasser."}
+    else{const tg=sport.find(x=>x.s>=780);if(tg){T.vor=Math.min(tg.s-45,Math.max(tg.s-120,T.mittag+60));H.vor="Ca. 1–2 h vor dem "+what+": etwas Leichtes mit Kohlenhydraten."}}
+    T.nach=last.e+10;L.nach="Nach dem "+what;H.nach="Innerhalb von ca. 1 h: Kohlenhydrate und Protein.";
+    const ev=sport.find(x=>x.e>T.abend-60&&x.s<T.abend+90);
+    if(ev){T.abend=Math.max(T.abend,ev.e+45);H.abend="Nach dem "+what+": Kohlenhydrate und Protein auffüllen.";
+      if(ev===last&&T.abend-T.nach<=50)H.nach="Das Nachtessen kommt bald, ein kleiner Snack reicht."}
+    if(d.t==="spiel"){H.fruehstueck=H.fruehstueck||"Matchday: nur Bekanntes essen, gut verdaulich.";}
+  }else L.nach="Snack am Abend";
+  Object.keys(T).forEach(x=>{T[x]=Math.min(Math.max(T[x],300),1425)});
+  return {T,H,L,S};
+}
+
+/* ---------- Woche automatisch füllen ---------- */
+const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis"];
+const LIGHT=["Gemüsecurry mit Reis","Quinoa mit Gemüse oder Quinoa-Salat","Couscous mit Gemüse","Linsendal mit Reis","Reis mit Ei und Gemüse","Reis mit Tofu und Gemüse"];
+const FRUIT=["Apfel","Orange","Mandarine/Clementine","Kaki","Nektarine/Pfirsich","Birne","Banane"];
+const PRE=["Sandwich mit Fleisch und/oder Käse","Banane","Getreidewaffeln (Mais, Reis, Amaranth usw.)","Riegel","Dörrfrüchte","Protein-Birchermüesli (kleine Portion)"];
+const ZN=["Skyr mit Frucht","Protein-Birchermüesli (kleine Portion)","Frucht und eine Handvoll Nüsse","Darvida","Studentenfutter"].concat(FRUIT);
+const PREF={
+  fruehstueck:{spiel:["Zopf mit Konfi oder Honig","Pfannen-Oats mit Beeren und Skyr","Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake"]},
+  znueni:{spiel:["Banane","Darvida","Getreidewaffeln (Mais, Reis, Amaranth usw.)"].concat(FRUIT),intensiv:ZN,mittel:ZN,leicht:FRUIT.concat(["Frucht und eine Handvoll Nüsse","Skyr mit Frucht"])},
+  mittag:{spiel:CARB,intensiv:CARB,mittel:CARB.concat(LIGHT),leicht:LIGHT},
+  abend:{spiel:CARB,intensiv:CARB,mittel:CARB.concat(LIGHT),leicht:LIGHT},
+  vor:{spiel:["Banane","Getreidewaffeln (Mais, Reis, Amaranth usw.)","Riegel","Dörrfrüchte"],intensiv:PRE,mittel:PRE.concat(FRUIT),leicht:FRUIT.concat(["Frucht und eine Handvoll Nüsse"])},
+  nach:{spiel:["Schokoladenmilch und Sandwich","Schokoladenmilch","Proteinshake"],intensiv:["Schokoladenmilch und Sandwich","Proteinshake","Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"],mittel:["Schokoladenmilch","Proteinshake","Brötli","Protein-Birchermüesli (kleine Portion)"],leicht:[]}
+};
+function candidates(k,sk){
+  const d=state.plan[k],t=TYPES[d.t]?d.t:"leicht";
+  let pref=PREF[sk]&&PREF[sk][t];
+  if(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")pref=["Pasta mit Tomatensauce"].concat(CARB);
+  if(sk==="nach"&&t==="leicht"&&sessionsOf(d).length)pref=["Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"];
+  const avail=optionsFor(sk).map(o=>o.n);
+  if(pref&&!pref.length)return [];
+  let c=pref?pref.filter(n=>avail.includes(n)):avail.slice();
+  (state.custom[sk]||[]).forEach(n=>{if(!c.includes(n))c.push(n)});
+  return c.length?c:avail;
+}
+function autoFill(){
+  const used={};
+  DAYS.forEach(([k])=>{const d=state.plan[k];
+    SLOTS.forEach(([sk])=>{
+      const c=candidates(k,sk);if(!c.length){d.s[sk]=NONE;return}
+      let pool=c.filter(n=>!(sk==="abend"&&n===d.s.mittag));if(!pool.length)pool=c;
+      let pick;
+      if((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel"))pick=pool[0];
+      else{const min=Math.min(...pool.map(n=>used[n]||0));const best=pool.filter(n=>(used[n]||0)===min);pick=best[Math.floor(Math.random()*best.length)]}
+      d.s[sk]=pick;used[pick]=(used[pick]||0)+1;
+    })});
+  save();renderTable();renderText();
+}
+function reroll(k,sk,btnId){
+  const d=state.plan[k],cur=d.s[sk];
+  let c=candidates(k,sk);if(!c.length)c=optionsFor(sk).map(o=>o.n);
+  let pool=c.filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
+  if(!pool.length)pool=c.filter(n=>n!==cur);
+  if(!pool.length){flash("Keine weitere passende Option.");return}
+  d.s[sk]=pool[Math.floor(Math.random()*pool.length)];save();renderTable();renderText();
+  const b=document.getElementById(btnId);if(b)b.focus();
+}
+let autoArmed=false;
+document.getElementById("autoBtn").addEventListener("click",e=>{
+  const b=e.currentTarget;
+  if(!autoArmed){autoArmed=true;b.textContent="Alle Mahlzeiten ersetzen?";b.classList.add("warn");
+    setTimeout(()=>{autoArmed=false;b.textContent="Woche automatisch füllen";b.classList.remove("warn")},4000);return}
+  autoArmed=false;b.textContent="Woche automatisch füllen";b.classList.remove("warn");
+  autoFill();flash("Woche gefüllt. Mit ↻ tauschst du einzelne Mahlzeiten.");
+});
+
+/* ---------- Heute ---------- */
+const GLASS=`<svg viewBox="0 0 24 30" aria-hidden="true"><path class="gfill" d="M6.6 13h10.8l-1 12.6a1.4 1.4 0 0 1-1.4 1.3H9a1.4 1.4 0 0 1-1.4-1.3z"/><path d="M4 3h16l-2.1 23.3a1.6 1.6 0 0 1-1.6 1.5H7.7a1.6 1.6 0 0 1-1.6-1.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+function slotName(sk){return SLOTS.find(x=>x[0]===sk)[1]}
+function renderToday(){
+  const tl=document.getElementById("hTimeline");if(!tl)return;
+  ensureSleep();
+  const today=startOfDay(new Date()),diff=Math.round((hDate-today)/864e5);
+  const k=wkey(hDate),idx=DAYS.findIndex(x=>x[0]===k),d=state.plan[k],dk=dkey(hDate),lg=getLog(dk),canTick=diff<=0;
+  const wake=toMin(state.sleepWeek[wkey(addDays(hDate,-1))].wake);const wk=wake===null?390:wake;
+  const {T,H,L,S}=planTimes(k,wk),sport=S.filter(x=>!x.rec);
+  document.getElementById("hDate").textContent=diff===0?"Heute":diff===1?"Morgen":diff===-1?"Gestern":DAYS[idx][1];
+  document.getElementById("hDateSub").textContent=`${DAYS[idx][1]}, ${hDate.getDate()}. ${MONTHS[hDate.getMonth()]}`;
+  // Hero
+  document.getElementById("hHero").innerHTML=`<div class="hero" data-t="${d.t||""}">
+    <span class="hicon">${d.t?icon(d.t,32):""}</span>
+    <h3>${d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
+    <p>${d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
+    <div class="hmeta">${d.tr?`<span class="pill">${esc(d.tr)}</span>`:S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}</span>`).join("")}
+      <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button></div>
+  </div>`;
+  // Banner: Matchday heute oder morgen
+  let ban="";
+  if(d.t==="spiel"){
+    const now=new Date(),mins=now.getHours()*60+now.getMinutes();
+    let cd="";if(diff===0&&sport.length&&sport[0].s>mins){const r=sport[0].s-mins;cd=`<div class="count">Erstes Spiel in ${r>=60?Math.floor(r/60)+" h ":""}${r%60} min</div>`}
+    ban=`<div class="banner"><h3>Matchday</h3>${cd}<ul><li>Nur Bekanntes essen, nichts Neues ausprobieren.</li><li>Frühstück ca. 2–3 h vor dem ersten Spiel.</li><li>Zwischen den Spielen kleine Snacks und regelmässig Wasser.</li><li>Nach dem letzten Spiel: Kohlenhydrate und Protein.</li></ul></div>`;
+  }else if(state.plan[nextKey(k)].t==="spiel"){
+    const nt=nightOf(k),ab=d.s.abend;
+    const sl=nt?(nt.dur>=480?`Dein Schlafplan: ${fmtTime(nt.bed)} bis ${fmtTime(nt.wake)} (${fmtDur(nt.dur)}). Gut so.`:`Für 8 h Schlaf spätestens um ${fmtTime(nt.wake-480)} ins Bett.`):"Mindestens 8 h schlafen.";
+    ban=`<div class="banner"><h3>${diff===0?"Morgen":"Am "+DAYS[(idx+1)%7][1]} ist Matchday</h3><ul><li>Am Abend viele Kohlenhydrate${ab?`, z. B. ${esc(ab)}`:", z. B. Pasta"}.</li><li>Nichts Neues ausprobieren.</li><li>${esc(sl)}</li><li>Trinkflasche und Snacks für zwischen den Spielen einpacken.</li></ul></div>`;
+  }
+  document.getElementById("hBanner").innerHTML=ban;
+  // Serien (nur heute)
+  let st="";
+  if(diff===0){
+    const items=[
+      [streak(x=>!!getLog(x).m.fruehstueck),"Tage mit Frühstück"],
+      [streak(x=>!!getLog(x).m.nach,isSportDay),"Trainings mit Snack danach"],
+      [streak(x=>(getLog(x).w||0)>=8),"Tage mit 2 l Wasser"],
+      [streak(x=>!!getLog(x).s),"Nächte mit mind. 8 h"]
+    ].filter(x=>x[0]>=2);
+    st=items.map(([n,t])=>`<span class="streak"><b>${n}</b>${t}</span>`).join("");
+  }
+  document.getElementById("hStreaks").innerHTML=st;
+  // Zeitleiste
+  const items=[];
+  items.push({t:wk-1,kind:"wake"});
+  SLOTS.forEach(([sk],o)=>{const v=d.s[sk]||NONE;if(sk==="nach"&&!sport.length&&!v)return;items.push({t:T[sk],kind:"meal",sk,o})});
+  S.forEach(x=>items.push({t:x.s,kind:"session",x}));
+  const nt=nightOf(k);if(nt)items.push({t:nt.bed<720?nt.bed+1440:nt.bed,kind:"sleep",nt});
+  items.sort((a,b)=>a.t-b.t||(a.kind==="session"?-1:0));
+  tl.innerHTML=items.map(it=>{
+    if(it.kind==="wake"){const ok=!!lg.s;
+      return `<li class="tl${ok?" done":""}"><div class="tltime">${fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen</span>
+        <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
+    if(it.kind==="session"){const x=it.x;
+      return `<li class="tl session" data-t="${d.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${fmtTime(x.s)}–${fmtTime(x.e)}${x.guess?" · Zeit geschätzt. Trag sie im Wochenplan bei «Notizen» ein.":""}</div></div></div></li>`}
+    if(it.kind==="sleep"){const n=it.nt;
+      return `<li class="tl sleepitem" data-level="${n.level}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
+    const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
+    const h=H[sk],hint=h?(typeof h==="string"?`<p class="tlhint">${esc(h)}</p>`:`<p class="tlhint warn">${esc(h.t)}</p>`):"";
+    const warn=state.veg&&isMeat(sk,v)?`<p class="tlhint warn">Nicht vegetarisch, bitte ersetzen.</p>`:isHidden(v)?`<p class="tlhint warn">Ausgeblendet, bitte ersetzen.</p>`:"";
+    const info=detailFor(sk,v),rec=recipeFor(sk,v);
+    return `<li class="tl meal${done?" done":""}"><div class="tltime">${fmtTime(it.t)}</div><div class="tlbody">
+      <div class="tlhead"><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
+      <div class="tlrow"><select id="hsel-${sk}" data-day="${k}" data-slot="${sk}" class="${v?"":"none"}" aria-label="${esc(slotName(sk))}">
+        <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}
+      </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button></div>
+      ${warn}${hint}
+      ${info||rec?`<div class="tlactions">${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}${rec?`<button type="button" class="linkbtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>`:""}
+    </div></li>`;
+  }).join("");
+  // Wasser
+  const w=lg.w||0;
+  document.getElementById("hWater").innerHTML=`<div class="tlhead"><h2>Wasser</h2><span class="pill">${w} von 8 Gläsern · ${String(w*0.25).replace(".",",")} l</span></div>
+    <div class="glasses" role="group" aria-label="Gläser Wasser">${Array.from({length:8},(_,i)=>`<button type="button" class="glass" id="glass-${i}" data-glass="${i}" aria-pressed="${i<w}" aria-label="${i+1} ${i?"Gläser":"Glas"}"${canTick?"":" disabled"}>${GLASS}</button>`).join("")}</div>
+    <p class="hint">Ziel: mind. 2 l ausserhalb des Trainings (1 Glas = 2,5 dl). Im Training zusätzlich trinken.</p>`;
+}
+document.addEventListener("click",e=>{
+  const nb=e.target.closest("[data-hday]");
+  if(nb){hDate=addDays(hDate,+nb.dataset.hday);renderToday();return}
+  const g=e.target.closest("[data-glass]");
+  if(g){const i=+g.dataset.glass,lg=ensureLog(dkey(hDate));lg.w=(lg.w===i+1)?i:i+1;pruneLog();save();renderToday();const a=document.getElementById(g.id);if(a)a.focus();return}
+  const rr=e.target.closest("[data-reroll]");
+  if(rr){const [k,sk]=rr.dataset.reroll.split("|");reroll(k,sk,rr.id);return}
+});
+
+/* ---------- Navigation ---------- */
+const VIEWS=["heute","woche","gerichte","trainer"];
+function showView(v,scroll){
+  if(!VIEWS.includes(v))v="heute";
+  VIEWS.forEach(x=>{document.getElementById("view-"+x).hidden=x!==v});
+  document.querySelectorAll("[data-nav]").forEach(a=>{if(a.dataset.nav===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  closeMenu(false);if(scroll)window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",()=>{const h=location.hash;if(/^#plan=/.test(h)){importFromHash();showView("heute",true)}else showView(h.slice(1),true)});
+document.getElementById("shareBtn2").addEventListener("click",()=>document.getElementById("shareBtn").click());
 
 /* PDF-Export */
 const TYPE_RGB={leicht:[226,242,232],mittel:[250,239,217],intensiv:[251,228,223],spiel:[227,236,250]};
@@ -839,5 +1194,5 @@ pdfBtn.addEventListener("click",()=>{
 
 document.getElementById("athlete").value=state.name||"";
 document.getElementById("vegToggle").checked=!!state.veg;
-renderPlates();renderAll();importFromHash();
+renderPlates();renderAll();showView(/^#plan=/.test(location.hash)?"heute":location.hash.slice(1));importFromHash();
 </script>
