@@ -734,7 +734,6 @@ function renderWeekTable(){
           ${opts.map(o=>`<option value="${esc(o.n)}"${o.n===val?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}
           ${known?"":`<option value="${esc(val)}" selected>${esc(val)}</option>`}
         </select><button type="button" class="iconbtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button><button type="button" class="iconbtn" id="ad-${k}-${sk}" data-adddish="${k}|${sk}" aria-label="Neues Gericht für ${sn} hinzufügen" title="Neues Gericht hinzufügen">＋</button></div>
-        ${sk==="abend"&&R.dinnerChoice?dinnerSeg(k,d,"wd-"+k):""}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:detailFor(sk,val)?`<details class="info detail"><summary>Info</summary>${esc(detailFor(sk,val))}</details>`:""}
         ${recipeFor(sk,val)?`<button type="button" class="linkbtn" data-recipe="${esc(recipeFor(sk,val))}">Rezept ansehen</button>`:""}
       </div></div>`;
@@ -1438,7 +1437,6 @@ function renderToday(){
       <div class="tlrow"><select id="hsel-${sk}" data-day="${k}" data-slot="${sk}" class="${v?"":"none"}" aria-label="${esc(slotName(sk))}">
         <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}
       </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button><button type="button" class="iconbtn" id="had-${sk}" data-adddish="${k}|${sk}" aria-label="Neues Gericht für ${esc(slotName(sk))} hinzufügen" title="Neues Gericht hinzufügen">＋</button>${v?`<button type="button" class="iconbtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}</div>
-      ${sk==="abend"&&R.dinnerChoice?dinnerSeg(k,d,"hd"):""}
       ${R.moved&&R.moved[sk]?`<button type="button" class="linkbtn mtreset" data-mtreset="${k}|${sk}">Zeit zurücksetzen</button>`:""}
       ${warn}${hint}
       ${info||rec?`<div class="tlactions">${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}${rec?`<button type="button" class="linkbtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>`:""}
