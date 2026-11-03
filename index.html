@@ -362,6 +362,9 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tl.act[data-k="schule"] .tlbody{--c:var(--k-schule);--cbg:var(--k-schule-bg)}
 .tl.act .tltime{color:var(--c)}
 .tl.act b{font-family:var(--display);font-size:1.1rem}
+.gymlink{font-size:.82rem;font-weight:600;color:var(--accent)}
+#addList input[type=url]{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+#addList .sestimes input{background:var(--bg)}
 .addentry{align-self:flex-start;font-size:.85rem;font-weight:600;padding:5px 10px;border-style:dashed;color:var(--accent)}
 .addlist{display:flex;flex-direction:column;gap:6px}
 .addopt{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border-radius:10px}
@@ -687,6 +690,10 @@ const ACT_IC={
   anderes:["M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z","M12 8v4.5l3 1.5"]
 };
 function actIcon(kd,size){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--k-${kd==="schule"?"schule":"well"})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(ACT_IC[kd]||ACT_IC.anderes).map(x=>`<path d="${x}"/>`).join("")}</svg>`}
+const ACT_INFO={sauna:"Hitzeschockproteine werden ab ca. 20 Minuten bei 90 °C aktiviert. Nicht am Tag vor dem Matchday (Dehydrierung und Salzverlust). Nur in gesundem Zustand, also nicht, wenn du angeschlagen bist. Die Sauna sofort verlassen, wenn du dich nicht gut fühlst."};
+function actWarn(kd,k){if(kd!=="sauna")return "";const nx=state.plan[nextKey(k)],d=state.plan[k];
+  if(nx&&nx.t==="spiel")return "Morgen ist Matchday: heute keine Sauna (Dehydrierung und Salzverlust).";
+  if(d&&d.t==="spiel")return "Heute ist Matchday: keine Sauna vor dem Spiel.";return ""}
 function actName(kd){const a=ACTS.find(x=>x[0]===kd);return a?a[1]:"Eintrag"}
 function actsOf(d){return (d&&Array.isArray(d.act)?d.act:[]).map((a,i)=>{const st=toMin(a.s);if(st===null)return null;let en=toMin(a.e);if(en===null||en<=st)en=st+60;return {i,k:a.k,s:st,e:en,label:String(a.n||"").trim()||actName(a.k)}}).filter(Boolean).sort((a,b)=>a.s-b.s)}
 function tzNames(d){return sessionsOf(d).map(x=>`${x.label} ${fmtTime(x.s)}–${fmtTime(x.e)}`).concat(actsOf(d).map(a=>`${a.label} ${fmtTime(a.s)}–${fmtTime(a.e)}`))}
@@ -746,7 +753,7 @@ function isMeat(cat,name){return OPTIONS[cat].some(o=>o.n===name&&o.m)}
 function isHidden(name){return (state.hidden||[]).includes(name)}
 function isFav(name){return !!name&&(state.fav||[]).includes(name)}
 function optionsFor(cat){return OPTIONS[cat].filter(o=>!(state.veg&&o.m)&&!isHidden(o.n)).concat((state.custom[cat]||[]).map(n=>({n,custom:true})))}
-function detailFor(cat,name){const o=optionsFor(cat).find(x=>x.n===name);return o&&o.d?o.d:""}
+function detailFor(cat,name){const o=optionsFor(cat).find(x=>x.n===name);const tg=typeof dishTags==="function"?dishTags(name):"";return [o&&o.d?o.d:"",tg].filter(Boolean).join(" ")}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 const ICONS={
@@ -799,11 +806,14 @@ function renderWeekTable(){
           <span class="sestimes"><label for="tact-${k}-${it.i}-s">von</label><input type="time" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}">
           <button type="button" class="iconbtn" id="tactdel-${k}-${it.i}" data-actdel="${k}|${it.i}" aria-label="Eintrag entfernen">×</button>
           <label for="tact-${k}-${it.i}-e">bis</label><input type="time" id="tact-${k}-${it.i}-e" data-act="${k}|${it.i}|e" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
+          ${actWarn(x.k,k)?`<div class="detail warn">${esc(actWarn(x.k,k))}</div>`:""}
+          ${ACT_INFO[x.k]?`<details class="info detail"><summary>Info</summary>${esc(ACT_INFO[x.k])}</details>`:""}
         </div></div>`}
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
         return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="wtime">${st===null?"–":fmtTime(st)}</span>
 </div>
           <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
+          ${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}
           <span class="sestimes"><label for="tses-${k}-${it.i}-s">von</label><input type="time" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}">
           <button type="button" class="iconbtn" id="tsesdel-${k}-${it.i}" data-sesdel="${k}|${it.i}" data-pre="t" aria-label="Einheit entfernen">×</button>
           <label for="tses-${k}-${it.i}-e">bis</label><input type="time" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
@@ -1223,7 +1233,7 @@ function sessionsOf(d){
   if(!d||!d.t)return [];
   if(Array.isArray(d.ses)){
     const rec=d.t==="leicht",dur=rec?60:90;
-    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {s:st,e:en,rec,auto,named:!!nm,label:nm||auto}}).filter(Boolean).sort((a,b)=>a.s-b.s);
+    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {s:st,e:en,rec,auto,named:!!nm,label:nm||auto,l:x.l||""}}).filter(Boolean).sort((a,b)=>a.s-b.s);
   }
   const o=timeOpts(d);if(!o)return [];
   const sel=d[o.f]||[],rec=d.t==="leicht";
@@ -1412,14 +1422,36 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!dishModal.hidde
 
 /* ---------- Einträge hinzufügen (Training, Schule, Sauna, Physio …) ---------- */
 const addModal=document.getElementById("addModal");let addCtx=null;
+const GYM_IC=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>`;
+function trainCode(str){const m=String(str||"").match(/#e=([zbyc][A-Za-z0-9_-]+)/);return m?m[1]:null}
+async function trainInfo(code){let bytes=unb64url(code.slice(1));if(code[0]==="z"||code[0]==="y")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));
+  const d=JSON.parse(new TextDecoder().decode(bytes));return {t:String(d.t||"Gym-Einheit"),n:Array.isArray(d.i)?d.i.length:0}}
+function trainUrl(code){const l=window.location;const base=/^https?:$/.test(l.protocol)&&!/claude/.test(l.hostname)?l.origin+l.pathname.replace(/[^/]*$/,""):SITE;return base+"training/#e="+code}
+async function showGymForm(){
+  document.getElementById("addList").innerHTML=`<p class="hint">Im Trainingstool bei der Einheit auf «Einheit als Link teilen» tippen, dann den Link hier einfügen.</p>
+    <input type="url" id="gymLink" placeholder="https://…/training/#e=…" aria-label="Link der Einheit">
+    <div class="sestimes"><label for="gymS">von</label><input type="time" id="gymS" aria-label="Start"><span></span><label for="gymE">bis</label><input type="time" id="gymE" aria-label="Ende"></div>
+    <button type="button" class="primary" id="gymGo">Einheit einfügen</button>`;
+  const li=document.getElementById("gymLink");li.focus();
+  try{if(navigator.clipboard&&navigator.clipboard.readText){const t=await navigator.clipboard.readText();if(trainCode(t))li.value=t.trim()}}catch(e){}
+}
+addModal.addEventListener("click",async e=>{if(!e.target.closest("#gymGo")||!addCtx)return;
+  const code=trainCode(document.getElementById("gymLink").value);if(!code){flash("Das ist kein Link aus dem Trainingstool.");return}
+  const s=document.getElementById("gymS").value,en=document.getElementById("gymE").value;if(!s){flash("Bitte die Startzeit eintragen.");document.getElementById("gymS").focus();return}
+  let info;try{info=await trainInfo(code)}catch(err){flash("Die Einheit konnte nicht gelesen werden.");return}
+  const k=addCtx.k,d=state.plan[k];if(!Array.isArray(d.ses))d.ses=[];if(!d.t||d.t==="leicht")d.t="mittel";
+  d.ses.push({s,e:en||"",n:"Gym: "+info.t,l:code});save();addModal.hidden=true;activeDay=k;renderTabs();renderTable();renderText();
+  flash(`«${info.t}» eingefügt${info.n?` (${info.n} Übungen)`:""}`)});
 function openAdd(k,from){addCtx={k,from};const d=state.plan[k],n=DAYS.find(x=>x[0]===k)[1];
   document.getElementById("addTitle").textContent="Eintrag am "+n;
-  document.getElementById("addList").innerHTML=`<button type="button" class="addopt" data-addkind="ses">${d.t?icon(d.t==="leicht"?"leicht":d.t,22):icon("mittel",22)}<span>${d.t==="spiel"?"Spiel":d.t==="leicht"?"Active Recovery Session (Tagestyp)":"Training"}<small>bestimmt Essenszeiten und Tagestyp</small></span></button>`+
+  document.getElementById("addList").innerHTML=`<button type="button" class="addopt" data-addkind="gym">${GYM_IC}<span>Gym-Einheit aus CZ Training<small>Link vom Trainingstool einfügen</small></span></button><button type="button" class="addopt" data-addkind="ses">${d.t?icon(d.t==="leicht"?"leicht":d.t,22):icon("mittel",22)}<span>${d.t==="spiel"?"Spiel":d.t==="leicht"?"Active Recovery Session (Tagestyp)":"Training"}<small>bestimmt Essenszeiten und Tagestyp</small></span></button>`+
     ACTS.map(([kd,nm])=>`<button type="button" class="addopt" data-addkind="${kd}">${actIcon(kd,22)}<span>${nm}${kd==="schule"?"<small>Essen in den Pausen und nach der Schule</small>":""}</span></button>`).join("");
   addModal.hidden=false;const f=addModal.querySelector(".addopt");if(f)f.focus()}
 function closeAdd(){addModal.hidden=true;const f=addCtx&&document.getElementById(addCtx.from);if(f)f.focus()}
 addModal.addEventListener("click",e=>{if(e.target===addModal||e.target.closest("[data-close]")){closeAdd();return}
-  const o=e.target.closest("[data-addkind]");if(!o||!addCtx)return;const k=addCtx.k,d=state.plan[k],kd=o.dataset.addkind;addModal.hidden=true;
+  const o=e.target.closest("[data-addkind]");if(!o||!addCtx)return;const k=addCtx.k,d=state.plan[k],kd=o.dataset.addkind;
+  if(kd==="gym"){showGymForm();return}
+  addModal.hidden=true;
   if(kd==="ses"){if(!Array.isArray(d.ses))d.ses=[];if(!d.t)d.t="mittel";d.ses.push({s:"",e:""});var fid=`tses-${k}-${d.ses.length-1}-s`}
   else{if(!Array.isArray(d.act))d.act=[];const def=kd==="schule"?{s:"",e:""}:{s:"",e:""};d.act.push(Object.assign({k:kd},def));var fid=`tact-${k}-${d.act.length-1}-s`}
   save();activeDay=k;if(document.getElementById("view-woche").hidden)location.hash="#woche";
@@ -1507,6 +1539,79 @@ const PREF={
   nach:{spiel:["Schokoladenmilch und Sandwich","Schokoladenmilch","Proteinshake"],intensiv:["Schokoladenmilch und Sandwich","Proteinshake","Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"],mittel:["Schokoladenmilch","Proteinshake","Brötli","Protein-Birchermüesli (kleine Portion)"],leicht:[]}
 };
 Object.values(PREF).forEach(o=>{if(o.intensiv)o.ganztag=o.intensiv});
+/* Eigenschaften der Gerichte:
+   pre  = leicht verdaulich, gut 2–3 h vor Training/Spiel
+   fast = schnelle Kohlenhydrate, als Snack bis kurz vor der Belastung
+   fib  = viele Nahrungsfasern (Vollkorn, Hülsenfrüchte, Gemüse): gut mit Abstand zum Training
+   rec  = Kohlenhydrate und Protein: gut nach dem Training
+   heavy= fett- oder ballaststoffreich, schwer verdaulich */
+const DP={
+  "Protein-Birchermüesli":{fib:1,rec:1},
+  "Vollkornbrot mit Avocado und Eiern":{fib:1,rec:1},
+  "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake":{pre:1,rec:1},
+  "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken":{rec:1},
+  "Pfannen-Oats mit Beeren und Skyr":{pre:1,rec:1},
+  "Zopf mit Konfi oder Honig":{pre:1,fast:1},
+  "Protein-Birchermüesli (kleine Portion)":{fib:1,rec:1},
+  "Frucht und eine Handvoll Nüsse":{fib:1},
+  "Skyr mit Frucht":{pre:1,rec:1},
+  "Darvida":{pre:1,fast:1},
+  "Studentenfutter":{heavy:1},
+  "Banane":{pre:1,fast:1},
+  "Apfel":{pre:1},"Birne":{pre:1},"Kaki":{pre:1},"Orange":{pre:1},"Mandarine/Clementine":{pre:1},"Nektarine/Pfirsich":{pre:1},
+  "Proteinshake":{rec:1},
+  "Sandwich mit Fleisch und/oder Käse":{pre:1,rec:1},
+  "Getreidewaffeln (Mais, Reis, Amaranth usw.)":{pre:1,fast:1},
+  "Riegel":{pre:1,fast:1},
+  "Dörrfrüchte":{pre:1,fast:1},
+  "Schokoladenmilch":{rec:1,fast:1},
+  "Brötli":{pre:1,fast:1},
+  "Schokoladenmilch und Sandwich":{rec:1},
+  "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus":{rec:1},
+  "Reis mit Poulet und Gemüse":{pre:1,rec:1},
+  "Vegi-Bolognese mit Linsen oder Sojahack":{fib:1,rec:1},
+  "Reis mit Tofu und Gemüse":{pre:1,rec:1},
+  "Reis mit Ei und Gemüse":{pre:1,rec:1},
+  "Pasta mit Tomatensauce":{pre:1},
+  "Gemüsecurry mit Reis":{fib:1},
+  "Quinoa mit Gemüse oder Quinoa-Salat":{fib:1},
+  "Couscous mit Gemüse":{fib:1},
+  "Linsendal mit Reis":{fib:1,rec:1},
+  "Pasta mit Thon-Tomatensauce":{pre:1,rec:1},
+  "Pasta mit Poulet und Pesto":{rec:1},
+  "Hörnli mit Hüttenkäse und Gemüse":{rec:1},
+  "Lasagne mit Linsen oder Hackfleisch":{heavy:1,rec:1},
+  "Poulet-Reis-Pfanne mit Ei (Fried Rice)":{rec:1},
+  "Chili sin Carne mit Reis":{fib:1,rec:1},
+  "Risotto mit Poulet und Erbsen":{pre:1,rec:1},
+  "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch":{fib:1,rec:1},
+  "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen":{fib:1,rec:1},
+  "Poulet-Wraps mit Bohnen und Salat":{fib:1,rec:1},
+  "Couscous-Salat mit Feta und Kichererbsen":{fib:1},
+  "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse":{rec:1}
+};
+const HARD=["intensiv","ganztag","spiel"];
+function dishTags(n){const p=DP[n];if(!p)return "";const t=[];
+  if(p.fast)t.push("schnelle Kohlenhydrate, gut kurz vor dem Training");else if(p.pre)t.push("leicht verdaulich, gut 2–3 h vor dem Training");
+  if(p.fib)t.push("viele Nahrungsfasern, gut mit Abstand zum Training");
+  if(p.heavy)t.push("eher schwer, nicht direkt vor dem Training");
+  if(p.rec)t.push("Kohlenhydrate und Protein, gut nach dem Training");
+  if(/Proteinshake/.test(n))t.push("Shake vor allem an intensiven Tagen");
+  return t.length?t.join(" · ").replace(/^./,c=>c.toUpperCase())+".":""}
+function dishContext(k,sk){
+  const d=state.plan[k],{T,S}=planTimes(k,wakeFor(k)),t=T[sk],sp=S.filter(x=>!x.rec);
+  const nx=sp.find(x=>x.s>=t),pv=sp.filter(x=>x.e<=t).pop();
+  return {pre:nx?nx.s-t:null,post:pv?t-pv.e:null,type:d.t||"leicht"};
+}
+function fitsCtx(n,sk,c){const p=DP[n]||{};
+  if(/Proteinshake/.test(n)&&!HARD.includes(c.type))return false;
+  if(c.pre!==null&&c.pre<=180){if(p.fib||p.heavy)return false;if(SNACKS.includes(sk)&&c.pre<=90&&DP[n]&&!p.fast)return false}
+  return true}
+function prefCtx(n,sk,c){const p=DP[n]||{};
+  if(c.pre!==null&&c.pre<=180)return SNACKS.includes(sk)&&c.pre<=90?!!p.fast:!!(p.pre||p.fast);
+  if(c.post!==null&&c.post<=120)return !!p.rec;
+  if(SNACKS.includes(sk)||sk==="fruehstueck")return !p.fast&&!p.heavy;
+  return !!p.fib}
 function candidates(k,sk){
   const d=state.plan[k],t=TYPES[d.t]?d.t:"leicht";
   let pref=PREF[sk]&&PREF[sk][t];
@@ -1516,14 +1621,18 @@ function candidates(k,sk){
   if(pref&&!pref.length)return [];
   let c=pref?pref.filter(n=>avail.includes(n)):avail.slice();
   (state.custom[sk]||[]).forEach(n=>{if(!c.includes(n))c.push(n)});
-  return c.length?c:avail;
+  if(!c.length)c=avail;
+  const ctx=dishContext(k,sk),ok=c.filter(n=>fitsCtx(n,sk,ctx));
+  return ok.length?ok:c;
 }
+function preferred(k,sk,pool){const ctx=dishContext(k,sk),p=pool.filter(n=>prefCtx(n,sk,ctx));return p.length?p:pool}
 function autoFill(){
   const used={};
   DAYS.forEach(([k])=>{const d=state.plan[k];
     SLOTS.forEach(([sk])=>{
       const c=candidates(k,sk);if(!c.length){d.s[sk]=NONE;return}
       let pool=c.filter(n=>!(sk==="abend"&&n===d.s.mittag));if(!pool.length)pool=c;
+      if(!((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel")))pool=preferred(k,sk,pool);
       let pick;
       if((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel"))pick=pool[0];
       else{const eff=n=>(used[n]||0)-(isFav(n)?1:0);const min=Math.min(...pool.map(eff));const best=pool.filter(n=>eff(n)===min);pick=best[Math.floor(Math.random()*best.length)]}
@@ -1537,8 +1646,9 @@ function reroll(k,sk,btnId){
   let pool=c.filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
   if(!pool.length)pool=c.filter(n=>n!==cur);
   if(!pool.length){flash("Keine weitere passende Option.");return}
-  const wsum=pool.reduce((a,n)=>a+(isFav(n)?3:1),0);let r=Math.random()*wsum,pick=pool[pool.length-1];
-  for(const n of pool){r-=isFav(n)?3:1;if(r<0){pick=n;break}}
+  const pf=new Set(preferred(k,sk,pool)),wt=n=>(isFav(n)?3:1)*(pf.has(n)?3:1);
+  const wsum=pool.reduce((a,n)=>a+wt(n),0);let r=Math.random()*wsum,pick=pool[pool.length-1];
+  for(const n of pool){r-=wt(n);if(r<0){pick=n;break}}
   d.s[sk]=pick;save();renderTable();renderText();
   const b=document.getElementById(btnId);if(b)b.focus();
 }
@@ -1612,9 +1722,9 @@ function renderToday(){
       return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="act"){const a=it.a;
-      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div></div></div></li>`}
+      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div></div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}" data-time="${it.t}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
