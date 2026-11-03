@@ -1064,21 +1064,21 @@ function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setHours(0,
 function wkOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
 function streak(){const W=new Set(hist().map(h=>wkOf(h.d)));let w=wkOf(Date.now());if(!W.has(w)){const d=new Date(w);d.setDate(d.getDate()-7);w=d.getTime()}
   let n=0;while(W.has(w)){n++;const d=new Date(w);d.setDate(d.getDate()-7);w=wkOf(d.getTime())}return n}
-function backupCard(){return `<div class="card"><h2>Sicherung</h2><p class="hint">Speichert alle Einheiten und deinen ganzen Verlauf als Datei, z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Sicherung laden».</p>
-  <div class="bkrow"><button type="button" class="primary" id="bkSave">💾 Sicherung speichern</button><button type="button" id="bkLoad">📂 Sicherung laden</button></div></div>`}
+function backupCard(){return `<div class="card"><h2>Backup</h2><p class="hint">Speichert alle Einheiten und deinen ganzen Verlauf als Datei, z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Backup laden».</p>
+  <div class="bkrow"><button type="button" class="primary" id="bkSave">💾 Backup speichern</button><button type="button" id="bkLoad">📂 Backup laden</button></div></div>`}
 async function saveBackup(){const data=JSON.stringify(Object.assign({app:"cz-training",v:1,saved:Date.now()},state));const d=new Date();
-  const filename=`CZ-Training-Sicherung-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const filename=`CZ-Training-Backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const blob=new Blob([data],{type:"application/json"});
-  if(downloadsApi){try{const r=await downloadsApi.save({filename,data:blob});flash(r&&r.status==="saved"?"Sicherung gespeichert ✓":"Sicherung übergeben")}catch(e){flash(e&&e.code==="declined"?"Abgebrochen":"Speichern hier nicht möglich")}return}
-  try{const f=new File([blob],filename,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Training Sicherung"});flash("Sicherung übergeben ✓");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);flash("Sicherung gespeichert ✓")}
+  if(downloadsApi){try{const r=await downloadsApi.save({filename,data:blob});flash(r&&r.status==="saved"?"Backup gespeichert ✓":"Backup übergeben")}catch(e){flash(e&&e.code==="declined"?"Abgebrochen":"Speichern hier nicht möglich")}return}
+  try{const f=new File([blob],filename,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Training Backup"});flash("Backup übergeben ✓");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);flash("Backup gespeichert ✓")}
 document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.sessions)||!d.sessions.length)throw 0;delete d.app;delete d.v;delete d.saved;
     /* Verlauf zusammenführen statt überschreiben */
     const seen=new Set(hist().map(h=>h.d+"|"+h.sid));const merged=hist().concat((d.hist||[]).filter(h=>!seen.has(h.d+"|"+h.sid)));
     const ids=new Set(d.sessions.map(x=>x.id));const extra=state.sessions.filter(x=>!ids.has(x.id)&&x.items.length);
-    state=Object.assign(d,{hist:merged,sessions:d.sessions.concat(extra)});syncNames(state);save();renderCustom();renderAll();flash(`Sicherung geladen ✓ – ${state.sessions.length} Einheiten, ${merged.length} Trainings`)}
-  catch(err){flash("Diese Datei ist keine CZ-Training-Sicherung.")}});
+    state=Object.assign(d,{hist:merged,sessions:d.sessions.concat(extra)});syncNames(state);save();renderCustom();renderAll();flash(`Backup geladen ✓ – ${state.sessions.length} Einheiten, ${merged.length} Trainings`)}
+  catch(err){flash("Diese Datei ist kein CZ-Training-Backup.")}});
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
   if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${backupCard()}`;return}
