@@ -327,6 +327,13 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dropline{height:4px;background:var(--accent);border-radius:2px;margin:1px 0;list-style:none;padding:0}
 .tl.dropline{display:block}
 .mtreset{align-self:flex-start;padding-left:0}
+.planbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
+.stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
+.stab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.stab.add{font-family:var(--body);font-size:.88rem;color:var(--accent);border-style:dashed}
+.warnbanner{background:var(--t-mittel-bg);border-color:var(--t-mittel)}
+.modalbox input[type=url],.modalbox input[type=text]{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
 .recipesteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 
 @media (max-width:760px){
@@ -344,7 +351,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
   .tl{grid-template-columns:50px minmax(0,1fr);gap:8px}
   .tltime{font-size:1.1rem}
 }
-@media (max-width:760px){.weekgrid{grid-template-columns:minmax(0,1fr);min-width:0}.daycol:not(.active){display:none}.daycol{border-right:none}}
+@media (max-width:760px){.planbar{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}.planbar::-webkit-scrollbar{display:none}.weekgrid{grid-template-columns:minmax(0,1fr);min-width:0}.daycol:not(.active){display:none}.daycol{border-right:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -371,10 +378,24 @@ details.info[open] summary{margin-bottom:4px;display:block}
   </nav>
 
   <div class="sharebanner" id="shareBanner" role="status" hidden>
-    <span id="shareBannerText">Du siehst einen geteilten Plan. Du kannst ihn anpassen, Änderungen bleiben in deinem Browser gespeichert.</span>
-    <button type="button" id="undoImport">Meinen vorherigen Plan zurückholen</button>
+    <span id="shareBannerText">Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.</span>
+    <button type="button" id="undoImport">Wieder entfernen</button>
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
   </div>
+
+  <div class="sharebanner warnbanner" id="browserBanner" hidden>
+    <span><b>Du bist im Browser, nicht in der App.</b> Hast du CZ Nutrition schon auf dem Homescreen? Dann so in die App holen: 1. «Link kopieren» tippen · 2. App öffnen · 3. «＋ Plan vom Coach». Noch keine App? Dann jetzt über Teilen → «Zum Home-Bildschirm» speichern.</span>
+    <button type="button" class="primary" id="copyHereBtn">Link kopieren</button>
+    <button type="button" class="linkbtn" id="browserClose">Ausblenden</button>
+  </div>
+
+  <div class="sharebanner" id="installCard" hidden>
+    <span><b>Als App auf dem Homescreen speichern.</b><span id="installText"></span></span>
+    <button type="button" class="primary" id="installBtn" hidden>App installieren</button>
+    <button type="button" class="linkbtn" id="installClose">Ausblenden</button>
+  </div>
+
+  <div class="planbar" id="planBar" role="group" aria-label="Meine Pläne"></div>
 
   <!-- HEUTE -->
   <section class="view" id="view-heute" aria-label="Heute">
@@ -461,10 +482,19 @@ details.info[open] summary{margin-bottom:4px;display:block}
       </div>
       <div class="card">
         <h2>Plan zurücksetzen</h2>
-        <p>Beide Buttons fragen zuerst nach. Name, ausgeblendete Gerichte und abgehakte Mahlzeiten bleiben erhalten.</p>
+        <p>Alle Buttons fragen zuerst nach. Ausgeblendete Gerichte, Favoriten und abgehakte Mahlzeiten bleiben erhalten.</p>
         <div class="toolbar">
           <button id="resetBtn" type="button">Beispielwoche wiederherstellen</button>
           <button id="clearBtn" type="button">Plan leeren</button>
+          <button id="delPlanBtn" type="button">Diesen Plan löschen</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <p>Speichert alle Pläne, Favoriten und Abgehaktes als Datei, z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Backup laden».</p>
+        <div class="toolbar">
+          <button class="primary" id="bkSave" type="button">Backup speichern</button>
+          <button id="bkLoad" type="button">Backup laden</button>
         </div>
       </div>
     </div>
@@ -474,6 +504,28 @@ details.info[open] summary{margin-bottom:4px;display:block}
 </div>
 
 <div class="toast" id="status" role="status" aria-live="polite"></div>
+
+<input type="file" id="bkFile" accept="application/json,.json" hidden>
+
+<div id="pasteModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="pasteTitle">Plan vom Coach hinzufügen</h3>
+    <p class="hint">1. In WhatsApp lange auf den Link vom Coach drücken → «Kopieren».<br>2. Hier ins Feld tippen → «Einsetzen» → «Plan öffnen».</p>
+    <input type="url" id="pasteInput" placeholder="https://…#plan=…" aria-label="Link">
+    <button type="button" class="primary" id="pasteGo">Plan öffnen</button>
+  </div>
+</div>
+
+<div id="dishModal" class="modal" hidden>
+  <form class="modalbox" role="dialog" aria-modal="true" aria-labelledby="dishTitle" id="dishForm">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="dishTitle">Neues Gericht</h3>
+    <p class="hint" id="dishHint"></p>
+    <input type="text" id="dishInput" placeholder="z. B. Snickers" aria-label="Name" autocomplete="off">
+    <button type="submit" class="primary">Hinzufügen und auswählen</button>
+  </form>
+</div>
 
 <div id="recipeModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="recipeTitle">
@@ -551,6 +603,7 @@ OPTIONS.mittag=HAUPT;OPTIONS.abend=HAUPT;
 const BIRCHER_SNACK={n:"Protein-Birchermüesli (kleine Portion)",r:"Protein-Birchermüesli",d:"Magerquark oder Skyr, Haferflocken, geraffelter Apfel, Banane, saisonale Früchte, ein paar Nüsse. Mit Zimt, Honig oder Datteln verfeinern. Lässt sich gut im Glas mitnehmen."};
 ["znueni","vor","nach"].forEach(k=>OPTIONS[k].unshift(BIRCHER_SNACK));
 const NONE="";
+const SNACKS=["znueni","vor","nach"],MAINS=["mittag","abend"];
 const RECIPES={
   "Protein-Birchermüesli":{z:["Magerquark oder Skyr","Haferflocken","Apfel, geraffelt","Banane, geschnitten","Weitere saisonale Früchte","Eine Handvoll Nüsse","Zimt, Honig oder Datteln"],a:"Alles mischen und mit Zimt, Honig oder Datteln verfeinern und süssen.",st:["Magerquark oder Skyr und Haferflocken in eine Schüssel geben.","Apfel dazuraffeln, Banane schneiden und mit den anderen Früchten dazugeben.","Nüsse darüberstreuen.","Mit Zimt, Honig oder Datteln abschmecken."]},
   "Pfannen-Oats":{z:["Haferflocken","Wasser","Gefrorene Beeren oder Banane","Honig","Skyr"],a:"Haferflocken in der Pfanne mit Wasser erhitzen, gefrorene Beeren oder Banane und Honig untermischen. Zusammen mit Skyr essen.",st:["Haferflocken mit Wasser in eine Pfanne geben.","Unter Rühren erhitzen, bis es cremig wird.","Gefrorene Beeren oder Banane und Honig untermischen.","Zusammen mit Skyr essen."]},
@@ -588,10 +641,35 @@ let activeDay=(()=>{const d=new Date().getDay();return DAYS[(d+6)%7][0]})();
 
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function load(){
-  try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&s.plan)return s}}catch(e){}
+  try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&(s.plan||(Array.isArray(s.plans)&&s.plans.length)))return s}}catch(e){}
   return {name:"",plan:clone(EXAMPLE),custom:{}};
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function activePlan(){return (state.plans||[]).find(p=>p.id===state.active)}
+function ensurePlans(){
+  if(Array.isArray(state.plans)&&state.plans.length&&activePlan())return;
+  const p={id:uid(),name:state.name||"",plan:state.plan,veg:!!state.veg,sleepWeek:state.sleepWeek||null};
+  state.plans=[p];state.active=p.id;
+}
+function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.sleepWeek=state.sleepWeek||null}}
+function save(){if(Array.isArray(state.plans))syncActive();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
+/* Nur in Claude: Pläne zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
+   Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles im Browser. */
+var cloud=null,cloudReady=false,cloudT=null,cloudLast="";
+function cloudSave(){if(!cloud||!cloudReady)return;clearTimeout(cloudT);cloudT=setTimeout(async()=>{
+  const j=JSON.stringify(state);if(j===cloudLast)return;
+  if(j.length>400000){flash("Zu viele Daten für den Claude-Speicher – im Browser gespeichert.");return}
+  try{await cloud.doc("coach/main").set({j,at:Date.now()});cloudLast=j}catch(e){}},800)}
+async function cloudInit(){
+  if(!(window.claude&&window.claude.use))return;let db=null;try{db=await window.claude.use("db")}catch(e){}if(!db)return;cloud=db;
+  try{const m=await db.doc("coach/main").get();
+    if(m.exists){const main=JSON.parse(m.data().j);if(main&&Array.isArray(main.plans)&&main.plans.length){state=main;ensurePlans();loadActive();cloudLast=JSON.stringify(state);
+      try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}refreshAll()}}
+    cloudReady=true;if(!m.exists)cloudSave();
+    /* Pläne, die Claude für dich abgelegt hat */
+    const inbox=await db.collection("inbox").get();state.imported=state.imported||{};
+    for(const d of inbox.docs){const c=codeFrom("#plan="+String((d.data()||{}).code||""));if(c&&!state.imported[c])await importCode(c)}
+  }catch(e){cloudReady=true}}
 function isMeat(cat,name){return OPTIONS[cat].some(o=>o.n===name&&o.m)}
 function isHidden(name){return (state.hidden||[]).includes(name)}
 function isFav(name){return !!name&&(state.fav||[]).includes(name)}
@@ -655,7 +733,7 @@ function renderWeekTable(){
           <option value=""${val===NONE?" selected":""}>– keine –</option>
           ${opts.map(o=>`<option value="${esc(o.n)}"${o.n===val?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}
           ${known?"":`<option value="${esc(val)}" selected>${esc(val)}</option>`}
-        </select><button type="button" class="iconbtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button></div>
+        </select><button type="button" class="iconbtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button><button type="button" class="iconbtn" id="ad-${k}-${sk}" data-adddish="${k}|${sk}" aria-label="Neues Gericht für ${sn} hinzufügen" title="Neues Gericht hinzufügen">＋</button></div>
         ${sk==="abend"&&R.dinnerChoice?dinnerSeg(k,d,"wd-"+k):""}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:detailFor(sk,val)?`<details class="info detail"><summary>Info</summary>${esc(detailFor(sk,val))}</details>`:""}
         ${recipeFor(sk,val)?`<button type="button" class="linkbtn" data-recipe="${esc(recipeFor(sk,val))}">Rezept ansehen</button>`:""}
@@ -722,7 +800,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("input",e=>{
   const el=e.target;
   if(el.dataset.train){state.plan[el.dataset.train].tr=el.value;save();renderText()}
-  if(el.id==="athlete"){state.name=el.value;save();renderText()}
+  if(el.id==="athlete"){state.name=el.value;save();renderText();renderPlanBar()}
 });
 document.addEventListener("click",e=>{
   const tab=e.target.closest("[data-tab]");
@@ -781,7 +859,8 @@ document.getElementById("resetBtn").addEventListener("click",e=>{
 /* Alle Gerichte / ausblenden */
 function likeGroups(){
   const uniq=list=>{const seen=new Set();return list.filter(o=>!seen.has(o.n)&&seen.add(o.n))};
-  return [["Frühstück",uniq(OPTIONS.fruehstueck)],["Mittag- und Nachtessen",uniq(HAUPT)],["Snacks",uniq(OPTIONS.znueni.concat(OPTIONS.vor,OPTIONS.nach))]];
+  const cu=ks=>ks.flatMap(k=>((state.custom||{})[k]||[]).map(n=>({n,custom:true})));
+  return [["Frühstück",uniq(OPTIONS.fruehstueck.concat(cu(["fruehstueck"])))],["Mittag- und Nachtessen",uniq(HAUPT.concat(cu(MAINS)))],["Snacks",uniq(OPTIONS.znueni.concat(OPTIONS.vor,OPTIONS.nach,cu(SNACKS)))]];
 }
 function renderLikes(){
   document.getElementById("likeGroups").innerHTML=likeGroups().map(([title,list])=>{
@@ -920,7 +999,8 @@ function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
 async function encodePlan(){
-  const data=new TextEncoder().encode(JSON.stringify({n:state.name||"",v:!!state.veg,p:state.plan}));
+  const o={n:state.name||"",v:!!state.veg,p:state.plan};if(state.sleepWeek)o.w=state.sleepWeek;
+  const data=new TextEncoder().encode(JSON.stringify(o));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data);
 }
@@ -930,30 +1010,102 @@ async function decodePlan(code){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 function baseUrl(){const l=window.location;return /^https?:$/.test(l.protocol)&&!/claude\.ai$/.test(l.hostname)&&!/claudeusercontent|claude\.site/.test(l.hostname)?l.origin+l.pathname:SITE}
+function codeFrom(str){const m=String(str||"").match(/#plan=([zb][A-Za-z0-9_-]+)/);return m?m[1]:null}
 document.getElementById("shareBtn").addEventListener("click",async()=>{
   let link;try{link=baseUrl()+"#plan="+await encodePlan()}catch(e){flash("Link konnte nicht erstellt werden.");return}
+  if(navigator.share&&matchMedia("(pointer:coarse)").matches){navigator.share({title:"Ernährungsplan"+(state.name?" "+state.name:""),url:link}).catch(()=>{});return}
   const fallback=()=>{location.hash="#trainer";setTimeout(()=>{const ta=document.getElementById("planText");ta.value=link;ta.focus();ta.select()},60);flash("Link im Feld markiert – jetzt kopieren.")};
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
 });
-let beforeImport=null;
-async function importFromHash(){
-  const m=(window.location.hash||"").match(/^#plan=([zb][A-Za-z0-9_-]+)$/);if(!m)return;
-  try{
-    const d=await decodePlan(m[1]);if(!d||!d.p)throw 0;
-    beforeImport=JSON.stringify(state);
-    state.plan=d.p;migratePlan(state.plan);state.name=d.n||state.name;state.veg=!!d.v;save();
-    document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
-    renderAll();renderLikes();
-    document.getElementById("shareBanner").hidden=false;
-  }catch(e){flash("Der geteilte Plan konnte nicht gelesen werden.")}
-  try{history.replaceState(null,"",window.location.pathname+window.location.search)}catch(e){}
+/* Pläne verwalten */
+function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.sleepWeek=p.sleepWeek||null;migratePlan(state.plan)}
+function refreshAll(){document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
+  if(typeof sleepSel!=="undefined")sleepSel=null;renderPlanBar();renderAll();renderLikes()}
+function switchPlan(id){if(id===state.active)return;save();state.active=id;loadActive();save();refreshAll()}
+function emptyPlan(){const o={};DAYS.forEach(([k])=>{o[k]={t:"",tr:"",ses:[],s:{}};SLOTS.forEach(([sk])=>o[k].s[sk]=NONE)});return o}
+function renderPlanBar(){
+  const el=document.getElementById("planBar");if(!el)return;
+  el.innerHTML=state.plans.map(p=>`<button type="button" class="stab" data-plan="${p.id}" aria-pressed="${p.id===state.active}"><span>${esc(p.name||"Ohne Name")}</span></button>`).join("")+
+    `<button type="button" class="stab add" id="newPlanBtn">+ Neuer Plan</button><button type="button" class="stab add" id="addCoachBtn">＋ Plan vom Coach</button>`;
+}
+let importedId=null,replacedBackup=null;
+/* Der Link bleibt in der Adresszeile: so landet der Plan auch in der Homescreen-App (iPhone speichert die App getrennt vom Browser). */
+async function importCode(code){
+  state.imported=state.imported||{};
+  const known=state.imported[code];
+  if(known&&state.plans.some(p=>p.id===known)){switchPlan(known);flash("Plan geöffnet");return true}
+  try{const d=await decodePlan(code);if(!d||!d.p)throw 0;migratePlan(d.p);save();
+    const norm=x=>String(x||"").trim().toLowerCase();
+    let old=state.plans.find(p=>norm(d.n)&&norm(p.name)===norm(d.n));
+    const fresh=state.plans.length===1&&!state.plans[0].name&&!Object.values(state.imported).includes(state.plans[0].id);
+    if(!old&&fresh)old=state.plans[0];
+    const txt=document.getElementById("shareBannerText"),undo=document.getElementById("undoImport");
+    if(old){
+      replacedBackup=JSON.parse(JSON.stringify(old));
+      old.plan=d.p;old.veg=!!d.v;if(d.w)old.sleepWeek=d.w;if(d.n)old.name=d.n;
+      state.imported[code]=old.id;importedId=null;state.active=old.id;loadActive();save();refreshAll();
+      txt.textContent=fresh&&!norm(replacedBackup.name)?"Du hast einen Ernährungsplan erhalten. Er ersetzt die Beispielwoche.":`«${old.name||"Plan"}» wurde vom Coach aktualisiert. Deine abgehakten Mahlzeiten bleiben erhalten.`;
+      undo.textContent=fresh&&!norm(replacedBackup.name)?"Beispielwoche zurückholen":"Alte Version zurückholen";
+    }else{
+      replacedBackup=null;
+      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,sleepWeek:d.w||null};
+      state.plans.push(p);state.imported[code]=p.id;importedId=p.id;state.active=p.id;loadActive();save();refreshAll();
+      txt.textContent="Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.";undo.textContent="Wieder entfernen";
+    }
+    document.getElementById("shareBanner").hidden=false;browserHint();showView("heute",true);return true
+  }catch(e){flash("Der geteilte Plan konnte nicht gelesen werden.");return false}
 }
 document.getElementById("undoImport").addEventListener("click",()=>{
-  if(!beforeImport)return;state=JSON.parse(beforeImport);save();
-  document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
-  renderAll();renderLikes();document.getElementById("shareBanner").hidden=true;flash("Vorheriger Plan wiederhergestellt");
-});
+  if(replacedBackup){const i=state.plans.findIndex(x=>x.id===replacedBackup.id);if(i>=0)state.plans[i]=replacedBackup;replacedBackup=null;
+    state.active=state.plans[i>=0?i:0].id;loadActive();save();refreshAll();document.getElementById("shareBanner").hidden=true;flash("Alte Version wiederhergestellt");return}
+  state.plans=state.plans.filter(p=>p.id!==importedId);if(!state.plans.length)state.plans.push({id:uid(),name:"",plan:clone(EXAMPLE),veg:false,sleepWeek:null});
+  state.active=state.plans[state.plans.length-1].id;loadActive();save();refreshAll();document.getElementById("shareBanner").hidden=true;flash("Geteilter Plan entfernt")});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
+document.addEventListener("click",async e=>{
+  const pb=e.target.closest("[data-plan]");if(pb){switchPlan(pb.dataset.plan);return}
+  if(e.target.closest("#newPlanBtn")){save();const p={id:uid(),name:"",plan:emptyPlan(),veg:false,sleepWeek:null};state.plans.push(p);state.active=p.id;loadActive();save();refreshAll();
+    showView("woche",true);const a=document.getElementById("athlete");a.focus();flash("Neuer Plan – Name eintragen und Tagestypen wählen");return}
+  if(e.target.closest("#addCoachBtn")){
+    try{if(navigator.clipboard&&navigator.clipboard.readText){const t=await navigator.clipboard.readText();const c=codeFrom(t);if(c){await importCode(c);return}}}catch(_){}
+    pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus();return}
+});
+const pasteModal=document.getElementById("pasteModal");
+pasteModal.addEventListener("click",e=>{if(e.target===pasteModal||e.target.closest("[data-close]"))pasteModal.hidden=true});
+document.getElementById("pasteGo").addEventListener("click",async()=>{const c=codeFrom(document.getElementById("pasteInput").value);
+  if(!c){flash("Das ist kein Plan-Link.");return}pasteModal.hidden=true;await importCode(c)});
+document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=location.href;
+  try{navigator.clipboard.writeText(u).then(()=>flash("Link kopiert – jetzt die App öffnen"),()=>flash("Bitte Link in der Adresszeile kopieren"))}catch(e){flash("Bitte Link in der Adresszeile kopieren")}});
+document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
+/* Plan löschen */
+let delArmed=false;
+document.getElementById("delPlanBtn").addEventListener("click",e=>{const b=e.currentTarget;
+  if(!delArmed){delArmed=true;b.textContent=`«${state.name||"Ohne Name"}» wirklich löschen?`;b.classList.add("warn");
+    setTimeout(()=>{delArmed=false;b.textContent="Diesen Plan löschen";b.classList.remove("warn")},4000);return}
+  delArmed=false;b.textContent="Diesen Plan löschen";b.classList.remove("warn");
+  const name=state.name||"Ohne Name";state.plans=state.plans.filter(p=>p.id!==state.active);
+  if(!state.plans.length)state.plans.push({id:uid(),name:"",plan:clone(EXAMPLE),veg:false,sleepWeek:null});
+  state.active=state.plans[0].id;loadActive();save();refreshAll();flash(`«${name}» gelöscht`)});
+/* Backup */
+async function saveBackup(){save();const data=JSON.stringify(Object.assign({app:"cz-nutrition",v:1,saved:Date.now()},state));const d=new Date();
+  const filename=`CZ-Nutrition-Backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const blob=new Blob([data],{type:"application/json"});
+  if(downloadsApi){try{const r=await downloadsApi.save({filename,data:blob});flash(r&&r.status==="saved"?"Backup gespeichert":"Backup übergeben")}catch(e){flash(e&&e.code==="declined"?"Abgebrochen":"Speichern hier nicht möglich")}return}
+  try{const f=new File([blob],filename,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Nutrition Backup"});flash("Backup übergeben");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);flash("Backup gespeichert")}
+document.getElementById("bkSave").addEventListener("click",saveBackup);
+document.getElementById("bkLoad").addEventListener("click",()=>document.getElementById("bkFile").click());
+document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d||!(Array.isArray(d.plans)||d.plan))throw 0;delete d.app;delete d.v;delete d.saved;
+    if(!Array.isArray(d.plans)){d.plans=[{id:uid(),name:d.name||"",plan:d.plan,veg:!!d.veg,sleepWeek:d.sleepWeek||null}];d.active=d.plans[0].id}
+    save();
+    /* zusammenführen statt überschreiben */
+    const ids=new Set(d.plans.map(p=>p.id)),ex=JSON.stringify(EXAMPLE);const plans=d.plans.concat(state.plans.filter(p=>!ids.has(p.id)&&!(!p.name&&JSON.stringify(p.plan)===ex)));
+    const log=Object.assign({},state.log||{},d.log||{});
+    const uni=(a,b)=>Array.from(new Set((a||[]).concat(b||[])));
+    const custom={};SLOTS.forEach(([sk])=>{const u=uni((state.custom||{})[sk],(d.custom||{})[sk]);if(u.length)custom[sk]=u});
+    state=Object.assign({},state,d,{plans,log,custom,fav:uni(state.fav,d.fav),hidden:uni(state.hidden,d.hidden),imported:Object.assign({},state.imported||{},d.imported||{})});
+    if(!activePlan())state.active=state.plans[0].id;loadActive();save();refreshAll();flash(`Backup geladen – ${state.plans.length} ${state.plans.length===1?"Plan":"Pläne"}`)}
+  catch(err){flash("Diese Datei ist kein CZ-Nutrition-Backup.")}});
 
 /* ---------- Datum, Log, Serien ---------- */
 const MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
@@ -1136,6 +1288,26 @@ document.addEventListener("keydown",e=>{
   if(e.key==="ArrowDown"&&i<sibs.length-1&&+sibs[i+1].dataset.time<1999)moveMeal(k,sk,timeBetween(sibs[i+1],sibs[i+2]||null),h.id);
 });
 
+/* ---------- Eigenes Gericht direkt bei der Mahlzeit hinzufügen ---------- */
+function dishGroup(sk){return SNACKS.includes(sk)?SNACKS:MAINS.includes(sk)?MAINS:[sk]}
+const dishModal=document.getElementById("dishModal");let dishCtx=null;
+function openDish(k,sk,from){dishCtx={k,sk,from};
+  const g=dishGroup(sk);document.getElementById("dishTitle").textContent="Neues Gericht: "+slotName(sk);
+  document.getElementById("dishHint").textContent=g===SNACKS?"Erscheint danach bei allen Snacks (Znüni, Zvieri, nach dem Training).":g===MAINS?"Erscheint danach beim Mittag- und Nachtessen.":"Erscheint danach in der Auswahl.";
+  document.getElementById("dishInput").placeholder=g===SNACKS?"z. B. Snickers":g===MAINS?"z. B. Älplermagronen":"z. B. Rührei mit Brot";
+  document.getElementById("dishInput").value="";dishModal.hidden=false;document.getElementById("dishInput").focus()}
+function closeDish(){dishModal.hidden=true;const f=dishCtx&&dishCtx.from&&document.getElementById(dishCtx.from);if(f)f.focus()}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-adddish]");if(!b)return;const [k,sk]=b.dataset.adddish.split("|");openDish(k,sk,b.id)});
+dishModal.addEventListener("click",e=>{if(e.target===dishModal||e.target.closest("[data-close]"))closeDish()});
+document.getElementById("dishForm").addEventListener("submit",e=>{e.preventDefault();if(!dishCtx)return;
+  const v=document.getElementById("dishInput").value.trim();if(!v){flash("Bitte einen Namen eingeben.");return}
+  const {k,sk}=dishCtx;const ex=optionsFor(sk).find(o=>o.n.toLowerCase()===v.toLowerCase());const name=ex?ex.n:v;
+  if(!ex)dishGroup(sk).forEach(x=>{state.custom[x]=state.custom[x]||[];if(!state.custom[x].includes(name))state.custom[x].push(name)});
+  if(isHidden(name))state.hidden=state.hidden.filter(x=>x!==name);
+  state.plan[k].s[sk]=name;save();dishModal.hidden=true;renderAll();renderLikes();
+  const f=document.getElementById(dishCtx.from);if(f)f.focus();flash(ex?`«${name}» ausgewählt`:`«${name}» hinzugefügt`)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!dishModal.hidden)closeDish();else if(!pasteModal.hidden)pasteModal.hidden=true}});
+
 /* ---------- Woche automatisch füllen ---------- */
 const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis","Pasta mit Thon-Tomatensauce","Pasta mit Poulet und Pesto","Hörnli mit Hüttenkäse und Gemüse","Lasagne mit Linsen oder Hackfleisch","Poulet-Reis-Pfanne mit Ei (Fried Rice)","Chili sin Carne mit Reis","Risotto mit Poulet und Erbsen","Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Poulet-Wraps mit Bohnen und Salat","Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse"];
 const LIGHT=["Gemüsecurry mit Reis","Quinoa mit Gemüse oder Quinoa-Salat","Couscous mit Gemüse","Linsendal mit Reis","Reis mit Ei und Gemüse","Reis mit Tofu und Gemüse","Chili sin Carne mit Reis","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Couscous-Salat mit Feta und Kichererbsen"];
@@ -1265,7 +1437,7 @@ function renderToday(){
       <div class="tlhead"><span class="tlgrip"><button type="button" class="draghandle" id="hdh-${sk}" data-drag="${k}|${sk}" aria-label="${esc(slotName(sk))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span></span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
       <div class="tlrow"><select id="hsel-${sk}" data-day="${k}" data-slot="${sk}" class="${v?"":"none"}" aria-label="${esc(slotName(sk))}">
         <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}
-      </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button>${v?`<button type="button" class="iconbtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}</div>
+      </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button><button type="button" class="iconbtn" id="had-${sk}" data-adddish="${k}|${sk}" aria-label="Neues Gericht für ${esc(slotName(sk))} hinzufügen" title="Neues Gericht hinzufügen">＋</button>${v?`<button type="button" class="iconbtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}</div>
       ${sk==="abend"&&R.dinnerChoice?dinnerSeg(k,d,"hd"):""}
       ${R.moved&&R.moved[sk]?`<button type="button" class="linkbtn mtreset" data-mtreset="${k}|${sk}">Zeit zurücksetzen</button>`:""}
       ${warn}${hint}
@@ -1300,7 +1472,7 @@ function showView(v,scroll){
   document.querySelectorAll("[data-nav]").forEach(a=>{if(a.dataset.nav===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   closeMenu(false);if(scroll)window.scrollTo(0,0);
 }
-window.addEventListener("hashchange",()=>{const h=location.hash;if(/^#plan=/.test(h)){importFromHash();showView("heute",true)}else showView(h.slice(1),true)});
+window.addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c);else showView(location.hash.slice(1),true)});
 document.getElementById("shareBtn2").addEventListener("click",()=>document.getElementById("shareBtn").click());
 
 /* PDF-Export */
@@ -1413,8 +1585,32 @@ pdfBtn.addEventListener("click",()=>{
   }else{doc.save(filename)}
 });
 
+ensurePlans();loadActive();
 document.getElementById("athlete").value=state.name||"";
 document.getElementById("vegToggle").checked=!!state.veg;
-if(migratePlan(state.plan))save();
-renderPlates();renderAll();showView(/^#plan=/.test(location.hash)?"heute":location.hash.slice(1));importFromHash();
+save();
+renderPlates();renderPlanBar();renderAll();showView(codeFrom(location.hash)?"heute":location.hash.slice(1));
+/* App auf dem Homescreen */
+const isStandalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+/* iPhone: Links aus WhatsApp öffnen immer im Browser, die Homescreen-App hat einen eigenen Speicher */
+function browserHint(){if(isStandalone||!/^https?:$/.test(location.protocol)||/claude/.test(location.hostname)||!isIOS)return;
+  const b=document.getElementById("browserBanner");if(b)b.hidden=false}
+let installEvt=null;
+function showInstall(){
+  let dismissed=false;try{dismissed=localStorage.getItem(KEY+"-noinstall")==="1"}catch(e){}
+  if(isStandalone||dismissed||!/^https?:$/.test(location.protocol)||/claude/.test(location.hostname))return;
+  const txt=document.getElementById("installText");
+  if(installEvt){txt.textContent=" Dann öffnest du deinen Plan mit einem Tipp, auch ohne Browser.";document.getElementById("installBtn").hidden=false}
+  else if(isIOS)txt.textContent=" In Safari unten auf «Teilen» (Quadrat mit Pfeil) tippen, dann «Zum Home-Bildschirm». Tipp: zuerst den Link vom Coach öffnen, dann speichern – so ist der Plan gleich in der App.";
+  else if(matchMedia("(pointer:coarse)").matches)txt.textContent=" Im Browser-Menü ⋮ «Zum Startbildschirm hinzufügen» wählen.";
+  else return;
+  document.getElementById("installCard").hidden=false}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;showInstall()});
+document.getElementById("installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;document.getElementById("installCard").hidden=true});
+document.getElementById("installClose").addEventListener("click",()=>{document.getElementById("installCard").hidden=true;try{localStorage.setItem(KEY+"-noinstall","1")}catch(e){}});
+if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+showInstall();cloudInit();
+{const c=codeFrom(location.hash);if(c)importCode(c)}
 </script>
