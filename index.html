@@ -304,19 +304,16 @@ const OPTIONS={
     {n:"Zopf mit Konfi oder Honig",d:"Gut verdaulich, ideal 2–3 h vor einem Spiel."}
   ],
   znueni:[
-    {n:"Frucht und eine Handvoll Nüsse"},{n:"Skyr mit Frucht"},{n:"Ruchbrot mit Käse"},
-    {n:"Darvida mit Käse"},{n:"Studentenfutter"},{n:"Rüebli-Sticks und Käse"},{n:"Banane"},{n:"Proteinshake",r:"Proteinshake"}
+    {n:"Frucht und eine Handvoll Nüsse"},{n:"Skyr mit Frucht"},
+    {n:"Darvida"},{n:"Studentenfutter"},{n:"Banane"},{n:"Apfel"},{n:"Orange"},{n:"Mandarine/Clementine"},{n:"Kaki"},{n:"Nektarine/Pfirsich"},{n:"Birne"},{n:"Proteinshake",r:"Proteinshake"}
   ],
   mittag:null,
   vor:[
-    {n:"Banane + Brot mit Honig"},{n:"Sandwich mit Schinken und Käse",m:1,d:"Eher 2–3 h vor dem Training."},
-    {n:"Sandwich mit Käse",d:"Eher 2–3 h vor dem Training."},{n:"Banane"},{n:"Reiswaffeln"},{n:"Getreideriegel"},{n:"Dörrfrüchte"},{n:"Trinkjoghurt"},
-    {n:"Quark mit Früchten"},{n:"Frucht und eine Handvoll Nüsse"},
-    {n:"Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte",d:"Kleine Portionen, dazu Wasser. Bei langen Turnieren verdünntes Sportgetränk."}
+    {n:"Sandwich mit Fleisch und/oder Käse",d:"Eher 2–3 h vor dem Training."},{n:"Banane"},{n:"Apfel"},{n:"Orange"},{n:"Mandarine/Clementine"},{n:"Kaki"},{n:"Nektarine/Pfirsich"},{n:"Birne"},
+    {n:"Getreidewaffeln (Mais, Reis, Amaranth usw.)"},{n:"Riegel"},{n:"Dörrfrüchte"},{n:"Frucht und eine Handvoll Nüsse"}
   ],
   nach:[
-    {n:"Schokoladenmilch"},{n:"Schokoladenmilch und Brötli"},{n:"Schokoladenmilch und Sandwich"},
-    {n:"Trinkjoghurt und Frucht"},{n:"Quark mit Früchten"},{n:"Sandwich mit Schinken oder Käse"},{n:"Proteinshake",r:"Proteinshake"}
+    {n:"Schokoladenmilch"},{n:"Brötli"},{n:"Schokoladenmilch und Sandwich"},{n:"Proteinshake",r:"Proteinshake"}
   ],
   abend:null
 };
@@ -351,17 +348,20 @@ function typeName(d){return d.t&&TYPES[d.t]?TYPES[d.t].n:""}
 function timeOpts(d){return SUBS[d.t]||null}
 function tzNames(d){const o=timeOpts(d);return o?o.l.filter(([k])=>(d[o.f]||[]).includes(k)).map(([,n])=>n):[]}
 const EXAMPLE={
-  mo:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Ruchbrot mit Käse",mittag:"Couscous mit Gemüse",vor:"Banane + Brot mit Honig",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
-  di:{t:"intensiv",tz:["abend"],tr:"Selektion 18:30–20:30",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Schinken und Käse",nach:"Schokoladenmilch und Brötli",abend:"Reis mit Poulet und Gemüse"}},
-  mi:{t:"leicht",tr:"Frei",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Quark mit Früchten",nach:NONE,abend:"Gemüsecurry mit Reis"}},
-  do:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Rüebli-Sticks und Käse",mittag:"Reis mit Poulet und Gemüse",vor:"Reiswaffeln",nach:"Trinkjoghurt und Frucht",abend:"Couscous mit Gemüse"}},
-  fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Quark mit Früchten",nach:NONE,abend:"Pasta mit Tomatensauce"}},
-  sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  mo:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  di:{t:"intensiv",tz:["abend"],tr:"Selektion 18:30–20:30",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
+  mi:{t:"leicht",tr:"Frei",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Apfel",nach:NONE,abend:"Gemüsecurry mit Reis"}},
+  do:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Mandarine/Clementine",mittag:"Reis mit Poulet und Gemüse",vor:"Getreidewaffeln (Mais, Reis, Amaranth usw.)",nach:"Proteinshake",abend:"Couscous mit Gemüse"}},
+  fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Birne",nach:NONE,abend:"Pasta mit Tomatensauce"}},
+  sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Banane",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
   so:{t:"leicht",tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
 };
 const KEY="u15-ernaehrungswoche-v2";
 let state=load();
-(function migrateNames(){const RN={"Zopf mit Konfi oder Honig, etwas Käse, Banane":"Zopf mit Konfi oder Honig","Reis mit Tofu oder Ei und Gemüse":"Reis mit Tofu und Gemüse","Joghurt mit Frucht":"Skyr mit Frucht"};let ch=false;
+(function migrateNames(){const RN={"Zopf mit Konfi oder Honig, etwas Käse, Banane":"Zopf mit Konfi oder Honig","Reis mit Tofu oder Ei und Gemüse":"Reis mit Tofu und Gemüse","Joghurt mit Frucht":"Skyr mit Frucht","Darvida mit Käse":"Darvida","Sandwich mit Schinken und Käse":"Sandwich mit Fleisch und/oder Käse","Reiswaffeln":"Getreidewaffeln (Mais, Reis, Amaranth usw.)","Getreideriegel":"Riegel","Schokoladenmilch und Brötli":"Brötli"};let ch=false;
+  const DEL=["Ruchbrot mit Käse","Rüebli-Sticks und Käse","Banane + Brot mit Honig","Sandwich mit Käse","Trinkjoghurt","Quark mit Früchten","Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte","Trinkjoghurt und Frucht","Sandwich mit Schinken oder Käse"];
+  Object.values(state.plan||{}).forEach(d=>Object.keys(d.s||{}).forEach(k=>{if(DEL.includes(d.s[k])){d.s[k]="";ch=true}}));
+  if(state.hidden){const n=state.hidden.length;state.hidden=state.hidden.filter(x=>!DEL.includes(x));if(state.hidden.length!==n)ch=true}
   Object.values(state.plan||{}).forEach(d=>Object.keys(d.s||{}).forEach(k=>{if(RN[d.s[k]]){d.s[k]=RN[d.s[k]];ch=true}}));
   if(state.hidden)state.hidden=state.hidden.map(n=>{if(RN[n]){ch=true;return RN[n]}return n});
   if(ch)save()})();
