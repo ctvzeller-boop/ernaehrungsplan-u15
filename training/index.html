@@ -170,7 +170,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .chart .sd{stroke:var(--surface);stroke-width:1.5;fill:var(--muted)}
 .chart .sd.st-more{fill:var(--more)}.chart .sd.st-less{fill:var(--less)}.chart .sd.st-ok{fill:var(--ink)}
 .chart .am{fill:var(--ink);opacity:.35}
-.chartkey{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:2px}.chartkey span{white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.chartkey{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:2px}.chartkey span{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;max-width:100%}.chartkey span:last-child{white-space:normal}
 .chartkey .k{display:inline-block;width:14px;height:4px;border-radius:2px}
 .chartkey .k.tup{background:var(--ok)}.chartkey .k.tdown{background:var(--less)}.chartkey .k.tflat{background:var(--accent)}
 .chart .cv1{font:600 20px var(--body);fill:var(--ink)}
@@ -269,6 +269,35 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .iname{flex:1;min-width:0;font-weight:600;font-size:1.05rem;line-height:1.3}
 .iname .vid{margin-left:4px}
 .idose{display:block;font-weight:500;font-size:.88rem;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+details.more>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.88rem;min-height:32px;display:flex;align-items:center;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"▸";margin-right:6px;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.morebody{display:flex;flex-direction:column;gap:6px;font-size:.88rem;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:4px}
+.morebody .mus,.morebody .mat{display:block}
+.morebody .desc{margin:0;white-space:pre-line}
+.alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.alts button{min-height:36px;padding:4px 10px;font-size:.85rem}
+button.vid{background:none;border:none;padding:0;min-height:32px;font:inherit;font-size:.85rem;font-weight:600;color:var(--accent);cursor:pointer}
+#vidModal .modalclose{z-index:3}
+#vidModal .vidwrap{margin-top:40px}
+.vidwrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+.vidwrap.short{aspect-ratio:9/16;max-height:70vh;width:auto;margin:0 auto}
+.vidwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.restbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--surface);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 8px 24px rgba(0,0,0,.25);width:min(520px,calc(100% - 24px))}
+.restbar>div{flex:1;display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.restbar .eyebrow{color:inherit;opacity:.75}
+.restbar b{font-family:var(--display);font-size:2rem;font-variant-numeric:tabular-nums}
+.restbar small{opacity:.8;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.restbar button{min-height:44px;background:transparent;color:inherit;border:1.5px solid currentColor;border-radius:10px;padding:6px 12px;font-weight:700}
+.restbar.go{background:var(--ok)}
+body.resting .wrap{padding-bottom:96px}
+.prtoast{position:fixed;left:50%;top:20%;transform:translate(-50%,0) scale(.9);z-index:70;background:var(--surface);color:var(--ink);border:3px solid var(--more);border-radius:16px;padding:16px 22px;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.prtoast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.prtoast b{display:block;font-family:var(--display);font-size:1.6rem}
+.qrbox{display:grid;place-items:center;background:#fff;border-radius:12px;padding:12px}
+.qrbox svg{width:min(320px,100%);height:auto}
+.bkrow{display:flex;flex-wrap:wrap;gap:8px}
 .inote{margin:0;font-size:.88rem;color:var(--muted);border-left:3px solid var(--line);padding-left:8px}
 .imove{display:flex;gap:4px;flex:none}
 .params{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
@@ -374,7 +403,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <h1>Trainingseinheit</h1>
       <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
       <p class="lead stats-only">Alle abgeschlossenen Trainings. Tippe auf ein Training, um alle Sätze, Wiederholungen und Gewichte zu sehen.</p>
-      <p class="lead train-only">Tippe nach jedem Satz auf «Satz erledigt» und am Schluss auf «Training abschliessen». So siehst du beim nächsten Mal, was du letztes Mal geschafft hast.</p>
+      <p class="lead train-only">Nach jedem Satz das nächste Feld antippen und die Wiederholungen eintragen. Am Schluss «Training abschliessen» – so siehst du beim nächsten Mal, was du geschafft hast.</p>
       </div>
     </div>
     <div class="modes" role="group" aria-label="Ansicht">
@@ -410,6 +439,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div id="sessHead"></div>
       <div class="toolbar edit-only">
         <button class="primary" id="shareBtn" type="button">Einheit als Link teilen</button>
+        <button id="qrBtn" type="button">QR-Code zeigen</button>
         <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
         <button id="copyBtn" type="button">Als Text kopieren</button>
         <button id="dupBtn" type="button">Duplizieren</button>
@@ -455,7 +485,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     </div>
     <div class="card">
       <h2>Begriffe</h2>
-      <p><b>RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes bis zum Muskelversagen noch möglich gewesen wären. RIR 0 = bis zum Versagen, RIR 2 = zwei wären noch drin gewesen.</p>
+      <p><b>«Im Tank» / RIR</b> (Reps in Reserve): Wiederholungen, die am Ende eines Satzes noch gegangen wären. «Noch 2 Wdh im Tank» = du hörst auf, wenn du noch 2 schaffen würdest. «Bis zum Muskelversagen» = keine mehr möglich.</p>
       <p><b>Superset</b>: Übungen mit gleichem Buchstaben (A1, A2) abwechselnd ausführen: 1. Satz A1, dann 1. Satz A2, dann 2. Satz A1 usw.</p>
       <p><b>/ Seite</b>: Wiederholungen oder Zeit pro Seite bzw. pro Bein.</p>
       <table class="cmp">
@@ -510,6 +540,31 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 </div>
 
+<div id="vidModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-label="Video">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <div class="vidwrap" id="vidWrap"></div>
+    <a class="vid" id="vidExt" href="#" target="_blank" rel="noopener" style="align-self:center">Video lädt nicht? Auf YouTube öffnen</a>
+  </div>
+</div>
+
+<div id="qrModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="qrTitle">QR-Code</h3>
+    <p class="hint" id="qrHint"></p>
+    <div class="qrbox" id="qrBox"></div>
+  </div>
+</div>
+
+<div id="restBar" class="restbar" hidden role="timer" aria-live="off">
+  <div><span class="eyebrow" id="restLbl">Pause</span><b id="restTime">0:00</b><small id="restNext"></small></div>
+  <button type="button" id="restPlus">+15 s</button>
+  <button type="button" id="restSkip">Weiter</button>
+</div>
+<div class="prtoast" id="prToast" role="status" aria-live="polite"></div>
+<input type="file" id="bkFile" accept="application/json,.json" hidden>
+
 <div id="pasteModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
@@ -521,6 +576,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script>
 const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
@@ -601,6 +657,26 @@ const FOC={abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandsho
  pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",plank:"stab",copenhagen:"stab",
  flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
+/* Alternativen, falls eine Übung nicht geht oder Material fehlt */
+const ALT={skater:"latbounds",latbounds:"skater",boxjump:"boxvar sprints",boxvar:"boxjump",depth:"boxjump",explsplit:"bsqjump splitsq",bsqjump:"explsplit",hillsprint:"sprints",sprints:"hillsprint",mbchest:"pushup",
+ squat:"trapbar splitsq",deadlift:"trapbar rdl",trapbar:"deadlift squat",rdl:"deadlift hamiso nordic",splitsq:"explsplit squat",hipthrust:"hamiso rdl",latlunge:"splitsq",hamiso:"nordic rdl",nordic:"hamiso rdl",
+ bench:"incline pushup dips",incline:"bench pushup",pullup:"pullupw row1 cablerow",pullupw:"pullup",pushup:"bench dips",shpress:"lmpress lmpressst",lmpress:"lmpressst shpress",lmpressst:"lmpress shpress",
+ row1:"cablerow rowchest",cablerow:"row1 rowchest",rowchest:"row1 cablerow",dips:"dipsw pushup",dipsw:"dips",flies:"incline pushup",pushdown:"dips",latraise:"shpress",facepull:"bandshoulder",
+ pallof:"chop sprow",chop:"pallof lmrot",birddog:"plank",lmrot:"chop mbrot",sprow:"plank pallof",mbrot:"lmrot",rollout:"plank spiderman",plank:"rollout spiderman",copenhagen:"plank",
+ flutter:"scissor dslr",dslr:"flutter",scissor:"flutter",bottomup:"dslr",bicycle:"flutter",spiderman:"plank"};
+function altsOf(id){return String(ALT[id]||"").split(" ").filter(x=>x&&EXBY[x])}
+function shortN(n){return String(n||"").split(" (")[0]}
+function moreHTML(it){const e=exById(it.id);const desc=e&&e.b?e.b:"";const info=infoHTML(it.id),vids=vidLinks(it.v);
+  const can=!(it.log||[]).length;const alts=can?altsOf(it.id).filter(a=>a!==it.orig):[];
+  const back=can&&it.orig&&EXBY[it.orig]?`<button type="button" data-swap="${esc(it.orig)}">↩ Zurück zu ${esc(shortN(EXBY[it.orig].n))}</button>`:"";
+  if(!info&&!vids&&!desc&&!alts.length&&!back)return "";
+  const lab=[vids?"Video":"",desc?"Ausführung":"",(info)?"Infos":"",(alts.length||back)?"Alternative":""].filter(Boolean);
+  return `<details class="more"><summary>${lab.join(" · ")}</summary><div class="morebody">${vids?`<div>${vids}</div>`:""}${desc?`<p class="desc">${esc(desc)}</p>`:""}${info}
+    ${alts.length||back?`<div class="alts"><span class="small">Geht nicht oder Material fehlt? Tauschen:</span>${alts.map(a=>`<button type="button" data-swap="${esc(a)}">⇄ ${esc(shortN(EXBY[a].n))}</button>`).join("")}${back}</div>`:""}</div></details>`}
+function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return false;
+  if(to===it.orig){delete it.orig;if(it.ob!==undefined){it.b=it.ob;delete it.ob}}else{if(!it.orig){it.orig=it.id;it.ob=it.b||""}it.b=""}
+  const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
+  if(g&&goalable(it)&&!(g==="max"&&NOMAX.includes(it.id)))applyGoal(it,g);return true}
 /* Material: einheitliche Namen; "A|B" = A oder B, "?A" = optional */
 const MAT={
  abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],shoulderwarm:["band",["Resistance Band"]],
@@ -722,13 +798,22 @@ function labels(items){
   items.forEach((it,i)=>{if(i===0||!it.ss){g++;n=0}n++;out.push([g,n]);size[g]=n});
   return out.map(([g,n])=>{const L=g<26?String.fromCharCode(65+g):"Z"+g;return size[g]>1?L+n:L});
 }
-function vidLinks(v){return (v||[]).map((u,i)=>`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">▶ Video${v.length>1?" "+(i+1):""}</a>`).join(" ")}
+function vidLinks(v){return (v||[]).map((u,i)=>{const lab=`▶ Video${v.length>1?" "+(i+1):""}`;const y=ytId(u);
+  return y?`<button type="button" class="vid" data-yt="${esc(y)}"${/shorts\//.test(u)?' data-short="1"':""} data-url="${esc(u)}">${lab}</button>`:`<a class="vid" href="${esc(u)}" target="_blank" rel="noopener">${lab}</a>`}).join(" ")}
+const vidModal=document.getElementById("vidModal");
+function openVid(id,short,url){const w=document.getElementById("vidWrap");w.className="vidwrap"+(short?" short":"");
+  w.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="Video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  document.getElementById("vidExt").href=url||("https://youtu.be/"+id);vidModal.hidden=false}
+function closeVid(){vidModal.hidden=true;document.getElementById("vidWrap").innerHTML=""}
+vidModal.addEventListener("click",e=>{if(e.target===vidModal||e.target.closest("[data-close]"))closeVid()});
 const LB=0.45359237;
 function r1(x){return Math.round(x*10)/10}
 function numOf(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*$/.exec(String(v||""));return m?parseFloat(m[1].replace(",",".")):null}
 /* «50 lbs» / «50 lb» im Text direkt in kg umrechnen */
 function lbsToKgTxt(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*(lbs?|pfund)\s*$/i.exec(String(v||""));return m?String(r1(parseFloat(m[1].replace(",","."))*LB)):v}
 function kgTxt(k){k=String(k||"").trim();return !k?"":/^\d+([.,]\d+)?$/.test(k)?k+" kg":k}
+function rirTxt(r){r=String(r||"").trim();return !r?"":/^0$/.test(r)?"bis zum Muskelversagen":`noch ${r} Wdh im Tank`}
+function doseT(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),rirTxt(e.r)].filter(Boolean).join(" · ")}
 function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
 
 /* Sätze */
@@ -837,7 +922,7 @@ function simpleSetsHTML(it){const log=it.log||[],p=Math.max(1,plannedSets(it));c
 function setsHTML(it){
   if(isSimple(it))return simpleSetsHTML(it);
   const log=it.log||[],p=plannedSets(it);
-  const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
+  const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.pr?`<span class="fire" aria-hidden="true">🏆</span>`:e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
   /* offene Sätze sind selbst die Buttons: Antippen öffnet den nächsten Satz */
   const n=log.length+1;
   const todo=Array.from({length:Math.max(0,p-log.length)},(_,j)=>`<button type="button" class="setbox todo${j===0?" next":""}" data-log="1"${j?` tabindex="-1"`:""} aria-label="Satz ${n} eintragen (Plan ${esc(planShort(it))})">${esc(planShort(it))}</button>`).join("");
@@ -851,9 +936,9 @@ function renderItems(focusSel){
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(dose(it))}</span>${infoHTML(it.id)}${vidLinks(it.v)}</div></div>
-      ${it.b?`<p class="inote">${esc(it.b)}</p>`:""}
-      ${howtoHTML(it.id)}
+        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div></div>
+      ${it.b&&it.b!==(exById(it.id)||{}).b?`<p class="inote">${esc(it.b)}</p>`:""}
+      ${moreHTML(it)}
       ${lastHTML(it)}
       ${setsHTML(it)}
       ${chartDetails(it.id,false)}
@@ -975,9 +1060,28 @@ document.addEventListener("pointerdown",e=>{const z=e.target.closest&&e.target.c
 document.addEventListener("pointerleave",e=>{},true);
 document.addEventListener("change",e=>{if(e.target.id==="chartPick"){chartEx=e.target.value;const c=document.getElementById("chartSlot");if(c)c.innerHTML=chartHTML(chartEx)}});
 function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
+/* Serie: Wochen hintereinander mit mindestens einem Training (diese Woche zählt, sobald trainiert) */
+function wkOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
+function streak(){const W=new Set(hist().map(h=>wkOf(h.d)));let w=wkOf(Date.now());if(!W.has(w)){const d=new Date(w);d.setDate(d.getDate()-7);w=d.getTime()}
+  let n=0;while(W.has(w)){n++;const d=new Date(w);d.setDate(d.getDate()-7);w=wkOf(d.getTime())}return n}
+function backupCard(){return `<div class="card"><h2>Sicherung</h2><p class="hint">Speichert alle Einheiten und deinen ganzen Verlauf als Datei, z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Sicherung laden».</p>
+  <div class="bkrow"><button type="button" class="primary" id="bkSave">💾 Sicherung speichern</button><button type="button" id="bkLoad">📂 Sicherung laden</button></div></div>`}
+async function saveBackup(){const data=JSON.stringify(Object.assign({app:"cz-training",v:1,saved:Date.now()},state));const d=new Date();
+  const filename=`CZ-Training-Sicherung-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const blob=new Blob([data],{type:"application/json"});
+  if(downloadsApi){try{const r=await downloadsApi.save({filename,data:blob});flash(r&&r.status==="saved"?"Sicherung gespeichert ✓":"Sicherung übergeben")}catch(e){flash(e&&e.code==="declined"?"Abgebrochen":"Speichern hier nicht möglich")}return}
+  try{const f=new File([blob],filename,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Training Sicherung"});flash("Sicherung übergeben ✓");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);flash("Sicherung gespeichert ✓")}
+document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.sessions)||!d.sessions.length)throw 0;delete d.app;delete d.v;delete d.saved;
+    /* Verlauf zusammenführen statt überschreiben */
+    const seen=new Set(hist().map(h=>h.d+"|"+h.sid));const merged=hist().concat((d.hist||[]).filter(h=>!seen.has(h.d+"|"+h.sid)));
+    const ids=new Set(d.sessions.map(x=>x.id));const extra=state.sessions.filter(x=>!ids.has(x.id)&&x.items.length);
+    state=Object.assign(d,{hist:merged,sessions:d.sessions.concat(extra)});syncNames(state);save();renderCustom();renderAll();flash(`Sicherung geladen ✓ – ${state.sessions.length} Einheiten, ${merged.length} Trainings`)}
+  catch(err){flash("Diese Datei ist keine CZ-Training-Sicherung.")}});
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
-  if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>`;return}
+  if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${backupCard()}`;return}
   if(statSel===null||!hist()[statSel])statSel=H[0].i;
   let sets=0,fire=0;H.forEach(({x})=>x.items.forEach(y=>y.log.forEach(z=>{sets++;if(z.st==="more")fire++})));
   const ws=weekStart(),week=H.filter(({x})=>x.d>=ws).length;
@@ -988,7 +1092,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
   el.innerHTML=`<div class="kpis">
       <div class="kpi"><b>${H.length}</b><span>Trainings</span></div>
       <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
-      <div class="kpi"><b>${sets}</b><span>Sätze</span></div>
+      <div class="kpi"><b>${streak()}</b><span>🔥 Wochen in Folge</span></div>
       <div class="kpi"><b>${fire}</b><span>🔥 mehr geschafft</span></div></div>
     ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{if(!isSimpleId(y.id))cnt[y.id]=(cnt[y.id]||0)+1}));
       /* am häufigsten gemachte Übung zuerst (bei Gleichstand die zuletzt gemachte) */
@@ -1007,7 +1111,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
         return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div>${miniSpark(y.id)}</div>
           <div class="sets">${isSimpleId(y.id)?`<span class="donetag">✓ Erledigt</span>`:y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
       <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
-    </div>`;
+    </div>${backupCard()}`;
 }
 function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
@@ -1028,6 +1132,11 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("click",e=>{
   const t=e.target;
+  const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
+  const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
+    if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  if(t.closest("#bkSave")){saveBackup();return}
+  if(t.closest("#bkLoad")){document.getElementById("bkFile").click();return}
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
   const sp=t.closest("[data-spark]");if(sp){const item=sp.closest(".item");const big=item&&item.querySelector(".bigchart");if(big){const open=big.hidden;if(open&&!big.innerHTML)big.innerHTML=chartHTML(sp.dataset.spark);big.hidden=!open;sp.setAttribute("aria-expanded",String(open))}return}
   const hsl=t.closest("[data-hsel]");if(hsl){statSel=+hsl.dataset.hsel;renderStats();const d=document.getElementById("statDetail");if(d&&innerWidth<900)d.scrollIntoView({block:"start",behavior:"smooth"});return}
@@ -1084,7 +1193,7 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   logCtx={u,idx,from};
   document.getElementById("logEyebrow").textContent=`Satz ${n}${p?" von "+p:""}`;
   document.getElementById("logTitle").innerHTML=nameHTML(it.n);
-  document.getElementById("logGoal").innerHTML=`Ziel: <b>${esc(it.w||"–")}</b>${it.kg?` · <b>${esc(kgTxt(it.kg))}</b>`:""}${it.r?` · RIR ${esc(it.r)}`:""}`;
+  document.getElementById("logGoal").innerHTML=`Ziel: <b>${esc(it.w||"–")}</b>${it.kg?` · <b>${esc(kgTxt(it.kg))}</b>`:""}${it.r?` · ${esc(rirTxt(it.r))}`:""}`;
   const time=isTime(it);
   document.getElementById("logValLbl").textContent=time?"Zeit":"Wiederholungen";
   const inp=document.getElementById("logVal");inp.value=e?e.v||"":"";inp.placeholder=planShort(it);inp.inputMode=time?"text":"numeric";
@@ -1117,11 +1226,43 @@ logModal.addEventListener("click",e=>{
   const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
   const sb=e.target.closest("#logSave");
   if(sb){const entry={st:judge(it,document.getElementById("logVal").value),v:document.getElementById("logVal").value.trim(),kg:(()=>{let v=lbsToKgTxt(document.getElementById("logKg").value.trim().replace(/\s*kg$/i,""));if(curUnit()==="lbs"&&numOf(v)!==null)v=String(r1(numOf(v)*LB));return v})()};if(!entry.kg)delete entry.kg;
-    if(logCtx.idx==null)it.log.push(entry);else it.log[logCtx.idx]=entry;
+    const isNew=logCtx.idx==null;const pr=isNew?prCheck(it,entry):null;if(pr)entry.pr=1;
+    if(isNew)it.log.push(entry);else it.log[logCtx.idx]=entry;
     save();renderItems();renderBar();closeLog();
-    flash(entry.st==="more"?"Stark! 🔥":entry.st==="less"?"Gespeichert – nächstes Mal klappt’s.":"Satz gespeichert ✓");return}
+    if(pr)showPR(pr);else flash(entry.st==="more"?"Stark! 🔥":entry.st==="less"?"Gespeichert – nächstes Mal klappt’s.":"Satz gespeichert ✓");
+    if(isNew){unlockAudio();startRest(it)}return}
   if(e.target.id==="logDel"){it.log.splice(logCtx.idx,1);save();renderItems();renderBar();closeLog();flash("Satz gelöscht")}
 });
+/* Bestwert: schwerer als je zuvor (bei Gewichtsübungen) oder mehr Wdh/Sekunden als je zuvor (ohne Gewicht) */
+function numV(x){return numOf(String(x||"").replace(/\s*(s|sek|min\.?)$/i,""))}
+function prCheck(it,entry){if(isSimple(it))return null;const prev=[];histFor(it.id).forEach(h=>h.log.forEach(e=>prev.push(e)));(it.log||[]).forEach(e=>prev.push(e));
+  if(!prev.length)return null;const kg=numOf(entry.kg);
+  if(kg!==null){const ks=prev.map(e=>numOf(e.kg)).filter(x=>x!==null);if(ks.length&&kg>Math.max(...ks))return `${kgTxt(String(kg))} – so schwer wie noch nie!`;return null}
+  if(prev.some(e=>numOf(e.kg)!==null))return null;
+  const v=numV(entry.v);const vs=prev.map(e=>numV(e.v)).filter(x=>x!==null);if(v!==null&&vs.length&&v>Math.max(...vs))return `${setVal(it,entry)} – so viel wie noch nie!`;return null}
+function showPR(txt){const t=document.getElementById("prToast");t.innerHTML=`<b>🏆 Neuer Bestwert!</b><span>${esc(txt)}</span>`;t.classList.add("show");if(navigator.vibrate)try{navigator.vibrate([60,40,60])}catch(e){}
+  clearTimeout(showPR.t);showPR.t=setTimeout(()=>t.classList.remove("show"),3200)}
+/* Pausen-Timer */
+function pauseSec(p){const t=String(p||"");const m=t.match(/\d+(?:[.,]\d+)?/);if(!m)return 0;const n=parseFloat(m[0].replace(",","."));return Math.round(/min/i.test(t)?n*60:n)}
+let rest={end:0,iv:null,ctx:null};const restBar=document.getElementById("restBar");
+function fmtSec(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function unlockAudio(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;if(!rest.ctx)rest.ctx=new A();if(rest.ctx.state==="suspended")rest.ctx.resume()}catch(e){}}
+function beep(){try{const c=rest.ctx;if(!c)return;[0,.25,.5].forEach((d,i)=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=i===2?1320:880;o.connect(g);g.connect(c.destination);
+  g.gain.setValueAtTime(.0001,c.currentTime+d);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d+.18);o.start(c.currentTime+d);o.stop(c.currentTime+d+.2)})}catch(e){}}
+function nextTxt(it){const c=cur();const left=plannedSets(it)-(it.log||[]).length;
+  if(left>0)return `Als Nächstes: ${shortN(it.n)}, Satz ${(it.log||[]).length+1}`;
+  const i=c.items.indexOf(it);const nx=c.items.slice(i+1).find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt)||c.items.find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt);
+  return nx?`Als Nächstes: ${shortN(nx.n)}`:"Alle Sätze geschafft 💪"}
+function startRest(it){const sec=pauseSec(it.p);if(!sec)return;rest.end=Date.now()+sec*1000;
+  document.getElementById("restNext").textContent=nextTxt(it);document.getElementById("restLbl").textContent="Pause";
+  restBar.classList.remove("go");restBar.hidden=false;document.body.classList.add("resting");clearInterval(rest.iv);tickRest();rest.iv=setInterval(tickRest,250)}
+function tickRest(){const left=(rest.end-Date.now())/1000;document.getElementById("restTime").textContent=fmtSec(left);
+  if(left<=0){clearInterval(rest.iv);rest.iv=null;restBar.classList.add("go");document.getElementById("restLbl").textContent="Pause vorbei";document.getElementById("restTime").textContent="Los! 💪";
+    beep();if(navigator.vibrate)try{navigator.vibrate([200,100,200])}catch(e){}clearTimeout(rest.hide);rest.hide=setTimeout(stopRest,6000)}}
+function stopRest(){clearInterval(rest.iv);rest.iv=null;restBar.hidden=true;document.body.classList.remove("resting")}
+document.getElementById("restPlus").addEventListener("click",()=>{if(!rest.iv){rest.end=Date.now();clearTimeout(rest.hide);restBar.classList.remove("go");document.getElementById("restLbl").textContent="Pause";rest.iv=setInterval(tickRest,250)}rest.end+=15000;tickRest()});
+document.getElementById("restSkip").addEventListener("click",stopRest);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&rest.iv)tickRest()});
 /* Einheit kg/lbs pro Übung merken (Geräte sind unterschiedlich beschriftet) */
 function unitKey(){const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);return it?it.id:""}
 function curUnit(){const k=unitKey();return (state.units&&state.units[k])||"kg"}
@@ -1336,6 +1477,16 @@ document.getElementById("installClose").addEventListener("click",()=>{document.g
 if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 
 renderCustom();renderAll();showInstall();cloudInit();
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+/* QR-Code für den Link: Spieler scannen mit der Handy-Kamera */
+const qrModal=document.getElementById("qrModal");
+qrModal.addEventListener("click",e=>{if(e.target===qrModal||e.target.closest("[data-close]"))qrModal.hidden=true});
+document.getElementById("qrBtn").addEventListener("click",async()=>{if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
+  if(!window.qrcode){flash("QR-Code braucht Internet – bitte später nochmals.");return}
+  let link;try{link=baseUrl()+"#e="+await encodeSess()}catch(e){flash("Link konnte nicht erstellt werden.");return}
+  try{const q=qrcode(0,"L");q.addData(link);q.make();document.getElementById("qrBox").innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}catch(e){flash("Einheit zu gross für einen QR-Code – bitte Link teilen.");return}
+  const c=cur();document.getElementById("qrTitle").textContent=c.t||"Trainingseinheit";
+  document.getElementById("qrHint").textContent="Spieler öffnen die Kamera, halten sie auf den Code und tippen auf den Link. Danach in der App «＋ Neue Einheit vom Coach hinzufügen».";qrModal.hidden=false});
 {const c=codeFrom(location.hash);if(c)importCode(c)}
 /* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
 addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
