@@ -295,8 +295,6 @@ body.resting .wrap{padding-bottom:96px}
 .prtoast{position:fixed;left:50%;top:20%;transform:translate(-50%,0) scale(.9);z-index:70;background:var(--surface);color:var(--ink);border:3px solid var(--more);border-radius:16px;padding:16px 22px;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .prtoast.show{opacity:1;transform:translate(-50%,0) scale(1)}
 .prtoast b{display:block;font-family:var(--display);font-size:1.6rem}
-.qrbox{display:grid;place-items:center;background:#fff;border-radius:12px;padding:12px}
-.qrbox svg{width:min(320px,100%);height:auto}
 .bkrow{display:flex;flex-wrap:wrap;gap:8px}
 .inote{margin:0;font-size:.88rem;color:var(--muted);border-left:3px solid var(--line);padding-left:8px}
 .imove{display:flex;gap:4px;flex:none}
@@ -439,7 +437,6 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div id="sessHead"></div>
       <div class="toolbar edit-only">
         <button class="primary" id="shareBtn" type="button">Einheit als Link teilen</button>
-        <button id="qrBtn" type="button">QR-Code zeigen</button>
         <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
         <button id="copyBtn" type="button">Als Text kopieren</button>
         <button id="dupBtn" type="button">Duplizieren</button>
@@ -548,15 +545,6 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 </div>
 
-<div id="qrModal" class="modal" hidden>
-  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
-    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
-    <h3 id="qrTitle">QR-Code</h3>
-    <p class="hint" id="qrHint"></p>
-    <div class="qrbox" id="qrBox"></div>
-  </div>
-</div>
-
 <div id="restBar" class="restbar" hidden role="timer" aria-live="off">
   <div><span class="eyebrow" id="restLbl">Pause</span><b id="restTime">0:00</b><small id="restNext"></small></div>
   <button type="button" id="restPlus">+15 s</button>
@@ -576,7 +564,6 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script>
 const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
@@ -1478,15 +1465,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(lo
 
 renderCustom();renderAll();showInstall();cloudInit();
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
-/* QR-Code für den Link: Spieler scannen mit der Handy-Kamera */
-const qrModal=document.getElementById("qrModal");
-qrModal.addEventListener("click",e=>{if(e.target===qrModal||e.target.closest("[data-close]"))qrModal.hidden=true});
-document.getElementById("qrBtn").addEventListener("click",async()=>{if(!cur().items.length){flash("Die Einheit ist noch leer.");return}
-  if(!window.qrcode){flash("QR-Code braucht Internet – bitte später nochmals.");return}
-  let link;try{link=baseUrl()+"#e="+await encodeSess()}catch(e){flash("Link konnte nicht erstellt werden.");return}
-  try{const q=qrcode(0,"L");q.addData(link);q.make();document.getElementById("qrBox").innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}catch(e){flash("Einheit zu gross für einen QR-Code – bitte Link teilen.");return}
-  const c=cur();document.getElementById("qrTitle").textContent=c.t||"Trainingseinheit";
-  document.getElementById("qrHint").textContent="Spieler öffnen die Kamera, halten sie auf den Code und tippen auf den Link. Danach in der App «＋ Neue Einheit vom Coach hinzufügen».";qrModal.hidden=false});
+
 {const c=codeFrom(location.hash);if(c)importCode(c)}
 /* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
 addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
