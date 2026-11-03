@@ -265,13 +265,18 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tl.sleepitem[data-level="orange"] .tlbody{--c:var(--t-mittel)}.tl.sleepitem[data-level="rot"] .tlbody{--c:var(--t-intensiv)}
 .tl.sleepitem .ndur{margin-top:0}
 .water{gap:12px}
-.glasses{display:grid;grid-template-columns:repeat(8,minmax(0,44px));gap:6px}
-.glass{width:100%;height:48px;padding:0;display:grid;place-items:center;border-radius:8px}
-.glass svg{width:24px;height:30px}
-.glass .gfill{fill:transparent}
-.glass[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
-.glass[aria-pressed="true"] .gfill{fill:var(--accent)}
-.glass:disabled{opacity:.45;cursor:not-allowed}
+.drinks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.drink{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding:8px 2px 6px;border-radius:10px;min-height:86px}
+.drink svg{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.drink span{font-size:.78rem;font-weight:600;white-space:nowrap}
+.drink:active{background:var(--accent-soft)}
+.drink:disabled{opacity:.45;cursor:not-allowed}
+.wbar{position:relative;height:16px;background:var(--bg);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.wfill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px;transition:width .35s ease}
+.wbar.full .wfill{background:var(--t-leicht)}
+.wrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wpct{font-family:var(--display);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.wbar.full+.wrow .wpct,.wpct.full{color:var(--t-leicht)}
 .cellrow{display:flex;gap:4px;align-items:center}
 .cellrow select{flex:1;min-width:0}
 .cellrow .iconbtn{padding:5px 7px;font-size:.9rem}
@@ -1013,7 +1018,11 @@ document.getElementById("autoBtn").addEventListener("click",e=>{
 });
 
 /* ---------- Heute ---------- */
-const GLASS=`<svg viewBox="0 0 24 30" aria-hidden="true"><path class="gfill" d="M6.6 13h10.8l-1 12.6a1.4 1.4 0 0 1-1.4 1.3H9a1.4 1.4 0 0 1-1.4-1.3z"/><path d="M4 3h16l-2.1 23.3a1.6 1.6 0 0 1-1.6 1.5H7.7a1.6 1.6 0 0 1-1.6-1.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+const BOTTLE=h=>`<svg width="${Math.round(h*0.5)}" height="${h}" viewBox="0 0 20 40" aria-hidden="true"><path d="M7.5 1.5h5v5l3.5 4.5v25.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V11l3.5-4.5z"/><path d="M7.5 4.5h5M4 18h12"/></svg>`;
+const DRINKS=[[250,"Glas",`<svg width="22" height="26" viewBox="0 0 24 30" aria-hidden="true"><path d="M4 3h16l-2.1 23.3a1.6 1.6 0 0 1-1.6 1.5H7.7a1.6 1.6 0 0 1-1.6-1.5z"/><path d="M5.2 10h13.6"/></svg>`],[500,"0,5 l",BOTTLE(30)],[750,"0,75 l",BOTTLE(35)],[1000,"1 l",BOTTLE(40)],[1500,"1,5 l",BOTTLE(48)]];
+const WATER_GOAL=2000;
+function waterMl(lg){return lg.ml!=null?lg.ml:(lg.w||0)*250}
+function fmtL(ml){return String(Math.round(ml/50)*50/1000).replace(".",",")+"\u00a0l"}
 function slotName(sk){return SLOTS.find(x=>x[0]===sk)[1]}
 function renderToday(){
   const tl=document.getElementById("hTimeline");if(!tl)return;
@@ -1050,7 +1059,7 @@ function renderToday(){
     const items=[
       [streak(x=>!!getLog(x).m.fruehstueck),"Tage mit Frühstück"],
       [streak(x=>!!getLog(x).m.nach,isSportDay),"Trainings mit Snack danach"],
-      [streak(x=>(getLog(x).w||0)>=8),"Tage mit 2 l Wasser"],
+      [streak(x=>waterMl(getLog(x))>=WATER_GOAL),"Tage mit 2 l Wasser"],
       [streak(x=>!!getLog(x).s),"Nächte mit mind. 8 h"]
     ].filter(x=>x[0]>=2);
     st=items.map(([n,t])=>`<span class="streak"><b>${n}</b>${t}</span>`).join("");
@@ -1085,16 +1094,21 @@ function renderToday(){
     </div></li>`;
   }).join("");
   // Wasser
-  const w=lg.w||0;
-  document.getElementById("hWater").innerHTML=`<div class="tlhead"><h2>Wasser</h2><span class="pill">${w} von 8 Gläsern · ${String(w*0.25).replace(".",",")} l</span></div>
-    <div class="glasses" role="group" aria-label="Gläser Wasser">${Array.from({length:8},(_,i)=>`<button type="button" class="glass" id="glass-${i}" data-glass="${i}" aria-pressed="${i<w}" aria-label="${i+1} ${i?"Gläser":"Glas"}"${canTick?"":" disabled"}>${GLASS}</button>`).join("")}</div>
-    <p class="hint">Ziel: mind. 2 l ausserhalb des Trainings (1 Glas = 2,5 dl). Im Training zusätzlich trinken.</p>`;
+  const ml=waterMl(lg),pct=Math.min(100,Math.round(ml/WATER_GOAL*100)),full=ml>=WATER_GOAL,hasE=(lg.e&&lg.e.length)||(lg.ml==null&&lg.w);
+  document.getElementById("hWater").innerHTML=`<div class="tlhead"><h2>Wasser</h2><span class="pill">${fmtL(ml)} von 2 l</span></div>
+    <p class="hint">Tippe an, was du getrunken hast. Ziel: mind. 2&nbsp;l ausserhalb des Trainings.</p>
+    <div class="drinks" role="group" aria-label="Getränk hinzufügen">${DRINKS.map(([v,l,ic])=>`<button type="button" class="drink" id="drink-${v}" data-drink="${v}" aria-label="${l} Wasser hinzufügen"${canTick?"":" disabled"}>${ic}<span>${l}</span></button>`).join("")}</div>
+    <div class="wbar${full?" full":""}" role="progressbar" aria-label="Wasser heute" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="wfill" style="width:${pct}%"></div></div>
+    <div class="wrow"><span class="wpct${full?" full":""}">${pct} %</span><span class="hint">${full?"Ziel erreicht. Im Training zusätzlich trinken.":`Noch ${fmtL(WATER_GOAL-ml)} bis zum Ziel`}</span>${hasE&&canTick?`<button type="button" class="linkbtn" id="drinkUndo" data-drinkundo="1">Letztes rückgängig</button>`:""}</div>`;
 }
 document.addEventListener("click",e=>{
   const nb=e.target.closest("[data-hday]");
   if(nb){hDate=addDays(hDate,+nb.dataset.hday);renderToday();return}
-  const g=e.target.closest("[data-glass]");
-  if(g){const i=+g.dataset.glass,lg=ensureLog(dkey(hDate));lg.w=(lg.w===i+1)?i:i+1;pruneLog();save();renderToday();const a=document.getElementById(g.id);if(a)a.focus();return}
+  const dr=e.target.closest("[data-drink]");
+  if(dr){const lg=ensureLog(dkey(hDate));if(lg.ml==null){lg.e=Array.from({length:lg.w||0},()=>250);lg.ml=(lg.w||0)*250}
+    const v=+dr.dataset.drink;lg.e=(lg.e||[]).concat([v]);lg.ml+=v;pruneLog();save();renderToday();const a=document.getElementById(dr.id);if(a)a.focus();flash(`+ ${fmtL(v)}`);return}
+  if(e.target.closest("[data-drinkundo]")){const lg=ensureLog(dkey(hDate));if(lg.ml==null){lg.e=Array.from({length:lg.w||0},()=>250);lg.ml=(lg.w||0)*250}
+    const v=(lg.e||[]).pop();if(v){lg.ml=Math.max(0,lg.ml-v);save();renderToday();flash(`− ${fmtL(v)}`);const u=document.getElementById("drinkUndo")||document.getElementById("drink-250");if(u)u.focus()}return}
   const rr=e.target.closest("[data-reroll]");
   if(rr){const [k,sk]=rr.dataset.reroll.split("|");reroll(k,sk,rr.id);return}
 });
