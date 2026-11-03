@@ -340,6 +340,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .draghandle:hover{color:var(--ink);background:var(--bg)}
 .tlgrip{display:flex;align-items:center;gap:4px}
 .tlgrip .draghandle{margin-left:-6px}
+.tldh{float:right;margin:-2px -4px 0 6px}
 .dragging{opacity:.35}
 .dragghost{position:fixed;z-index:80;pointer-events:none;box-shadow:0 12px 30px rgba(10,25,40,.25);opacity:.96;list-style:none;margin:0;transform:rotate(-1deg)}
 .dropline{height:4px;background:var(--accent);border-radius:2px;margin:1px 0;list-style:none;padding:0}
@@ -801,7 +802,7 @@ function renderWeekTable(){
     items.sort((a,b)=>a.t-b.t||a.o-b.o);
     const body=items.map(it=>{
       if(it.kind==="act"){const x=d.act[it.i],st=toMin(x.s);
-        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"><div class="whead">${actIcon(x.k,15)}<span class="wtime">${st===null?"–":fmtTime(st)}</span><span class="wlabel">${esc(actName(x.k))}</span></div>
+        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"><div class="whead">${actIcon(x.k,15)}<span class="wtime">${st===null?"–":fmtTime(st)}</span><span class="wlabel">${esc(actName(x.k))}</span>${st===null?"":`<button type="button" class="draghandle" id="dha-${k}-${it.i}" data-drag="${k}|act|${it.i}" aria-label="${esc(actName(x.k))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <input type="text" class="sesname" id="tactn-${k}-${it.i}" data-act="${k}|${it.i}|n" value="${esc(x.n||"")}" placeholder="${esc(actName(x.k))}" aria-label="Name">
           <span class="sestimes"><label for="tact-${k}-${it.i}-s">von</label><input type="time" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}">
           <button type="button" class="iconbtn" id="tactdel-${k}-${it.i}" data-actdel="${k}|${it.i}" aria-label="Eintrag entfernen">×</button>
@@ -811,7 +812,7 @@ function renderWeekTable(){
         </div></div>`}
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
         return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="wtime">${st===null?"–":fmtTime(st)}</span>
-</div>
+${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
           ${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}
           <span class="sestimes"><label for="tses-${k}-${it.i}-s">von</label><input type="time" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}">
@@ -1233,7 +1234,7 @@ function sessionsOf(d){
   if(!d||!d.t)return [];
   if(Array.isArray(d.ses)){
     const rec=d.t==="leicht",dur=rec?60:90;
-    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {s:st,e:en,rec,auto,named:!!nm,label:nm||auto,l:x.l||""}}).filter(Boolean).sort((a,b)=>a.s-b.s);
+    return d.ses.map((x,i)=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {i,s:st,e:en,rec,auto,named:!!nm,label:nm||auto,l:x.l||""}}).filter(Boolean).sort((a,b)=>a.s-b.s);
   }
   const o=timeOpts(d);if(!o)return [];
   const sel=d[o.f]||[],rec=d.t==="leicht";
@@ -1352,9 +1353,14 @@ function timeBetween(prev,next){
   let t=p!==null&&n!==null?(p+n)/2:p!==null?p+30:n!==null?n-30:null;
   if(t===null)return null;t=Math.round(t/5)*5;return Math.min(Math.max(t,300),1425);
 }
-function moveMeal(k,sk,t,focusId){
-  if(t===null)return;const d=state.plan[k];d.mt=d.mt||{};d.mt[sk]=t;save();renderTable();
-  flash(`${slotName(sk)} auf ${fmtTime(t)} verschoben`);if(focusId){const f=document.getElementById(focusId);if(f)f.focus()}
+function moveItem(ref,t,focusId){
+  if(t===null)return;const [k,a,b]=ref.split("|"),d=state.plan[k];
+  if(a==="ses"||a==="act"){const arr=a==="ses"?d.ses:d.act,x=arr&&arr[+b];if(!x)return;
+    const st=toMin(x.s),en=toMin(x.e),dur=st!==null&&en!==null&&en>st?en-st:(a==="ses"?(d.t==="leicht"?60:90):60);
+    x.s=fmtTime(t);x.e=fmtTime(Math.min(t+dur,1439));save();renderTable();renderText();
+    flash(`${a==="ses"?(String(x.n||"").trim()||"Einheit"):(String(x.n||"").trim()||actName(x.k))} auf ${fmtTime(t)}–${x.e} verschoben`);
+  }else{d.mt=d.mt||{};d.mt[a]=t;save();renderTable();flash(`${slotName(a)} auf ${fmtTime(t)} verschoben`)}
+  if(focusId){const f=document.getElementById(focusId);if(f)f.focus()}
 }
 document.addEventListener("pointerdown",e=>{
   const h=e.target.closest("[data-drag]");if(!h||e.button>0)return;
@@ -1364,8 +1370,7 @@ document.addEventListener("pointerdown",e=>{
   ghost.classList.add("dragghost");Object.assign(ghost.style,{width:r.width+"px",left:r.left+"px",top:r.top+"px"});document.body.appendChild(ghost);
   const ph=document.createElement(item.tagName);ph.className="dropline";ph.setAttribute("aria-hidden","true");list.insertBefore(ph,item);
   item.classList.add("dragging");
-  const [k,sk]=h.dataset.drag.split("|");
-  drag={item,list,ghost,ph,dy:e.clientY-r.top,k,sk,h};
+  drag={item,list,ghost,ph,dy:e.clientY-r.top,ref:h.dataset.drag,h};
   try{h.setPointerCapture(e.pointerId)}catch(_){}
 });
 document.addEventListener("pointermove",e=>{
@@ -1385,7 +1390,7 @@ function endDrag(cancel){
   const unchanged=sibs[idx+1]===g.item||sibs[idx-1]===g.item;
   g.ph.remove();
   if(cancel||unchanged)return;
-  moveMeal(g.k,g.sk,timeBetween(prev,next),g.h.id);
+  moveItem(g.ref,timeBetween(prev,next),g.h.id);
 }
 document.addEventListener("pointerup",()=>endDrag(false));
 document.addEventListener("pointercancel",()=>endDrag(true));
@@ -1395,9 +1400,9 @@ document.addEventListener("keydown",e=>{
   if(e.key!=="ArrowUp"&&e.key!=="ArrowDown")return;
   e.preventDefault();
   const item=h.closest("[data-time]"),sibs=timedSibs(item.parentElement,null),i=sibs.indexOf(item);
-  const [k,sk]=h.dataset.drag.split("|");
-  if(e.key==="ArrowUp"&&i>0)moveMeal(k,sk,timeBetween(sibs[i-2]||null,sibs[i-1]),h.id);
-  if(e.key==="ArrowDown"&&i<sibs.length-1&&+sibs[i+1].dataset.time<1999)moveMeal(k,sk,timeBetween(sibs[i+1],sibs[i+2]||null),h.id);
+  const ref=h.dataset.drag;
+  if(e.key==="ArrowUp"&&i>0)moveItem(ref,timeBetween(sibs[i-2]||null,sibs[i-1]),h.id);
+  if(e.key==="ArrowDown"&&i<sibs.length-1&&+sibs[i+1].dataset.time<1999)moveItem(ref,timeBetween(sibs[i+1],sibs[i+2]||null),h.id);
 });
 
 /* ---------- Eigenes Gericht direkt bei der Mahlzeit hinzufügen ---------- */
@@ -1722,9 +1727,9 @@ function renderToday(){
       return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="act"){const a=it.a;
-      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
+      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><button type="button" class="draghandle tldh" id="hdha-${a.i}" data-drag="${k}|act|${a.i}" aria-label="${esc(a.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><button type="button" class="draghandle tldh" id="hdhs-${x.i}" data-drag="${k}|ses|${x.i}" aria-label="${esc(x.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}" data-time="${it.t}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
