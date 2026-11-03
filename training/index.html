@@ -692,7 +692,28 @@ function load(){
   const first={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};return {sessions:[first],active:first.id,custom:[]};
 }
 function syncNames(st){(st.sessions||[]).forEach(se=>(se.items||[]).forEach(it=>{if(EXBY[it.id])it.n=EXBY[it.id].n}))}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
+/* Nur in Claude: Einheiten, Verlauf und Bilder zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
+   Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles wie bisher im Browser. */
+let cloud=null,cloudReady=false,cloudT=null;const cloudLast={};
+function cloudParts(){const {hist,imgs,...main}=state;return {main,hist:hist||[],imgs:imgs||{}}}
+function cloudSave(){if(!cloud||!cloudReady)return;clearTimeout(cloudT);cloudT=setTimeout(async()=>{const parts=cloudParts();
+  for(const k of Object.keys(parts)){const j=JSON.stringify(parts[k]);if(j===cloudLast[k])continue;
+    if(j.length>250000){if(k!=="imgs")flash("Zu viele Daten für den Claude-Speicher – im Browser gespeichert.");continue}
+    try{await cloud.doc("coach/"+k).set({j,at:Date.now()});cloudLast[k]=j}catch(e){}}},800)}
+async function cloudInit(){
+  if(!(window.claude&&claude.use))return;let db=null;try{db=await claude.use("db")}catch(e){}if(!db)return;cloud=db;
+  try{const [m,h,i]=await Promise.all(["main","hist","imgs"].map(k=>db.doc("coach/"+k).get()));
+    if(m.exists){const main=JSON.parse(m.data().j);if(main&&Array.isArray(main.sessions)&&main.sessions.length){
+        const mode=state.mode;state=Object.assign(main,{hist:h.exists?JSON.parse(h.data().j):[],imgs:i.exists?JSON.parse(i.data().j):{}});
+        state.mode=main.mode||mode;syncNames(state);
+        const p=cloudParts();for(const k in p)cloudLast[k]=JSON.stringify(p[k]);
+        try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}renderCustom();renderAll()}}
+    cloudReady=true;if(!m.exists)cloudSave();
+    /* Einheiten, die Claude für dich abgelegt hat (Links aus dem Chat) */
+    const inbox=await db.collection("inbox").get();state.imported=state.imported||{};
+    for(const d of inbox.docs){const c=codeFrom("#e="+String((d.data()||{}).code||""));if(c&&!state.imported[c])await importCode(c)}
+  }catch(e){cloudReady=true}}
 function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
 function flash(msg){document.querySelectorAll(".status").forEach(s=>{s.textContent=msg});clearTimeout(flash.t);flash.t=setTimeout(()=>document.querySelectorAll(".status").forEach(s=>s.textContent=""),2600)}
 
@@ -1314,7 +1335,7 @@ document.getElementById("installBtn").addEventListener("click",async()=>{if(!ins
 document.getElementById("installClose").addEventListener("click",()=>{document.getElementById("installCard").hidden=true;try{localStorage.setItem(KEY+"-noinstall","1")}catch(e){}});
 if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 
-renderCustom();renderAll();showInstall();
+renderCustom();renderAll();showInstall();cloudInit();
 {const c=codeFrom(location.hash);if(c)importCode(c)}
 /* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
 addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
