@@ -144,7 +144,17 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .setbox.addset:hover{border-color:var(--accent)}
 .donecard{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--c-warm-bg);border:1px solid var(--ok);border-radius:10px;padding:12px 14px}
 .donecard div{display:flex;flex-direction:column;min-width:0}.donecard span{font-size:.85rem;color:var(--muted)}
+.addrow{display:flex;flex-wrap:wrap;gap:8px}
+.addcoach.free{border-color:var(--ink);color:var(--ink);background:var(--surface)}
+.picklist{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:55vh;margin:0 -4px;padding:0 4px}
+.picklist h4{margin:10px 0 2px;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pickrow{display:flex;align-items:center;gap:10px;text-align:left;width:100%;min-height:52px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;color:var(--ink)}
+.pickrow:hover{border-color:var(--accent)}
+.pickrow .pn{flex:1;display:flex;flex-direction:column;font-weight:600;line-height:1.2}
+.pickrow .pn .de{font-weight:400;font-size:.8rem;color:var(--muted)}
+.pickrow .pd{font-size:.78rem;color:var(--muted);white-space:nowrap}
 .addcoach{align-self:flex-start;border:2px dashed var(--accent);color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:10px 14px}
+.addex{align-self:stretch;margin-top:12px;width:100%;font-weight:700;min-height:48px}
 .warnbanner{background:var(--c-beine-bg);border-color:var(--c-beine)}
 .warnbanner span{display:block;font-size:.9rem;margin-top:2px}
 .hentry{border-top:1px solid var(--line);padding:4px 0}
@@ -430,7 +440,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 
   <div class="sessionbar" id="sessionBar" role="group" aria-label="Meine Einheiten"></div>
-  <button type="button" class="addcoach train-only" id="addCoachBtn">＋ Neue Einheit vom Coach hinzufügen</button>
+  <div class="addrow train-only"><button type="button" class="addcoach" id="addCoachBtn">＋ Neue Einheit vom Coach hinzufügen</button><button type="button" class="addcoach free" id="freeBtn">⚡ Freies Training starten</button></div>
 
   <div class="main">
     <section class="card sess" aria-label="Einheit">
@@ -444,6 +454,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
         <span class="status" role="status"></span>
       </div>
       <div class="items" id="items"></div>
+      <button type="button" class="addcoach addex train-only" id="addExBtn">＋ Übung hinzufügen</button>
       <div class="toolbar train-only">
         <button class="primary" id="finishBtn" type="button">✓ Training abschliessen &amp; speichern</button>
         <button id="resultBtn" type="button">Ergebnis an Coach senden</button>
@@ -534,6 +545,15 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <p class="judge" id="logJudge" aria-live="polite"></p>
     <button type="button" class="savebtn ok" id="logSave">✓ Satz speichern</button>
     <button type="button" class="linkbtn" id="logDel" hidden style="align-self:center">Satz löschen</button>
+  </div>
+</div>
+
+<div id="pickModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="pickTitle">Übung hinzufügen</h3>
+    <input type="search" id="pickSearch" placeholder="Übung suchen, z. B. bench, kniebeuge" aria-label="Übung suchen" autocomplete="off">
+    <div class="picklist" id="pickList"></div>
   </div>
 </div>
 
@@ -897,7 +917,7 @@ function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&
 function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
 function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,w:it.w,log:it.log.map(e=>Object.assign({},e))}));
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
-  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
+  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free)c.items=[];else c.items.forEach(it=>{delete it.added});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
 /* Aufwärmen & Mobilität: nur «erledigt», keine Werte und keine Stats */
 function isSimpleId(id){const e=exById(id);return !!e&&e.k==="warm"}
@@ -918,7 +938,7 @@ function setsHTML(it){
 }
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
-  if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?"Diese Einheit ist noch leer.":"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
+  if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?(c.free?"Freies Training: Tippe unten auf <b>＋ Übung hinzufügen</b> und wähle deine erste Übung. Danach einfach Sätze eintragen und die nächste Übung hinzufügen.":"Diese Einheit ist noch leer."):"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
   else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
@@ -928,6 +948,7 @@ function renderItems(focusSel){
       ${moreHTML(it)}
       ${lastHTML(it)}
       ${setsHTML(it)}
+      ${it.added&&!(it.log||[]).length?`<button type="button" class="linkbtn" data-rmfree="1" style="align-self:flex-start;padding:0">Übung wieder entfernen</button>`:""}
       ${chartDetails(it.id,false)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
@@ -1122,6 +1143,7 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const it=c.items.find(x=>x.u===u);c.items=c.items.filter(x=>x.u!==u);if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();flash(`${shortN(it.n)} entfernt`);return}
   if(t.closest("#bkSave")){saveBackup();return}
   if(t.closest("#bkLoad")){document.getElementById("bkFile").click();return}
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
@@ -1387,6 +1409,26 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+/* Freies Training: im Gym spontan Übung für Übung zusammenstellen */
+document.getElementById("freeBtn").addEventListener("click",()=>{
+  let s=state.sessions.find(x=>x.free&&!x.items.some(it=>(it.log||[]).length));
+  if(!s){s={id:uid(),t:"Freies Training",a:"",h:"",free:true,items:[]};state.sessions.push(s)}
+  state.active=s.id;state.mode="train";save();renderAll();scrollTo({top:0,behavior:"smooth"});openPick()});
+const pickModal=document.getElementById("pickModal");
+function recentIds(){const out=[];hist().slice().sort((a,b)=>b.d-a.d).forEach(h=>h.items.forEach(x=>{if(!out.includes(x.id)&&exById(x.id))out.push(x.id)}));return out.slice(0,8)}
+function pickRow(e){return `<button type="button" class="pickrow" data-pick="${esc(e.id)}"><span class="pn">${nameHTML(e.n)}</span><span class="pd">${esc([e.s&&e.w?e.s+" × "+e.w:e.w].filter(Boolean).join(""))}</span></button>`}
+function renderPick(){const q=document.getElementById("pickSearch").value.trim().toLowerCase();const all=exAll();let h="";
+  if(q){const hit=all.filter(e=>(e.n+" "+(musOf(e.id)||"")).toLowerCase().includes(q));h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
+  else{const rec=recentIds();if(rec.length)h+=`<h4>Zuletzt gemacht</h4>`+rec.map(id=>pickRow(exById(id))).join("");
+    CATS.forEach(([k,n])=>{const L=all.filter(e=>(e.k||"eigen")===k);if(L.length)h+=`<h4>${esc(n)}</h4>`+L.map(pickRow).join("")})}
+  document.getElementById("pickList").innerHTML=h}
+function openPick(){document.getElementById("pickSearch").value="";renderPick();pickModal.hidden=false;document.getElementById("pickList").scrollTop=0}
+document.getElementById("addExBtn").addEventListener("click",openPick);
+document.getElementById("pickSearch").addEventListener("input",renderPick);
+pickModal.addEventListener("click",e=>{if(e.target===pickModal||e.target.closest("[data-close]")){pickModal.hidden=true;return}
+  const b=e.target.closest("[data-pick]");if(!b)return;const ex=exById(b.dataset.pick);if(!ex)return;
+  const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();pickModal.hidden=true;renderItems();renderBar();renderProgress();
+  flash(`${shortN(ex.n)} hinzugefügt`);const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
 document.getElementById("addCoachBtn").addEventListener("click",async()=>{
   try{if(navigator.clipboard&&navigator.clipboard.readText){const txt=await navigator.clipboard.readText();const c=codeFrom(txt);if(c){await importCode(c,true);return}}}catch(e){}
   pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus()});
