@@ -1319,7 +1319,7 @@ function buildPDF(){
     if(state.name){doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(255,255,255);doc.text(T(state.name),W-M,12.6,{align:"right"})}
     if(state.veg){doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(150,215,175);doc.text("Vegetarisch",W-M,18.4,{align:"right"})}
   }
-  band("Ernährungswoche","Unihockey · U15 Selektion");
+  band("Ernährungswoche","CZ Nutrition · Unihockey");
   // daily line
   doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(...INK);doc.text("Jeden Tag:",M,29.5);
   const lw=doc.getTextWidth("Jeden Tag:")+2;doc.setFont("helvetica","normal");doc.setTextColor(...MUTED);
@@ -1327,11 +1327,15 @@ function buildPDF(){
 
   const links=[];
   const head=[["Mahlzeit"].concat(DAYS.map(()=>""))];
-  const body=SLOTS.map(([sk,sn])=>[T(sn)].concat(DAYS.map(([k])=>{const v=state.plan[k].s[sk];if(!v)return "–";return T(v)+(recipeFor(sk,v)?"\n» Rezept":"")})));
+  const PT={};DAYS.forEach(([k])=>{PT[k]=planTimes(k,wakeFor(k)).T});
+  const body=SLOTS.map(([sk,sn])=>[T(sn)].concat(DAYS.map(([k])=>{const v=state.plan[k].s[sk];if(!v)return "–";return fmtTime(PT[k][sk])+"  "+T(v)+(recipeFor(sk,v)?"\n» Rezept":"")})));
+  doc.setFontSize(7.2);const colW0=(W-2*M-32)/7-4.4;
+  const headH=Math.max(24,...DAYS.map(([k])=>{const d=state.plan[k];const tl=d.t?Math.min(2,doc.splitTextToSize(T(typeName(d)),colW0).length):0;
+    const ex=tzNames(d).concat(d.tr?[d.tr]:[]).reduce((a,e)=>a+Math.min(2,doc.splitTextToSize(T(e),colW0).length),0);return 9+4.4+tl*3.6+ex*3+2}));
   doc.autoTable({
     head,body,startY:33,margin:{left:M,right:M,bottom:16},theme:"grid",
     styles:{font:"helvetica",fontSize:7.8,cellPadding:{top:2.2,right:2.2,bottom:2.2,left:2.4},textColor:INK,lineColor:LINE,lineWidth:.2,valign:"top",overflow:"linebreak"},
-    headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7,minCellHeight:24,valign:"bottom"},
+    headStyles:{fillColor:SOFT,textColor:MUTED,fontStyle:"bold",fontSize:7,minCellHeight:headH,valign:"bottom"},
     bodyStyles:{minCellHeight:13},
     alternateRowStyles:{fillColor:[251,252,253]},
     columnStyles:{0:{cellWidth:32,fontStyle:"bold",fontSize:8.2,fillColor:SOFT}},
@@ -1346,7 +1350,7 @@ function buildPDF(){
         doc.setFillColor(...col);doc.rect(c.cell.x,c.cell.y,c.cell.width,1.6,"F");
         let y=c.cell.y+7;const x=c.cell.x+2.4,w=c.cell.width-4.4;
         doc.setFont("helvetica","bold");doc.setFontSize(10.5);doc.setTextColor(...INK);doc.text(T(n),x,y);y+=4.4;
-        if(d.t){doc.setFontSize(7.2);doc.setTextColor(...col);doc.text(doc.splitTextToSize(T(typeName(d)),w)[0],x,y);y+=3.6}
+        if(d.t){doc.setFontSize(7.2);doc.setTextColor(...col);doc.splitTextToSize(T(typeName(d)),w).slice(0,2).forEach(l=>{doc.text(l,x,y);y+=3.6})}
         doc.setFont("helvetica","normal");doc.setFontSize(6.8);doc.setTextColor(...MUTED);
         const extra=tzNames(d).concat(d.tr?[d.tr]:[]);
         extra.forEach(e=>{doc.splitTextToSize(T(e),w).slice(0,2).forEach(l=>{if(y<c.cell.y+c.cell.height-1){doc.text(l,x,y);y+=3}})});
