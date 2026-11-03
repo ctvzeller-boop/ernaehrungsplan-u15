@@ -321,6 +321,12 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .witem{display:block}
 .whead{display:flex;align-items:baseline;gap:7px;flex-wrap:nowrap;min-width:0}
 .whead .wlabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tpick{position:relative;display:inline-block;cursor:pointer;border-radius:6px;flex:none}
+.tpick:hover .tshow{text-decoration:underline dotted;text-underline-offset:3px}
+.tedit{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:none;font:inherit;color:inherit;cursor:pointer;background:var(--surface)}
+.tedit::-webkit-calendar-picker-indicator{display:none}
+.tedit:focus{opacity:1;width:auto;min-width:100%;z-index:6;border-radius:6px;outline:2px solid var(--accent);outline-offset:1px;font-variant-numeric:tabular-nums}
+.tltime .tedit:focus{left:auto;right:0}
 .wtime{font-family:var(--display);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;color:var(--ink)}
 .wbody{display:flex;flex-direction:column;gap:5px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--surface)}
 .wlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
@@ -345,7 +351,6 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dragghost{position:fixed;z-index:80;pointer-events:none;box-shadow:0 12px 30px rgba(10,25,40,.25);opacity:.96;list-style:none;margin:0;transform:rotate(-1deg)}
 .dropline{height:4px;background:var(--accent);border-radius:2px;margin:1px 0;list-style:none;padding:0}
 .tl.dropline{display:block}
-.mtreset{align-self:flex-start;padding-left:0}
 .planbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .stab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
 .stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
@@ -820,9 +825,8 @@ ${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" d
           <label for="tses-${k}-${it.i}-e">bis</label><input type="time" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
         </div></div>`}
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,opts=optionsFor(sk),known=val===NONE||opts.some(o=>o.n===val);
-      return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="wtime">${fmtTime(it.t)}</span>
+      return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel">${esc(L[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
-        ${R.moved&&R.moved[sk]?`<button type="button" class="linkbtn mtreset" data-mtreset="${k}|${sk}">Zeit zurücksetzen</button>`:""}
         <div class="cellrow"><select id="sel-${k}-${sk}" data-day="${k}" data-slot="${sk}" class="${val===NONE?"none":""}" aria-label="${sn} ${n}">
           <option value=""${val===NONE?" selected":""}>– keine –</option>
           ${opts.map(o=>`<option value="${esc(o.n)}"${o.n===val?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}
@@ -881,6 +885,8 @@ function renderAll(){renderTabs();renderTable();renderCustom();renderText();if(d
 function flash(msg){const s=document.getElementById("status");s.textContent=msg;clearTimeout(flash.t);flash.t=setTimeout(()=>s.textContent="",2500)}
 
 document.addEventListener("change",e=>{
+  const te=e.target.closest&&e.target.closest("[data-mtime],[data-itime]");
+  if(te){clearTimeout(teTimer);teTimer=setTimeout(()=>commitTime(te),1500);return}
   const el=e.target;
   if(el.dataset.train){renderToday();return}
   if(el.dataset.tick){const lg=ensureLog(dkey(hDate));if(el.dataset.tick==="sleep")lg.s=el.checked;else lg.m[el.dataset.tick]=el.checked;pruneLog();save();renderToday();const a=document.getElementById(el.id);if(a)a.focus();return}
@@ -1335,8 +1341,6 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("click",e=>{
   const dn=e.target.closest("[data-dinner]");
-  const mr=e.target.closest("[data-mtreset]");
-  if(mr){const [k,sk]=mr.dataset.mtreset.split("|");if(state.plan[k].mt)delete state.plan[k].mt[sk];save();renderTable();flash("Zeit zurückgesetzt");return}
   if(dn){const [k,v]=dn.dataset.dinner.split("|");state.plan[k].dinner=v;if(state.plan[k].mt)delete state.plan[k].mt.abend;save();const id=dn.id;renderTable();const f=document.getElementById(id);if(f)f.focus();flash(v==="vor"?"Nachtessen vor dem Training":"Nachtessen nach dem Training");return}
   const ad=e.target.closest("[data-sesadd]");
   if(ad){const k=ad.dataset.sesadd,pre=ad.dataset.pre,d=state.plan[k];if(pre==="m"&&menu.sub&&d.t!==menu.sub)d.t=menu.sub;
@@ -1345,6 +1349,15 @@ document.addEventListener("click",e=>{
   if(dl){const [k,i]=dl.dataset.sesdel.split("|"),pre=dl.dataset.pre;state.plan[k].ses.splice(+i,1);save();refreshSesEditor(k,pre,`${pre}sesadd-${k}`);renderToday();renderText();return}
 });
 
+let teTimer=null;
+function commitTime(te){clearTimeout(teTimer);teTimer=null;if(!te.isConnected||te.value===te.defaultValue)return;
+  const t=toMin(te.value),ref=te.dataset.itime||te.dataset.mtime,keep=document.activeElement===te?te.id:null;
+  if(te.dataset.itime){if(t!==null)moveItem(ref,t,keep);return}
+  const [k,sk]=ref.split("|"),d=state.plan[k];
+  if(t===null){if(d.mt)delete d.mt[sk];save();renderTable();flash(`${slotName(sk)}: Zeit wieder automatisch`)}
+  else moveItem(ref,t,keep)}
+document.addEventListener("focusout",e=>{if(e.target.matches&&e.target.matches("input.tedit")&&teTimer)commitTime(e.target)});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches&&e.target.matches("input.tedit")){e.preventDefault();commitTime(e.target)}});
 /* ---------- Mahlzeiten verschieben (Drag & Drop, Pfeiltasten) ---------- */
 let drag=null;
 function timedSibs(list,skip){return [...list.children].filter(c=>c!==skip&&c.dataset&&c.dataset.time!==undefined&&!c.classList.contains("dropline"))}
@@ -1727,21 +1740,20 @@ function renderToday(){
       return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="act"){const a=it.a;
-      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><button type="button" class="draghandle tldh" id="hdha-${a.i}" data-drag="${k}|act|${a.i}" aria-label="${esc(a.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
+      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(a.s)}</span><input type="time" class="tedit" id="hat-${a.i}" data-itime="${k}|act|${a.i}" value="${fmtTime(a.s)}" aria-label="Startzeit ${esc(a.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><button type="button" class="draghandle tldh" id="hdha-${a.i}" data-drag="${k}|act|${a.i}" aria-label="${esc(a.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><button type="button" class="draghandle tldh" id="hdhs-${x.i}" data-drag="${k}|ses|${x.i}" aria-label="${esc(x.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(x.s)}</span><input type="time" class="tedit" id="hst-${x.i}" data-itime="${k}|ses|${x.i}" value="${fmtTime(x.s)}" aria-label="Startzeit ${esc(x.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><button type="button" class="draghandle tldh" id="hdhs-${x.i}" data-drag="${k}|ses|${x.i}" aria-label="${esc(x.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}" data-time="${it.t}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
     const h=H[sk],hint=h?(typeof h==="string"?`<p class="tlhint">${esc(h)}</p>`:`<p class="tlhint warn">${esc(h.t)}</p>`):"";
     const warn=state.veg&&isMeat(sk,v)?`<p class="tlhint warn">Nicht vegetarisch, bitte ersetzen.</p>`:isHidden(v)?`<p class="tlhint warn">Ausgeblendet, bitte ersetzen.</p>`:"";
     const info=detailFor(sk,v),rec=recipeFor(sk,v);
-    return `<li class="tl meal${done?" done":""}" data-time="${it.t}"><div class="tltime">${fmtTime(it.t)}</div><div class="tlbody">
+    return `<li class="tl meal${done?" done":""}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="hmt-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${esc(slotName(sk))} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">
       <div class="tlhead"><span class="tlgrip"><button type="button" class="draghandle" id="hdh-${sk}" data-drag="${k}|${sk}" aria-label="${esc(slotName(sk))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span></span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
       <div class="tlrow"><select id="hsel-${sk}" data-day="${k}" data-slot="${sk}" class="${v?"":"none"}" aria-label="${esc(slotName(sk))}">
         <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}
       </select><button type="button" class="iconbtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button><button type="button" class="iconbtn" id="had-${sk}" data-adddish="${k}|${sk}" aria-label="Neues Gericht für ${esc(slotName(sk))} hinzufügen" title="Neues Gericht hinzufügen">＋</button>${v?`<button type="button" class="iconbtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}</div>
-      ${R.moved&&R.moved[sk]?`<button type="button" class="linkbtn mtreset" data-mtreset="${k}|${sk}">Zeit zurücksetzen</button>`:""}
       ${warn}${hint}
       ${info||rec?`<div class="tlactions">${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}${rec?`<button type="button" class="linkbtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>`:""}
     </div></li>`;
