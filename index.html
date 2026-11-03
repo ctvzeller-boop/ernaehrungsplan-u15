@@ -1,13 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CZ Nutrition</title>
-<meta name="theme-color" content="#0B0B0D">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="CZ Nutrition">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Ernährungswoche U15</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,9 +41,6 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;l
 h1{font-size:2.4rem;line-height:1}
 h2{font-size:1.5rem;text-transform:uppercase;letter-spacing:.04em}
 .lead{color:var(--muted);max-width:65ch;margin:6px 0 0}
-.brand{display:flex;gap:14px;align-items:flex-start}
-.logo{width:64px;height:64px;border-radius:14px;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-@media (max-width:760px){.logo{width:52px;height:52px;border-radius:12px}}
 header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
 .namefield{display:flex;flex-direction:column;gap:4px;min-width:0}
 label.small,.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
@@ -198,13 +188,10 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
 
 <div class="wrap">
   <header>
-    <div class="brand">
-      <img class="logo" src="icons/icon-192.png" alt="CZ Nutrition by Calvin Zeller" width="64" height="64">
-      <div>
-      <div class="eyebrow">CZ Nutrition · Unihockey U15</div>
+    <div>
+      <div class="eyebrow">Unihockey · U15 Selektion</div>
       <h1>Ernährungswoche</h1>
       <p class="lead">Wähle pro Tag die Belastung und für jede Mahlzeit eine Option. Die Woche ist mit einem Beispiel vorausgefüllt; deine Auswahl bleibt in diesem Browser gespeichert.</p>
-      </div>
     </div>
     <div class="headctl">
     <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
@@ -314,7 +301,7 @@ const OPTIONS={
     {n:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",r:"Proteinshake",d:"Konfi oder anderer süsser Aufstrich."},
     {n:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",m:1,d:"Bündnerfleisch hat sehr viel Protein."},
     {n:"Pfannen-Oats mit Beeren und Skyr",r:"Pfannen-Oats",d:"Haferflocken in der Pfanne mit Wasser erhitzen, gefrorene Beeren oder Banane und Honig untermischen. Zusammen mit Skyr essen."},
-    {n:"Zopf mit Konfi oder Honig, etwas Käse, Banane",d:"Gut verdaulich, ideal 2–3 h vor einem Spiel."}
+    {n:"Zopf mit Konfi oder Honig",d:"Gut verdaulich, ideal 2–3 h vor einem Spiel."}
   ],
   znueni:[
     {n:"Frucht und eine Handvoll Nüsse"},{n:"Joghurt mit Frucht"},{n:"Ruchbrot mit Käse"},
@@ -368,11 +355,15 @@ const EXAMPLE={
   mi:{t:"leicht",tr:"Frei",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Quark mit Früchten",nach:NONE,abend:"Gemüsecurry mit Reis"}},
   do:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Rüebli-Sticks und Käse",mittag:"Reis mit Poulet und Gemüse",vor:"Reiswaffeln",nach:"Trinkjoghurt und Frucht",abend:"Couscous mit Gemüse"}},
   fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Joghurt mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Quark mit Früchten",nach:NONE,abend:"Pasta mit Tomatensauce"}},
-  sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig, etwas Käse, Banane",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
   so:{t:"leicht",tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
 };
 const KEY="u15-ernaehrungswoche-v2";
 let state=load();
+(function migrateNames(){const RN={"Zopf mit Konfi oder Honig, etwas Käse, Banane":"Zopf mit Konfi oder Honig"};let ch=false;
+  Object.values(state.plan||{}).forEach(d=>Object.keys(d.s||{}).forEach(k=>{if(RN[d.s[k]]){d.s[k]=RN[d.s[k]];ch=true}}));
+  if(state.hidden)state.hidden=state.hidden.map(n=>{if(RN[n]){ch=true;return RN[n]}return n});
+  if(ch)save()})();
 const menu={day:null,sub:null};
 let activeDay=(()=>{const d=new Date().getDay();return DAYS[(d+6)%7][0]})();
 
