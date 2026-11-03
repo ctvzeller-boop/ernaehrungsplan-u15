@@ -146,6 +146,12 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .donecard div{display:flex;flex-direction:column;min-width:0}.donecard span{font-size:.85rem;color:var(--muted)}
 .ssbtn{align-self:flex-start;min-height:40px;padding:6px 12px;font-size:.88rem;border:1.5px dashed var(--line);background:transparent;color:var(--ink);border-radius:10px}
 .ssbtn.on{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.totreps{margin:2px 0 0;font-size:.9rem;color:var(--muted)}
+.totreps b{color:var(--ink);font-family:var(--display);font-size:1.05rem}
+#pickFilters{display:flex;flex-direction:column;gap:6px}
+#pickFilters .cats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+#pickFilters .cat{white-space:nowrap;flex:none}
+#pickFilters .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
 .addrow{display:flex;flex-wrap:wrap;gap:8px}
 .addcoach.free{border-color:var(--ink);color:var(--ink);background:var(--surface)}
 .picklist{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:55vh;margin:0 -4px;padding:0 4px}
@@ -554,7 +560,8 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
     <h3 id="pickTitle">Übung hinzufügen</h3>
-    <input type="search" id="pickSearch" placeholder="Übung suchen, z. B. bench, kniebeuge" aria-label="Übung suchen" autocomplete="off">
+    <input type="search" id="pickSearch" placeholder="Übung suchen, z. B. bench, schulter" aria-label="Übung suchen" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div id="pickFilters"></div>
     <div class="picklist" id="pickList"></div>
   </div>
 </div>
@@ -855,7 +862,7 @@ function renderBar(){
   document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
    `<button type="button" id="newSess" class="edit-only" style="flex:none">+ Neue Einheit</button>
     ${TPL.length?"":"<!--"}<select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>${TPL.length?"":"-->"}`;
-  const a=document.querySelector(".stab[aria-pressed=true]");if(a&&a.scrollIntoView&&document.getElementById("sessionBar").scrollWidth>innerWidth)a.scrollIntoView({block:"nearest",inline:"center"});
+  const a=document.querySelector(".stab[aria-pressed=true]"),bar=document.getElementById("sessionBar");if(a&&bar.scrollWidth>bar.clientWidth)bar.scrollLeft=Math.max(0,a.offsetLeft-bar.offsetLeft-(bar.clientWidth-a.offsetWidth)/2);
 }
 
 /* Einheit: Kopf */
@@ -928,6 +935,10 @@ function simpleSetsHTML(it){const log=it.log||[],p=Math.max(1,plannedSets(it));c
   const boxes=log.map((e,j)=>`<button type="button" class="setbox ok" data-edit="${j}" aria-label="Erledigt. Zum Rückgängigmachen tippen">✓</button>`).join("");
   const todo=Array.from({length:Math.max(0,p-log.length)},()=>`<span class="setbox todo" aria-hidden="true">✓</span>`).join("");
   return `<div class="sets">${p>1?boxes+todo:""}${done?`<span class="donetag">✓ Erledigt</span>${p<=1?`<button type="button" class="linkbtn" data-edit="0">Rückgängig</button>`:""}`:`<button type="button" class="setbtn" data-log="1">✓ ${p>1?`Runde ${log.length+1} von ${p} erledigt`:"Erledigt"}</button>`}</div>`}
+/* Total aller Sätze (leer eingetragen = unterer Planwert) */
+function totalOf(it,log){let t=0,n=0;const r=planRange(it.w);(log||[]).forEach(e=>{let v=numV(e.v);if(v===null&&r&&isFinite(r.mn))v=r.mn;if(v!==null){t+=v;n++}});return n?Math.round(t*10)/10:null}
+function totalHTML(it,log){const t=totalOf(it,log);if(t===null)return "";const time=isTime(it);const u=time?(unitOf(it)||"s").replace(/\.$/,""):"Wdh";const side=perSide(it.w);
+  return `<p class="totreps">Total: <b>${t} ${esc(u)}</b>${side?` <span>${esc(side)}</span>`:""}</p>`}
 function setsHTML(it){
   if(isSimple(it))return simpleSetsHTML(it);
   const log=it.log||[],p=plannedSets(it);
@@ -936,7 +947,7 @@ function setsHTML(it){
   const n=log.length+1;
   const todo=Array.from({length:Math.max(0,p-log.length)},(_,j)=>`<button type="button" class="setbox todo${j===0?" next":""}" data-log="1"${j?` tabindex="-1"`:""} aria-label="Satz ${n} eintragen (Plan ${esc(planShort(it))})">${esc(planShort(it))}</button>`).join("");
   const addrm=`<button type="button" class="setbox addset" data-addset="1" aria-label="Satz hinzufügen">＋ Satz</button>${(it.xs||0)>0&&p>log.length?`<button type="button" class="setbox addset" data-rmset="1" aria-label="Zusätzlichen Satz entfernen">−</button>`:""}`;
-  return `<div class="sets">${boxes}${todo}${addrm}</div>`;
+  return `<div class="sets">${boxes}${todo}${addrm}</div>${totalHTML(it,log)}`;
 }
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
@@ -1204,7 +1215,7 @@ document.getElementById("resultBtn").addEventListener("click",()=>copyOrShare(re
 const logModal=document.getElementById("logModal");let logCtx=null;
 function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return;
   const log=it.log||[];const e=idx==null?null:log[idx];const p=plannedSets(it);const n=idx==null?log.length+1:idx+1;
-  logCtx={u,idx,from};
+  logCtx={u,idx,from,y:scrollY};
   document.getElementById("logEyebrow").textContent=`Satz ${n}${p?" von "+p:""}`;
   document.getElementById("logTitle").innerHTML=nameHTML(it.n);
   document.getElementById("logGoal").innerHTML=`Ziel: <b>${esc(it.w||"–")}</b>${it.kg?` · <b>${esc(kgTxt(it.kg))}</b>`:""}${it.r?` · ${esc(rirTxt(it.r))}`:""}`;
@@ -1221,7 +1232,7 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   document.getElementById("logHint").textContent=(pSet?`Letztes Mal (${fmtDate(prev.d)}), Satz ${Math.min(pIdx,prev.log.length-1)+1}: ${setTxt(pSet,prev.w)}. `:"")+`Leer lassen = ${planShort(it)} wie im Plan.`;
   updJudge();
   document.getElementById("logDel").hidden=!e;
-  logModal.hidden=false;document.getElementById("logVal").focus();
+  logModal.hidden=false;document.getElementById("logVal").focus({preventScroll:true});
 }
 /* Status automatisch aus den eingegebenen Wdh/Sekunden im Vergleich zum Plan: weniger / geschafft / mehr */
 function planRange(w){const t=String(w||"");const n=(t.match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(",",".")));if(!n.length)return null;
@@ -1234,7 +1245,9 @@ function updJudge(){const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)
   el.className="judge "+st;el.textContent=!has?`Leer = ${planShort(it)} wie im Plan → geschafft`:st==="more"?"🔥 Mehr als geplant":st==="less"?"↓ Weniger als geplant":"✓ Im Plan – geschafft";
   btn.className="savebtn "+st}
 function closeLog(){logModal.hidden=true;const c=logCtx;logCtx=null;
-  if(c){const b=document.querySelector(`[data-u="${c.u}"] [data-log]`);if(b)b.focus()}}
+  if(c){const b=document.querySelector(`[data-u="${c.u}"] [data-log]`);if(b)b.focus({preventScroll:true});
+    /* iPhone: Tastatur/Modal verschieben die Seite – zurück auf die alte Höhe */
+    const y=c.y;scrollTo(0,y);requestAnimationFrame(()=>scrollTo(0,y));setTimeout(()=>scrollTo(0,y),120);setTimeout(()=>scrollTo(0,y),350)}}
 logModal.addEventListener("click",e=>{
   if(e.target===logModal||e.target.closest("[data-close]")){closeLog();return}
   const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
@@ -1249,7 +1262,7 @@ logModal.addEventListener("click",e=>{
 });
 /* Bestwert: schwerer als je zuvor (bei Gewichtsübungen) oder mehr Wdh/Sekunden als je zuvor (ohne Gewicht) */
 function numV(x){return numOf(String(x||"").replace(/\s*(s|sek|min\.?)$/i,""))}
-function prCheck(it,entry){if(isSimple(it))return null;const prev=[];histFor(it.id).forEach(h=>h.log.forEach(e=>prev.push(e)));(it.log||[]).forEach(e=>prev.push(e));
+function prCheck(it,entry){if(isSimple(it)||!histFor(it.id).length)return null;const prev=[];histFor(it.id).forEach(h=>h.log.forEach(e=>prev.push(e)));(it.log||[]).forEach(e=>prev.push(e));
   if(!prev.length)return null;const kg=numOf(entry.kg);
   if(kg!==null){const ks=prev.map(e=>numOf(e.kg)).filter(x=>x!==null);if(ks.length&&kg>Math.max(...ks))return `${kgTxt(String(kg))} – so schwer wie noch nie!`;return null}
   if(prev.some(e=>numOf(e.kg)!==null))return null;
@@ -1426,15 +1439,23 @@ document.getElementById("freeBtn").addEventListener("click",()=>{
 const pickModal=document.getElementById("pickModal");
 function recentIds(){const out=[];hist().slice().sort((a,b)=>b.d-a.d).forEach(h=>h.items.forEach(x=>{if(!out.includes(x.id)&&exById(x.id))out.push(x.id)}));return out.slice(0,8)}
 function pickRow(e){return `<button type="button" class="pickrow" data-pick="${esc(e.id)}"><span class="pn">${nameHTML(e.n)}</span><span class="pd">${esc([e.s&&e.w?e.s+" × "+e.w:e.w].filter(Boolean).join(""))}</span></button>`}
-function renderPick(){const q=document.getElementById("pickSearch").value.trim().toLowerCase();const all=exAll();let h="";
-  if(q){const hit=all.filter(e=>(e.n+" "+(musOf(e.id)||"")).toLowerCase().includes(q));h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
+const pickF={foc:[],load:[]};
+function pickHay(e){const fn=focOf(e).map(f=>(FOCI.find(x=>x[0]===f)||[,""])[1]);return [e.n,e.b,musOf(e.id),matLine(e.id),fn.join(" "),(e.l||[]).map(l=>LOADN[l]).join(" ")].join(" ").toLowerCase()}
+function renderPickFilters(){document.getElementById("pickFilters").innerHTML=
+  `<div class="cats" role="group" aria-label="Fokus">${FOCI.map(([k,n])=>`<button type="button" class="cat" data-pfoc="${k}" aria-pressed="${pickF.foc.includes(k)}">${n}</button>`).join("")}</div>`+
+  `<div class="cats" role="group" aria-label="Belastung">${LOADS.map(([k,n])=>`<button type="button" class="cat" data-pload="${k}" aria-pressed="${pickF.load.includes(k)}">${n}</button>`).join("")}</div>`}
+function renderPick(){const q=document.getElementById("pickSearch").value.trim().toLowerCase();const toks=q.split(/\s+/).filter(Boolean);
+  const all=exAll().filter(e=>(!pickF.foc.length||focOf(e).some(x=>pickF.foc.includes(x)))&&(!pickF.load.length||(e.l||[]).some(x=>pickF.load.includes(x))));let h="";
+  if(toks.length||pickF.foc.length||pickF.load.length){const hit=all.filter(e=>{const hay=pickHay(e);return toks.every(t=>hay.includes(t))});h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
   else{const rec=recentIds();if(rec.length)h+=`<h4>Zuletzt gemacht</h4>`+rec.map(id=>pickRow(exById(id))).join("");
     CATS.forEach(([k,n])=>{const L=all.filter(e=>(e.k||"eigen")===k);if(L.length)h+=`<h4>${esc(n)}</h4>`+L.map(pickRow).join("")})}
   document.getElementById("pickList").innerHTML=h}
-function openPick(){document.getElementById("pickSearch").value="";renderPick();pickModal.hidden=false;document.getElementById("pickList").scrollTop=0}
+function openPick(){document.getElementById("pickSearch").value="";renderPickFilters();renderPick();pickModal.hidden=false;document.getElementById("pickList").scrollTop=0}
 document.getElementById("addExBtn").addEventListener("click",openPick);
 document.getElementById("pickSearch").addEventListener("input",renderPick);
 pickModal.addEventListener("click",e=>{if(e.target===pickModal||e.target.closest("[data-close]")){pickModal.hidden=true;return}
+  const pf=e.target.closest("[data-pfoc],[data-pload]");if(pf){const [arr,k]=pf.dataset.pfoc?[pickF.foc,pf.dataset.pfoc]:[pickF.load,pf.dataset.pload];const i=arr.indexOf(k);if(i>=0)arr.splice(i,1);else arr.push(k);
+    const sl=[...document.querySelectorAll("#pickFilters .cats")].map(x=>x.scrollLeft);renderPickFilters();document.querySelectorAll("#pickFilters .cats").forEach((x,i)=>x.scrollLeft=sl[i]);renderPick();return}
   const b=e.target.closest("[data-pick]");if(!b)return;const ex=exById(b.dataset.pick);if(!ex)return;
   const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();pickModal.hidden=true;renderItems();renderBar();renderProgress();
   flash(`${shortN(ex.n)} hinzugefügt`);const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
