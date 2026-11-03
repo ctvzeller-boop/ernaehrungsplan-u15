@@ -20,6 +20,7 @@
   --t-leicht:#2E8B57; --t-leicht-bg:#E2F2E8;
   --t-mittel:#B7791F; --t-mittel-bg:#FAEFD9;
   --t-intensiv:#C2412D; --t-intensiv-bg:#FBE4DF;
+  --t-ganztag:#7A3FC2; --t-ganztag-bg:#EFE5FB;
   --t-spiel:#1D63C9; --t-spiel-bg:#E3ECFA;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -30,6 +31,7 @@
   --t-leicht:#6BCB95; --t-leicht-bg:#18322A;
   --t-mittel:#E3AE5B; --t-mittel-bg:#3A2D17;
   --t-intensiv:#F08A77; --t-intensiv-bg:#3D211C;
+  --t-ganztag:#B99AF2; --t-ganztag-bg:#2B2140;
   --t-spiel:#6EA4F2; --t-spiel-bg:#1B2D46; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
@@ -37,6 +39,7 @@
   --t-leicht:#6BCB95; --t-leicht-bg:#18322A;
   --t-mittel:#E3AE5B; --t-mittel-bg:#3A2D17;
   --t-intensiv:#F08A77; --t-intensiv-bg:#3D211C;
+  --t-ganztag:#B99AF2; --t-ganztag-bg:#2B2140;
   --t-spiel:#6EA4F2; --t-spiel-bg:#1B2D46; color-scheme:dark}
 
 [hidden]{display:none!important}
@@ -113,6 +116,11 @@ thead th{background:var(--bg)}
 .typebtn[data-t="leicht"],.tm-type[data-t="leicht"] .dot{background:var(--t-leicht-bg);border-left-color:var(--t-leicht)}
 .typebtn[data-t="mittel"],.tm-type[data-t="mittel"] .dot{background:var(--t-mittel-bg);border-left-color:var(--t-mittel)}
 .typebtn[data-t="intensiv"],.tm-type[data-t="intensiv"] .dot{background:var(--t-intensiv-bg);border-left-color:var(--t-intensiv)}
+.typebtn[data-t="ganztag"]{background:var(--t-ganztag-bg);border-left-color:var(--t-ganztag)}
+.ticon[data-t="ganztag"]{background:var(--t-ganztag-bg)}
+.hero[data-t="ganztag"]{--c:var(--t-ganztag);--cbg:var(--t-ganztag-bg)}
+.tl.session[data-t="ganztag"] .tlbody{--c:var(--t-ganztag);--cbg:var(--t-ganztag-bg)}
+.witem.train[data-t="ganztag"]{--c:var(--t-ganztag);--cbg:var(--t-ganztag-bg)}
 .typebtn[data-t="spiel"],.tm-type[data-t="spiel"] .dot{background:var(--t-spiel-bg);border-left-color:var(--t-spiel)}
 .trainfield{margin-top:6px;font-size:.85rem}
 .tz{display:flex;flex-direction:column;gap:3px;margin-top:8px}
@@ -145,6 +153,8 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .sleepcell{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);box-shadow:inset 0 4px 0 var(--c);cursor:pointer}
 .sleepcell[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
 .sleepcell[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
+.sleepcell[data-level="leer"]{--c:var(--line);--cbg:var(--bg)}
+.sleepcell[data-level="leer"] .ndur{background:var(--bg);color:var(--muted)}
 .sleepcell[aria-current="true"]{background:var(--cbg)}
 .sleepcell .slabel{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:4px 0 2px}
 .sleepcell input{font:inherit;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%;box-sizing:border-box;min-width:0}
@@ -152,6 +162,8 @@ th.slot small{display:block;font-family:var(--body);font-weight:400;font-size:.7
 .nwarn{display:block;margin-top:6px;font-size:.78rem;font-weight:600;color:var(--t-intensiv)}
 .nwarn:empty{display:none}
 .sleepresult{--c:var(--t-leicht);--cbg:var(--t-leicht-bg);background:var(--cbg);border-left:5px solid var(--c);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;max-width:760px}
+.sleepresult[data-level="leer"]{--c:var(--line);--cbg:var(--bg)}
+.sleepresult[data-level="leer"] .sleeptag{background:var(--muted)}
 .sleepresult[data-level="orange"]{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
 .sleepresult[data-level="rot"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}
 .sleepresult p{margin:0;max-width:65ch}
@@ -291,6 +303,8 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .sestimes input{font:inherit;font-weight:600;font-size:.88rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:0;width:100%;box-sizing:border-box}
 .sestimes .iconbtn{padding:3px 7px}
 .sesadd{padding-left:0}
+.sesname{font:inherit;font-weight:700;font-size:.88rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 6px;width:100%;box-sizing:border-box;min-width:0}
+.sesname::placeholder{color:var(--muted);font-weight:600}
 .tmhint{margin:0;font-size:.8rem;color:var(--muted)}
 #typemenu .sesed{min-width:200px}
 .weekgrid{display:grid;grid-template-columns:repeat(7,minmax(205px,1fr));min-width:1435px}
@@ -302,7 +316,8 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dayhead .sesadd{align-self:flex-start;font-weight:600}
 .dayitems{display:flex;flex-direction:column;gap:6px;padding:8px;flex:1}
 .witem{display:block}
-.whead{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.whead{display:flex;align-items:baseline;gap:7px;flex-wrap:nowrap;min-width:0}
+.whead .wlabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .wtime{font-family:var(--display);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;color:var(--ink)}
 .wbody{display:flex;flex-direction:column;gap:5px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--surface)}
 .wlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
@@ -540,6 +555,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
 const DAYS=[["mo","Montag","Mo"],["di","Dienstag","Di"],["mi","Mittwoch","Mi"],["do","Donnerstag","Do"],["fr","Freitag","Fr"],["sa","Samstag","Sa"],["so","Sonntag","So"]];
 const TYPES={
   spiel:{n:"Matchday (intensiv)",p:[.25,.5,.25],h:"Viel Kohlenhydrate, genügend Protein",f:"¼ Gemüse & Früchte · ½ Kohlenhydrate · ¼ Protein"},
+  ganztag:{n:"Trainingstag ganzer Tag (sehr intensiv)",p:[.2,.55,.25],h:"Sehr viel Kohlenhydrate, genügend Protein, regelmässig essen und trinken"},
   intensiv:{n:"Trainingstag (intensiv)",p:[.25,.5,.25],h:"Viel Kohlenhydrate, genügend Protein",f:"¼ Gemüse & Früchte · ½ Kohlenhydrate · ¼ Protein"},
   mittel:{n:"Trainingstag (normal)",p:[1/3,1/3,1/3],h:"Genügend Kohlenhydrate und Protein",f:"⅓ Gemüse & Früchte · ⅓ Kohlenhydrate · ⅓ Protein"},
   leicht:{n:"Restday (easy)",p:[.5,.25,.25],h:"Viel Gemüse und Früchte",f:"½ Gemüse & Früchte · ¼ Kohlenhydrate · ¼ Protein"}
@@ -611,20 +627,20 @@ const RECIPES={
 };
 function recipeFor(cat,name){if(!name)return null;const o=OPTIONS[cat].find(x=>x.n===name);return o&&o.r&&RECIPES[o.r]?o.r:null}
 const TZ=[["morgen","Morgentraining"],["nachmittag","Nachmittagstraining"],["abend","Abendtraining"]];
-function isTraining(d){return d.t==="intensiv"||d.t==="mittel"}
+function isTraining(d){return d.t==="intensiv"||d.t==="mittel"||d.t==="ganztag"}
 const SZ=[["morgen","Morgenspiel"],["nachmittag","Nachmittagsspiel"],["abend","Abendspiel"]];
 const RZ=[["recovery","Active Recovery Session"]];
-const SUBS={spiel:{f:"sz",l:SZ,a:"Spiele"},intensiv:{f:"tz",l:TZ,a:"Trainings"},mittel:{f:"tz",l:TZ,a:"Trainings"},leicht:{f:"rz",l:RZ,a:"Erholung"}};
+const SUBS={spiel:{f:"sz",l:SZ,a:"Spiele"},ganztag:{f:"tz",l:TZ,a:"Trainings"},intensiv:{f:"tz",l:TZ,a:"Trainings"},mittel:{f:"tz",l:TZ,a:"Trainings"},leicht:{f:"rz",l:RZ,a:"Erholung"}};
 function typeName(d){return d.t&&TYPES[d.t]?TYPES[d.t].n:""}
 function timeOpts(d){return SUBS[d.t]||null}
 function tzNames(d){return sessionsOf(d).map(x=>`${x.label} ${fmtTime(x.s)}–${fmtTime(x.e)}`)}
 const EXAMPLE={
-  mo:{t:"mittel",ses:[{s:"18:00",e:"19:30"}],tr:"Clubtraining",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
-  di:{t:"intensiv",ses:[{s:"18:30",e:"20:30"}],tr:"Selektion",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
+  mo:{t:"mittel",ses:[{s:"18:00",e:"19:30",n:"Clubtraining"}],tr:"",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  di:{t:"intensiv",ses:[{s:"18:30",e:"20:30",n:"Selektion"}],tr:"",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
   mi:{t:"leicht",ses:[],tr:"",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Apfel",nach:NONE,abend:"Gemüsecurry mit Reis"}},
-  do:{t:"mittel",ses:[{s:"18:00",e:"19:30"}],tr:"Clubtraining",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Mandarine/Clementine",mittag:"Reis mit Poulet und Gemüse",vor:"Getreidewaffeln (Mais, Reis, Amaranth usw.)",nach:"Proteinshake",abend:"Couscous mit Gemüse"}},
+  do:{t:"mittel",ses:[{s:"18:00",e:"19:30",n:"Clubtraining"}],tr:"",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Mandarine/Clementine",mittag:"Reis mit Poulet und Gemüse",vor:"Getreidewaffeln (Mais, Reis, Amaranth usw.)",nach:"Proteinshake",abend:"Couscous mit Gemüse"}},
   fr:{t:"leicht",ses:[],tr:"Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Birne",nach:NONE,abend:"Pasta mit Tomatensauce"}},
-  sa:{t:"spiel",ses:[{s:"10:00",e:"11:30"},{s:"14:00",e:"15:30"}],tr:"Turnier",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Banane",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  sa:{t:"spiel",ses:[{s:"10:00",e:"11:30",n:"Turnier Spiel 1"},{s:"14:00",e:"15:30",n:"Turnier Spiel 2"}],tr:"",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Banane",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
   so:{t:"leicht",ses:[],tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
 };
 const KEY="u15-ernaehrungswoche-v2";
@@ -680,6 +696,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 const ICONS={
   spiel:["M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z","m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z","M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0","M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"],
   intensiv:[{"d":"M14.6 1.4a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 1 0 0-4.2z","f":1},"M13 6.6 9.5 12","M12.6 7.6 11.6 10.6 13.4 12.6","M12.6 7.6 14.8 10 15 14.6","M9.5 12 12.6 15.4 12 20.8","M9.5 12 6.8 16 2.6 18.4","M12.4 11.4 20 20.6","M20 20.6c.8.5 1.8.4 2.8-.4","M1.5 5.5h4","M1 8.5h5","M2 11.5h3.5"],
+  ganztag:[{"d":"M14.6 1.4a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 1 0 0-4.2z","f":1},"M13 6.6 9.5 12","M12.6 7.6 11.6 10.6 13.4 12.6","M12.6 7.6 14.8 10 15 14.6","M9.5 12 12.6 15.4 12 20.8","M9.5 12 6.8 16 2.6 18.4","M12.4 11.4 20 20.6","M20 20.6c.8.5 1.8.4 2.8-.4","M1.5 5.5h4","M1 8.5h5","M2 11.5h3.5","M21 1.5l-2.2 3.3h2.6l-2.2 3.3"],
   mittel:[{"d":"M14.6 1.4a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 1 0 0-4.2z","f":1},"M13 6.6 9.5 12","M12.6 7.6 11.6 10.6 13.4 12.6","M12.6 7.6 14.8 10 15 14.6","M9.5 12 12.6 15.4 12 20.8","M9.5 12 6.8 16 2.6 18.4","M12.4 11.4 20 20.6","M20 20.6c.8.5 1.8.4 2.8-.4"],
   leicht:["M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3", "M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z", "M4 18v2", "M20 18v2", "M12 4v9"]
 };
@@ -720,7 +737,8 @@ function renderWeekTable(){
     const body=items.map(it=>{
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
         return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="wtime">${st===null?"–":fmtTime(st)}</span>
-          <span class="seslabel" id="tseslbl-${k}-${it.i}">${esc(sesLabel(d.t,st))}</span></div>
+</div>
+          <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
           <span class="sestimes"><label for="tses-${k}-${it.i}-s">von</label><input type="time" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}">
           <button type="button" class="iconbtn" id="tsesdel-${k}-${it.i}" data-sesdel="${k}|${it.i}" data-pre="t" aria-label="Einheit entfernen">×</button>
           <label for="tses-${k}-${it.i}-e">bis</label><input type="time" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
@@ -747,7 +765,7 @@ function renderWeekTable(){
         <button type="button" class="linkbtn sesadd" id="tsesadd-${k}" data-sesadd="${k}" data-pre="t">${addLabel(d.t)}</button>
       </div>
       <div class="dayitems">${body}</div>
-      <div class="sleepcell" data-night="${k}" data-level="${nt?nt.level:"rot"}" aria-current="${k===sleepSel}">
+      <div class="sleepcell" data-night="${k}" data-level="${nt?nt.level:"leer"}" aria-current="${k===sleepSel}">
         <span class="wlabel">Schlaf</span>
         <label class="slabel" for="bed-${k}">Schlafen</label>
         <input type="time" id="bed-${k}" data-sleep="${k}" data-f="bed" value="${esc(v.bed||"")}">
@@ -932,6 +950,10 @@ function fmtDur(min){const h=Math.floor(min/60),m=min%60;return m?`${h} h ${m} m
 function fmtShort(min){const h=Math.floor(min/60),m=min%60;return m?`${h}:${String(m).padStart(2,"0")} h`:`${h} h`}
 function fmtTime(min){min=((min%1440)+1440)%1440;return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0")}
 function sleepLevel(d){return d>=480?"gruen":d>=420?"orange":"rot"}
+function clearDefaultSleep(sw){
+  if(!sw)return false;const def=k=>k==="fr"||k==="sa"?["23:00","08:00"]:["22:00","06:30"];
+  if(DAYS.every(([k])=>sw[k]&&sw[k].bed===def(k)[0]&&sw[k].wake===def(k)[1])){DAYS.forEach(([k])=>sw[k]={bed:"",wake:""});return true}return false;
+}
 function nightOf(k){
   const n=(state.sleepWeek&&state.sleepWeek[k])||{};
   const bed=toMin(n.bed),wake=toMin(n.wake);
@@ -953,7 +975,7 @@ let sleepSel=null;
 function ensureSleep(){
   if(!state.sleepWeek){
     const old=state.sleep||{};state.sleepWeek={};
-    DAYS.forEach(([k])=>state.sleepWeek[k]={bed:old.bed||(k==="fr"||k==="sa"?"23:00":"22:00"),wake:old.wake||(k==="fr"||k==="sa"?"08:00":"06:30")});
+    DAYS.forEach(([k])=>state.sleepWeek[k]={bed:"",wake:""});
   }
 }
 function renderSleepAvg(){
@@ -970,7 +992,7 @@ function selectNight(k){if(k===sleepSel)return;sleepSel=k;document.querySelector
 function renderSleepDetail(){
   const i=DAYS.findIndex(([k])=>k===sleepSel);const k=sleepSel;const nt=nightOf(k);const res=document.getElementById("sleepResult");
   document.getElementById("sleepNight").textContent=`Nacht ${DAYS[i][1]} auf ${DAYS[(i+1)%7][1]}`;
-  if(!nt){res.dataset.level="rot";document.getElementById("sleepHours").textContent="–";document.getElementById("sleepTag").textContent="Zeiten eingeben";
+  if(!nt){res.dataset.level="leer";document.getElementById("sleepHours").textContent="–";document.getElementById("sleepTag").textContent="Noch leer";
     document.getElementById("sleepText").textContent="Gib ein, wann du schlafen gehst und wann du aufstehen musst.";document.getElementById("sleepHint").textContent="";document.getElementById("sleepFill").style.width="0";return}
   res.dataset.level=nt.level;
   document.getElementById("sleepHours").textContent=fmtDur(nt.dur);
@@ -983,7 +1005,7 @@ function renderSleepDetail(){
 document.addEventListener("input",e=>{
   const el=e.target;if(!el.dataset||!el.dataset.sleep)return;
   const k=el.dataset.sleep;ensureSleep();state.sleepWeek[k][el.dataset.f]=el.value;save();
-  const nt=nightOf(k);const cell=el.closest(".sleepcell");cell.dataset.level=nt?nt.level:"rot";
+  const nt=nightOf(k);const cell=el.closest(".sleepcell");cell.dataset.level=nt?nt.level:"leer";
   document.getElementById("dur-"+k).textContent=nt?fmtShort(nt.dur):"–";
   const w=matchWarnings();DAYS.forEach(([d])=>{const x=document.getElementById("warn-"+d);if(x)x.textContent=w[d]?`Vor dem Matchday am ${w[d].join(" und ")}: mind. 8 h`:""});
   selectNight(k);renderSleepAvg();renderSleepDetail();renderToday();
@@ -998,7 +1020,7 @@ function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
 async function encodePlan(){
-  const o={n:state.name||"",v:!!state.veg,p:state.plan};if(state.sleepWeek)o.w=state.sleepWeek;
+  const o={n:state.name||"",v:!!state.veg,p:state.plan};
   const data=new TextEncoder().encode(JSON.stringify(o));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data);
@@ -1017,7 +1039,7 @@ document.getElementById("shareBtn").addEventListener("click",async()=>{
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
 });
 /* Pläne verwalten */
-function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.sleepWeek=p.sleepWeek||null;migratePlan(state.plan)}
+function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.sleepWeek=p.sleepWeek||null;clearDefaultSleep(state.sleepWeek);migratePlan(state.plan)}
 function refreshAll(){document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
   if(typeof sleepSel!=="undefined")sleepSel=null;renderPlanBar();renderAll();renderLikes()}
 function switchPlan(id){if(id===state.active)return;save();state.active=id;loadActive();save();refreshAll()}
@@ -1041,13 +1063,13 @@ async function importCode(code){
     const txt=document.getElementById("shareBannerText"),undo=document.getElementById("undoImport");
     if(old){
       replacedBackup=JSON.parse(JSON.stringify(old));
-      old.plan=d.p;old.veg=!!d.v;if(d.w)old.sleepWeek=d.w;if(d.n)old.name=d.n;
+      old.plan=d.p;old.veg=!!d.v;if(d.n)old.name=d.n;
       state.imported[code]=old.id;importedId=null;state.active=old.id;loadActive();save();refreshAll();
       txt.textContent=fresh&&!norm(replacedBackup.name)?"Du hast einen Ernährungsplan erhalten. Er ersetzt die Beispielwoche.":`«${old.name||"Plan"}» wurde vom Coach aktualisiert. Deine abgehakten Mahlzeiten bleiben erhalten.`;
       undo.textContent=fresh&&!norm(replacedBackup.name)?"Beispielwoche zurückholen":"Alte Version zurückholen";
     }else{
       replacedBackup=null;
-      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,sleepWeek:d.w||null};
+      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,sleepWeek:null};
       state.plans.push(p);state.imported[code]=p.id;importedId=p.id;state.active=p.id;loadActive();save();refreshAll();
       txt.textContent="Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.";undo.textContent="Wieder entfernen";
     }
@@ -1136,7 +1158,7 @@ function sessionsOf(d){
   if(!d||!d.t)return [];
   if(Array.isArray(d.ses)){
     const rec=d.t==="leicht",dur=rec?60:90;
-    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;return {s:st,e:en,rec,label:sesLabel(d.t,st)}}).filter(Boolean).sort((a,b)=>a.s-b.s);
+    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {s:st,e:en,rec,auto,named:!!nm,label:nm||auto}}).filter(Boolean).sort((a,b)=>a.s-b.s);
   }
   const o=timeOpts(d);if(!o)return [];
   const sel=d[o.f]||[],rec=d.t==="leicht";
@@ -1194,7 +1216,7 @@ function sesEditor(k,pre){
   const d=state.plan[k];if(!Array.isArray(d.ses))d.ses=[];
   const n=DAYS.find(x=>x[0]===k)[1];
   return `<div class="sesed" id="${pre}sesed-${k}">${d.ses.map((x,i)=>`<div class="sesrow">
-      <span class="seslabel" id="${pre}seslbl-${k}-${i}">${esc(sesLabel(d.t,toMin(x.s)))}</span>
+      <input type="text" class="sesname" id="${pre}sesn-${k}-${i}" data-ses="${k}|${i}|n" data-pre="${pre}" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,toMin(x.s)))}" aria-label="Name der Einheit">
       <span class="sestimes"><label for="${pre}ses-${k}-${i}-s">von</label><input type="time" id="${pre}ses-${k}-${i}-s" data-ses="${k}|${i}|s" data-pre="${pre}" value="${esc(x.s||"")}" aria-label="Start ${n}">
       <button type="button" class="iconbtn" id="${pre}sesdel-${k}-${i}" data-sesdel="${k}|${i}" data-pre="${pre}" aria-label="Einheit entfernen">×</button>
       <label for="${pre}ses-${k}-${i}-e">bis</label><input type="time" id="${pre}ses-${k}-${i}-e" data-ses="${k}|${i}|e" data-pre="${pre}" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
@@ -1216,7 +1238,7 @@ document.addEventListener("input",e=>{
   const [k,i,f]=el.dataset.ses.split("|"),d=state.plan[k];
   if(el.dataset.pre==="m"&&menu.sub&&d.t!==menu.sub){d.t=menu.sub}
   d.ses[+i][f]=el.value;save();
-  const lb=document.getElementById(el.dataset.pre+"seslbl-"+k+"-"+i);if(lb)lb.textContent=sesLabel(d.t,toMin(d.ses[+i].s));
+  const nm=document.getElementById(el.dataset.pre+"sesn-"+k+"-"+i);if(nm)nm.placeholder=sesLabel(d.t,toMin(d.ses[+i].s));
   renderToday();renderText();
 });
 document.addEventListener("click",e=>{
@@ -1321,6 +1343,7 @@ const PREF={
   vor:{spiel:["Banane","Getreidewaffeln (Mais, Reis, Amaranth usw.)","Riegel","Dörrfrüchte"],intensiv:PRE,mittel:PRE.concat(FRUIT),leicht:FRUIT.concat(["Frucht und eine Handvoll Nüsse"])},
   nach:{spiel:["Schokoladenmilch und Sandwich","Schokoladenmilch","Proteinshake"],intensiv:["Schokoladenmilch und Sandwich","Proteinshake","Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"],mittel:["Schokoladenmilch","Proteinshake","Brötli","Protein-Birchermüesli (kleine Portion)"],leicht:[]}
 };
+Object.values(PREF).forEach(o=>{if(o.intensiv)o.ganztag=o.intensiv});
 function candidates(k,sk){
   const d=state.plan[k],t=TYPES[d.t]?d.t:"leicht";
   let pref=PREF[sk]&&PREF[sk][t];
@@ -1377,7 +1400,7 @@ function renderToday(){
   ensureSleep();
   const today=startOfDay(new Date()),diff=Math.round((hDate-today)/864e5);
   const k=wkey(hDate),idx=DAYS.findIndex(x=>x[0]===k),d=state.plan[k],dk=dkey(hDate),lg=getLog(dk),canTick=diff<=0;
-  const wake=toMin(state.sleepWeek[wkey(addDays(hDate,-1))].wake);const wk=wake===null?390:wake;
+  const wake=toMin(state.sleepWeek[wkey(addDays(hDate,-1))].wake);const wk=wake===null?390:wake,noWake=wake===null;
   const {T,H,L,S,R}=planTimes(k,wk),sport=S.filter(x=>!x.rec);
   document.getElementById("hDate").textContent=diff===0?"Heute":diff===1?"Morgen":diff===-1?"Gestern":DAYS[idx][1];
   document.getElementById("hDateSub").textContent=`${DAYS[idx][1]}, ${hDate.getDate()}. ${MONTHS[hDate.getMonth()]}`;
@@ -1386,7 +1409,7 @@ function renderToday(){
     <span class="hicon">${d.t?icon(d.t,32):""}</span>
     <h3>${d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
     <p>${d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
-    <div class="hmeta">${S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}–${fmtTime(x.e)}</span>`).join("")}${d.tr?`<span class="pill">${esc(d.tr)}</span>`:""}${!S.length&&(d.t==="mittel"||d.t==="intensiv"||d.t==="spiel")?`<span class="pill">Uhrzeit fehlt: unter «Tagestyp ändern» eintragen</span>`:""}
+    <div class="hmeta">${S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}–${fmtTime(x.e)}</span>`).join("")}${d.tr?`<span class="pill">${esc(d.tr)}</span>`:""}${!S.length&&(d.t==="mittel"||d.t==="intensiv"||d.t==="ganztag"||d.t==="spiel")?`<span class="pill">Uhrzeit fehlt: unter «Tagestyp ändern» eintragen</span>`:""}
       <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button></div>
   </div>`;
   // Banner: Matchday heute oder morgen
@@ -1422,10 +1445,10 @@ function renderToday(){
   items.sort((a,b)=>a.t-b.t||(a.kind==="session"?-1:0));
   tl.innerHTML=items.map(it=>{
     if(it.kind==="wake"){const ok=!!lg.s;
-      return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen</span>
+      return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${fmtTime(x.s)}–${fmtTime(x.e)}</div></div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div></div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}" data-time="${it.t}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
@@ -1474,13 +1497,13 @@ window.addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)i
 document.getElementById("shareBtn2").addEventListener("click",()=>document.getElementById("shareBtn").click());
 
 /* PDF-Export */
-const TYPE_RGB={leicht:[226,242,232],mittel:[250,239,217],intensiv:[251,228,223],spiel:[227,236,250]};
+const TYPE_RGB={leicht:[226,242,232],mittel:[250,239,217],intensiv:[251,228,223],ganztag:[239,229,251],spiel:[227,236,250]};
 function pdfSafe(s){return String(s||"").replace(/⅓/g,"1/3").replace(/★/g,"").replace(/[^\x00-\xFF–—•]/g,"")}
 function buildPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
   const W=297,H=210,M=12,INK=[20,35,44],MUTED=[96,112,121],ACC=[29,99,201],LINE=[220,227,232],SOFT=[244,247,249];
-  const STRONG={leicht:[46,139,87],mittel:[183,121,31],intensiv:[194,65,45],spiel:[29,99,201]};
+  const STRONG={leicht:[46,139,87],mittel:[183,121,31],intensiv:[194,65,45],ganztag:[122,63,194],spiel:[29,99,201]};
   const T=x=>pdfSafe(x);
   function band(title,sub){
     doc.setFillColor(...INK);doc.rect(0,0,W,22,"F");
@@ -1530,7 +1553,7 @@ function buildPDF(){
     }
   });
   // legend
-  let ly=doc.lastAutoTable.finalY+7;const colW=(W-2*M)/4;
+  let ly=doc.lastAutoTable.finalY+7;const colW=(W-2*M)/Object.keys(TYPES).length;
   Object.entries(TYPES).forEach(([k,t],i)=>{const x=M+i*colW;
     doc.setFillColor(...STRONG[k]);doc.roundedRect(x,ly-2.8,3.2,3.2,.6,.6,"F");
     doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(...INK);doc.text(T(t.n),x+5,ly);
