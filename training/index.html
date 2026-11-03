@@ -950,7 +950,7 @@ function renderItems(focusSel){
       ${moreHTML(it)}
       ${lastHTML(it)}
       ${setsHTML(it)}
-      ${it.added&&i>0?`<button type="button" class="ssbtn${it.ss?" on":""}" data-sslink="1" aria-pressed="${!!it.ss}">${it.ss?`✓ Superset mit ${esc(shortN(c.items[i-1].n))}`:`＋ Superset mit ${esc(shortN(c.items[i-1].n))}`}</button>`:""}
+      ${(it.added||c.free)&&i>0?`<button type="button" class="ssbtn${it.ss?" on":""}" data-sslink="1" aria-pressed="${!!it.ss}">${it.ss?`✓ Superset mit ${esc(shortN(c.items[i-1].n))}`:`＋ Superset mit ${esc(shortN(c.items[i-1].n))}`}</button>`:""}
       ${it.added&&!(it.log||[]).length?`<button type="button" class="linkbtn" data-rmfree="1" style="align-self:flex-start;padding:0">Übung wieder entfernen</button>`:""}
       ${chartDetails(it.id,false)}
     </div>`;
@@ -1147,7 +1147,7 @@ document.addEventListener("click",e=>{
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
   if(t.closest("[data-sslink]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<1)return;const it=c.items[i];it.ss=!it.ss;save();renderItems(`[data-u="${u}"] [data-sslink]`);
-    flash(it.ss?`Superset: ${labels(c.items)[i-1]} und ${labels(c.items)[i]} abwechselnd – Pause erst nach ${labels(c.items)[i]}`:"Superset aufgehoben");return}
+    flash(it.ss?`Superset: ${labels(c.items)[i-1]} und ${labels(c.items)[i]} abwechselnd`:"Superset aufgehoben");return}
   if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const it=c.items.find(x=>x.u===u);c.items=c.items.filter(x=>x.u!==u);if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();flash(`${shortN(it.n)} entfernt`);return}
   if(t.closest("#bkSave")){saveBackup();return}
   if(t.closest("#bkLoad")){document.getElementById("bkFile").click();return}
@@ -1271,9 +1271,7 @@ function nextTxt(it){const c=cur();const g=grpOf(it);
   const i=c.items.indexOf(it);const nx=c.items.slice(i+1).find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt)||c.items.find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt);
   return nx?`Als Nächstes: ${shortN(nx.n)}`:"Alle Sätze geschafft 💪"}
 function startRest(it){const c=cur();const i=c.items.indexOf(it);const nx=c.items[i+1];
-  if(nx&&nx.ss&&(nx.log||[]).length<plannedSets(nx)){stopRest();flash(`Ohne Pause weiter mit ${labels(c.items)[i+1]}: ${shortN(nx.n)}`);return}
-  let pIt=it;if(it.ss){let j=i;while(j>0&&c.items[j].ss)j--;const grp=[];for(let k=j;k<c.items.length&&(k===j||c.items[k].ss);k++)grp.push(c.items[k]);pIt=grp.find(x=>pauseSec(x.p))||it}
-  const sec=pauseSec(pIt.p);if(!sec)return;rest.end=Date.now()+sec*1000;
+  const sec=pauseSec(it.p);if(!sec)return;rest.end=Date.now()+sec*1000;
   document.getElementById("restNext").textContent=nextTxt(it);document.getElementById("restLbl").textContent="Pause";
   restBar.classList.remove("go");restBar.hidden=false;document.body.classList.add("resting");clearInterval(rest.iv);tickRest();rest.iv=setInterval(tickRest,250)}
 function tickRest(){const left=(rest.end-Date.now())/1000;document.getElementById("restTime").textContent=fmtSec(left);
