@@ -304,7 +304,7 @@ const OPTIONS={
     {n:"Zopf mit Konfi oder Honig",d:"Gut verdaulich, ideal 2–3 h vor einem Spiel."}
   ],
   znueni:[
-    {n:"Frucht und eine Handvoll Nüsse"},{n:"Joghurt mit Frucht"},{n:"Ruchbrot mit Käse"},
+    {n:"Frucht und eine Handvoll Nüsse"},{n:"Skyr mit Frucht"},{n:"Ruchbrot mit Käse"},
     {n:"Darvida mit Käse"},{n:"Studentenfutter"},{n:"Rüebli-Sticks und Käse"},{n:"Banane"},{n:"Proteinshake",r:"Proteinshake"}
   ],
   mittag:null,
@@ -352,16 +352,16 @@ function timeOpts(d){return SUBS[d.t]||null}
 function tzNames(d){const o=timeOpts(d);return o?o.l.filter(([k])=>(d[o.f]||[]).includes(k)).map(([,n])=>n):[]}
 const EXAMPLE={
   mo:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Ruchbrot mit Käse",mittag:"Couscous mit Gemüse",vor:"Banane + Brot mit Honig",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
-  di:{t:"intensiv",tz:["abend"],tr:"Selektion 18:30–20:30",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Joghurt mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Schinken und Käse",nach:"Schokoladenmilch und Brötli",abend:"Reis mit Poulet und Gemüse"}},
+  di:{t:"intensiv",tz:["abend"],tr:"Selektion 18:30–20:30",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Schinken und Käse",nach:"Schokoladenmilch und Brötli",abend:"Reis mit Poulet und Gemüse"}},
   mi:{t:"leicht",tr:"Frei",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Quark mit Früchten",nach:NONE,abend:"Gemüsecurry mit Reis"}},
   do:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Rüebli-Sticks und Käse",mittag:"Reis mit Poulet und Gemüse",vor:"Reiswaffeln",nach:"Trinkjoghurt und Frucht",abend:"Couscous mit Gemüse"}},
-  fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Joghurt mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Quark mit Früchten",nach:NONE,abend:"Pasta mit Tomatensauce"}},
+  fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Quark mit Früchten",nach:NONE,abend:"Pasta mit Tomatensauce"}},
   sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Zwischen den Spielen: Banane, Brot mit Honig, Dörrfrüchte",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
   so:{t:"leicht",tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
 };
 const KEY="u15-ernaehrungswoche-v2";
 let state=load();
-(function migrateNames(){const RN={"Zopf mit Konfi oder Honig, etwas Käse, Banane":"Zopf mit Konfi oder Honig","Reis mit Tofu oder Ei und Gemüse":"Reis mit Tofu und Gemüse"};let ch=false;
+(function migrateNames(){const RN={"Zopf mit Konfi oder Honig, etwas Käse, Banane":"Zopf mit Konfi oder Honig","Reis mit Tofu oder Ei und Gemüse":"Reis mit Tofu und Gemüse","Joghurt mit Frucht":"Skyr mit Frucht"};let ch=false;
   Object.values(state.plan||{}).forEach(d=>Object.keys(d.s||{}).forEach(k=>{if(RN[d.s[k]]){d.s[k]=RN[d.s[k]];ch=true}}));
   if(state.hidden)state.hidden=state.hidden.map(n=>{if(RN[n]){ch=true;return RN[n]}return n});
   if(ch)save()})();
