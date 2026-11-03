@@ -476,7 +476,19 @@ const HAUPT=[
   {n:"Gemüsecurry mit Reis",d:"Gesund, der Reis liefert viele Kohlenhydrate."},
   {n:"Quinoa mit Gemüse oder Quinoa-Salat",d:"Gesund."},
   {n:"Couscous mit Gemüse",d:"Gesund."},
-  {n:"Linsendal mit Reis",d:"Gesund, liefert Kohlenhydrate und mit den Linsen auch Protein."}
+  {n:"Linsendal mit Reis",d:"Gesund, liefert Kohlenhydrate und mit den Linsen auch Protein."},
+  {n:"Pasta mit Thon-Tomatensauce",m:1,d:"Thon aus der Dose in Tomatensauce, dazu Erbsen oder Mais. Sehr schnell, viel Protein."},
+  {n:"Pasta mit Poulet und Pesto",m:1,d:"Pouletstreifen anbraten, mit Pesto und Cherrytomaten mischen."},
+  {n:"Hörnli mit Hüttenkäse und Gemüse",v:1,d:"Hüttenkäse, Spinat oder Zucchetti untermischen. Leichte Variante der Älplermagronen."},
+  {n:"Lasagne mit Linsen oder Hackfleisch",d:"Etwas aufwändiger, reicht aber für 2–3 Tage und lässt sich gut aufwärmen. Mit Linsen vegetarisch."},
+  {n:"Poulet-Reis-Pfanne mit Ei (Fried Rice)",m:1,d:"Reis vom Vortag mit Ei, Poulet, Erbsen und Rüebli anbraten. Ideal für Reste."},
+  {n:"Chili sin Carne mit Reis",v:1,d:"Kidneybohnen, Mais und Tomaten. Lässt sich in grosser Menge vorkochen."},
+  {n:"Risotto mit Poulet und Erbsen",m:1,d:"Cremig und gut verdaulich, gut als Abendessen vor dem Matchday."},
+  {n:"Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch",m:1,d:"Reis, Bohnen, Rindshack oder Poulet, Mais, Salsa, etwas Käse oder Joghurt."},
+  {n:"Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen",d:"Alles auf ein Blech und ab in den Ofen. Mit Kichererbsen vegetarisch."},
+  {n:"Poulet-Wraps mit Bohnen und Salat",m:1,d:"Vollkorn-Tortillas. Gut auch kalt für unterwegs oder zwischen zwei Spielen."},
+  {n:"Couscous-Salat mit Feta und Kichererbsen",v:1,d:"Kalt essbar, gut zum Vorbereiten."},
+  {n:"Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse",d:"Mie- oder Udon-Nudeln mit Sojasauce, Broccoli und Peperoni. Mit Tofu vegetarisch."}
 ];
 OPTIONS.mittag=HAUPT;OPTIONS.abend=HAUPT;
 const BIRCHER_SNACK={n:"Protein-Birchermüesli (kleine Portion)",r:"Protein-Birchermüesli",d:"Magerquark oder Skyr, Haferflocken, geraffelter Apfel, Banane, saisonale Früchte, ein paar Nüsse. Mit Zimt, Honig oder Datteln verfeinern. Lässt sich gut im Glas mitnehmen."};
@@ -933,8 +945,8 @@ function planTimes(k,wake){
 }
 
 /* ---------- Woche automatisch füllen ---------- */
-const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis"];
-const LIGHT=["Gemüsecurry mit Reis","Quinoa mit Gemüse oder Quinoa-Salat","Couscous mit Gemüse","Linsendal mit Reis","Reis mit Ei und Gemüse","Reis mit Tofu und Gemüse"];
+const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis","Pasta mit Thon-Tomatensauce","Pasta mit Poulet und Pesto","Hörnli mit Hüttenkäse und Gemüse","Lasagne mit Linsen oder Hackfleisch","Poulet-Reis-Pfanne mit Ei (Fried Rice)","Chili sin Carne mit Reis","Risotto mit Poulet und Erbsen","Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Poulet-Wraps mit Bohnen und Salat","Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse"];
+const LIGHT=["Gemüsecurry mit Reis","Quinoa mit Gemüse oder Quinoa-Salat","Couscous mit Gemüse","Linsendal mit Reis","Reis mit Ei und Gemüse","Reis mit Tofu und Gemüse","Chili sin Carne mit Reis","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Couscous-Salat mit Feta und Kichererbsen"];
 const FRUIT=["Apfel","Orange","Mandarine/Clementine","Kaki","Nektarine/Pfirsich","Birne","Banane"];
 const PRE=["Sandwich mit Fleisch und/oder Käse","Banane","Getreidewaffeln (Mais, Reis, Amaranth usw.)","Riegel","Dörrfrüchte","Protein-Birchermüesli (kleine Portion)"];
 const ZN=["Skyr mit Frucht","Protein-Birchermüesli (kleine Portion)","Frucht und eine Handvoll Nüsse","Darvida","Studentenfutter"].concat(FRUIT);
@@ -949,7 +961,7 @@ const PREF={
 function candidates(k,sk){
   const d=state.plan[k],t=TYPES[d.t]?d.t:"leicht";
   let pref=PREF[sk]&&PREF[sk][t];
-  if(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")pref=["Pasta mit Tomatensauce"].concat(CARB);
+  if(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")pref=["Pasta mit Tomatensauce","Risotto mit Poulet und Erbsen"].concat(CARB);
   if(sk==="nach"&&t==="leicht"&&sessionsOf(d).length)pref=["Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"];
   const avail=optionsFor(sk).map(o=>o.n);
   if(pref&&!pref.length)return [];
