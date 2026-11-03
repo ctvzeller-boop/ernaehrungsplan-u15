@@ -90,7 +90,7 @@ thead th{background:var(--bg)}
 .typebtn{font-weight:600;border-width:0;border-left:4px solid;width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left;padding:7px 9px;border-radius:6px}
 .typebtn[data-t=""]{background:var(--bg);border-left-color:var(--line);color:var(--muted)}
 .typebtn .caret{font-size:.75rem;color:var(--muted)}
-#typemenu{position:fixed;z-index:50;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(10,25,40,.22);display:grid;grid-template-columns:230px 220px;max-width:calc(100vw - 32px);overflow:hidden}
+#typemenu{position:fixed;z-index:50;max-height:calc(100vh - 16px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(10,25,40,.22);display:grid;grid-template-columns:230px 220px;max-width:calc(100vw - 32px);overflow:hidden}
 .tm-types{display:flex;flex-direction:column;gap:2px;padding:6px;border-right:1px solid var(--line);min-width:0}
 .tm-type{display:flex;align-items:center;gap:8px;text-align:left;border:none;background:none;padding:8px 10px;border-radius:6px;font-weight:600;width:100%}
 .tm-type:hover,.tm-type.preview{background:var(--bg)}
@@ -280,6 +280,17 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .cellrow{display:flex;gap:4px;align-items:center}
 .cellrow select{flex:1;min-width:0}
 .cellrow .iconbtn{padding:5px 7px;font-size:.9rem}
+.sesed{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.sesrow{display:flex;flex-direction:column;gap:3px;width:100%}
+.seslabel{font-size:.78rem;font-weight:700;color:var(--ink)}
+.sestimes{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 6px;width:100%}
+.sestimes label{font-size:.75rem;color:var(--muted)}
+.sescell .sestimes input::-webkit-calendar-picker-indicator{display:none}
+.sestimes input{font:inherit;font-weight:600;font-size:.88rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:0;width:100%;box-sizing:border-box}
+.sestimes .iconbtn{padding:3px 7px}
+.sesadd{padding-left:0}
+.tmhint{margin:0;font-size:.8rem;color:var(--muted)}
+#typemenu .sesed{min-width:200px}
 .recipesteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 
 @media (max-width:760px){
@@ -351,7 +362,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
       <button id="shareBtn" type="button">Plan als Link teilen</button>
       <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
     </div>
-    <p class="hint">Tipp: Schreib bei «Notizen» die Zeiten, z. B. «Training 18:00–19:30». Dann rechnet die Heute-Ansicht aus, wann du essen solltest.</p>
+    <p class="hint">Tipp: Trag in der Zeile «Training / Spiel» die Uhrzeiten ein. Ob Morgen, Nachmittag oder Abend, erkennt die App selbst, und die Heute-Ansicht rechnet aus, wann du essen solltest.</p>
 
     <div class="daytabs" id="daytabs" role="group" aria-label="Tag wählen"></div>
 
@@ -516,15 +527,15 @@ const RZ=[["recovery","Active Recovery Session"]];
 const SUBS={spiel:{f:"sz",l:SZ,a:"Spiele"},intensiv:{f:"tz",l:TZ,a:"Trainings"},mittel:{f:"tz",l:TZ,a:"Trainings"},leicht:{f:"rz",l:RZ,a:"Erholung"}};
 function typeName(d){return d.t&&TYPES[d.t]?TYPES[d.t].n:""}
 function timeOpts(d){return SUBS[d.t]||null}
-function tzNames(d){const o=timeOpts(d);return o?o.l.filter(([k])=>(d[o.f]||[]).includes(k)).map(([,n])=>n):[]}
+function tzNames(d){return sessionsOf(d).map(x=>`${x.label} ${fmtTime(x.s)}–${fmtTime(x.e)}`)}
 const EXAMPLE={
-  mo:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
-  di:{t:"intensiv",tz:["abend"],tr:"Selektion 18:30–20:30",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
-  mi:{t:"leicht",tr:"Frei",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Apfel",nach:NONE,abend:"Gemüsecurry mit Reis"}},
-  do:{t:"mittel",tz:["abend"],tr:"Clubtraining 18:00–19:30",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Mandarine/Clementine",mittag:"Reis mit Poulet und Gemüse",vor:"Getreidewaffeln (Mais, Reis, Amaranth usw.)",nach:"Proteinshake",abend:"Couscous mit Gemüse"}},
-  fr:{t:"leicht",tr:"Frei, Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Birne",nach:NONE,abend:"Pasta mit Tomatensauce"}},
-  sa:{t:"spiel",sz:["morgen","nachmittag"],tr:"Turnier ca. 10:00 und 14:00",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Banane",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
-  so:{t:"leicht",tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
+  mo:{t:"mittel",ses:[{s:"18:00",e:"19:30"}],tr:"Clubtraining",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  di:{t:"intensiv",ses:[{s:"18:30",e:"20:30"}],tr:"Selektion",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
+  mi:{t:"leicht",ses:[],tr:"",s:{fruehstueck:"Pfannen-Oats mit Beeren und Skyr",znueni:"Frucht und eine Handvoll Nüsse",mittag:"Quinoa mit Gemüse oder Quinoa-Salat",vor:"Apfel",nach:NONE,abend:"Gemüsecurry mit Reis"}},
+  do:{t:"mittel",ses:[{s:"18:00",e:"19:30"}],tr:"Clubtraining",s:{fruehstueck:"Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken",znueni:"Mandarine/Clementine",mittag:"Reis mit Poulet und Gemüse",vor:"Getreidewaffeln (Mais, Reis, Amaranth usw.)",nach:"Proteinshake",abend:"Couscous mit Gemüse"}},
+  fr:{t:"leicht",ses:[],tr:"Tag vor dem Spiel",s:{fruehstueck:"Vollkornbrot mit Avocado und Eiern",znueni:"Skyr mit Frucht",mittag:"Gemüsecurry mit Reis",vor:"Birne",nach:NONE,abend:"Pasta mit Tomatensauce"}},
+  sa:{t:"spiel",ses:[{s:"10:00",e:"11:30"},{s:"14:00",e:"15:30"}],tr:"Turnier",s:{fruehstueck:"Zopf mit Konfi oder Honig",znueni:"Banane",mittag:"Reis mit Poulet und Gemüse",vor:"Banane",nach:"Schokoladenmilch und Sandwich",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
+  so:{t:"leicht",ses:[],tr:"Erholung",s:{fruehstueck:"Protein-Birchermüesli",znueni:NONE,mittag:"Linsendal mit Reis",vor:"Frucht und eine Handvoll Nüsse",nach:NONE,abend:"Quinoa mit Gemüse oder Quinoa-Salat"}}
 };
 const KEY="u15-ernaehrungswoche-v2";
 let state=load();
@@ -586,11 +597,13 @@ function renderWeekTable(){
     const d=state.plan[k];
     h+=`<th scope="col" data-day="${k}" class="${k===activeDay?"active":""}"><span class="dayname">${n}</span>
       <button type="button" class="typebtn" id="typebtn-${k}" data-t="${d.t}" data-typemenu="${k}" aria-haspopup="dialog" aria-expanded="${menu.day===k}" aria-label="Tagestyp ${n}: ${typeName(d)||"nicht gewählt"}"><span>${typeName(d)||"Tagestyp wählen"}</span><span class="caret">▾</span></button>
-      ${tzNames(d).length?`<div class="tzchips">${tzNames(d).map(x=>`<span class="tzchip">${x}</span>`).join("")}</div>`:""}
-      <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen, z. B. 18:00–19:30" aria-label="Notizen ${n}">
+      <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen" aria-label="Notizen ${n}">
       ${d.t&&TYPES[d.t]?`<div class="platehint">${TYPES[d.t].h}</div>`:""}</th>`;
   });
   h+=`</tr></thead><tbody>`;
+  h+=`<tr class="sesrowtr"><th class="slot" scope="row">Training / Spiel<small>Uhrzeit eintragen</small></th>`;
+  DAYS.forEach(([k])=>{h+=`<td data-day="${k}" class="sescell${k===activeDay?" active":""}">${sesEditor(k,"t")}</td>`});
+  h+=`</tr>`;
   SLOTS.forEach(([sk,sn,sub])=>{
     h+=`<tr><th class="slot" scope="row">${sn}${sub?`<small>${sub}</small>`:""}</th>`;
     DAYS.forEach(([k,n])=>{
@@ -707,7 +720,7 @@ document.getElementById("clearBtn").addEventListener("click",e=>{
   if(!clearArmed){clearArmed=true;b.textContent="Wirklich alles leeren?";b.classList.add("warn");
     setTimeout(()=>{clearArmed=false;b.textContent="Plan leeren";b.classList.remove("warn")},4000);return}
   clearArmed=false;b.textContent="Plan leeren";b.classList.remove("warn");
-  DAYS.forEach(([k])=>{const d=state.plan[k];d.t="";d.tr="";d.tz=[];d.sz=[];d.rz=[];SLOTS.forEach(([sk])=>d.s[sk]=NONE)});
+  DAYS.forEach(([k])=>{const d=state.plan[k];d.t="";d.tr="";d.tz=[];d.sz=[];d.rz=[];d.ses=[];SLOTS.forEach(([sk])=>d.s[sk]=NONE)});
   save();renderAll();flash("Plan geleert");
 });
 let resetArmed=false;
@@ -746,10 +759,9 @@ const menuEl=document.getElementById("typemenu");
 function subHTML(){
   const d=state.plan[menu.day];const sub=SUBS[menu.sub];
   if(!sub)return `<div class="empty">Wähle links einen Tagestyp.</div>`;
-  const same=SUBS[d.t]&&SUBS[d.t].f===sub.f;
-  return `<div class="eyebrow">${sub.a} · ${TYPES[menu.sub].n}</div>`+
-    sub.l.map(([tk,tn])=>`<label class="tzopt"><input type="checkbox" id="tm-${sub.f}-${tk}" data-tmsub="1" value="${tk}"${same&&(d[sub.f]||[]).includes(tk)?" checked":""}>${tn}</label>`).join("")+
-    `<button type="button" class="primary" data-tmclose="1">Fertig</button>`;
+  return `<div class="eyebrow">${menu.sub==="spiel"?"Spielzeiten":menu.sub==="leicht"?"Recovery Session (optional)":"Trainingszeiten"} · ${TYPES[menu.sub].n}</div>
+    <p class="tmhint">Uhrzeit eintragen, Morgen, Nachmittag oder Abend wird automatisch erkannt.</p>`+
+    sesEditor(menu.day,"m")+`<button type="button" class="primary" data-tmclose="1">Fertig</button>`;
 }
 function renderMenu(){
   if(!menu.day){menuEl.hidden=true;return}
@@ -771,11 +783,11 @@ function positionMenu(){
   if(!trig||!trig.offsetParent){closeMenu(false);return}
   const r=trig.getBoundingClientRect();const w=menuEl.offsetWidth,h=menuEl.offsetHeight;
   let left=Math.max(16,Math.min(r.left,window.innerWidth-w-16));
-  let top=r.bottom+4;if(top+h>window.innerHeight-8&&r.top-h-4>8)top=r.top-h-4;
+  let top=r.bottom+4;if(top+h>window.innerHeight-8)top=r.top-h-4>8?r.top-h-4:window.innerHeight-h-8;
   menuEl.style.left=left+"px";menuEl.style.top=Math.max(8,top)+"px";
 }
 function closeMenu(focusTrigger){
-  if(!menu.day)return;const k=menu.day;menu.day=null;menu.sub=null;menuEl.hidden=true;
+  if(!menu.day)return;const k=menu.day;menu.day=null;menu.sub=null;menuEl.hidden=true;renderWeekTable();renderToday();
   const t=document.getElementById(menu.tid||("typebtn-"+k));menu.tid=null;if(t){t.setAttribute("aria-expanded","false");if(focusTrigger)t.focus()}
 }
 menuEl.addEventListener("pointerover",e=>{const b=e.target.closest("[data-tmtype]");if(b&&e.pointerType==="mouse"&&!menuEl.classList.contains("sheet"))previewSub(b.dataset.tmtype)});
@@ -883,7 +895,7 @@ async function importFromHash(){
   try{
     const d=await decodePlan(m[1]);if(!d||!d.p)throw 0;
     beforeImport=JSON.stringify(state);
-    state.plan=d.p;state.name=d.n||state.name;state.veg=!!d.v;save();
+    state.plan=d.p;migratePlan(state.plan);state.name=d.n||state.name;state.veg=!!d.v;save();
     document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
     renderAll();renderLikes();
     document.getElementById("shareBanner").hidden=false;
@@ -918,8 +930,17 @@ function isSportDay(d){const p=state.plan[wkey(d)];return p&&sessionsOf(p).some(
 
 /* ---------- Zeiten aus Training, Spiel und Schlaf ---------- */
 const DEF_START={morgen:570,nachmittag:840,abend:1110,recovery:600};
+function sesLabel(t,start){
+  if(t==="leicht")return "Active Recovery Session";
+  if(start===null||start===undefined)return t==="spiel"?"Neues Spiel":"Neue Einheit";
+  return (start<720?"Morgen":start<1020?"Nachmittags":"Abend")+(t==="spiel"?"spiel":"training");
+}
 function sessionsOf(d){
   if(!d||!d.t)return [];
+  if(Array.isArray(d.ses)){
+    const rec=d.t==="leicht",dur=rec?60:90;
+    return d.ses.map(x=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;return {s:st,e:en,rec,label:sesLabel(d.t,st)}}).filter(Boolean).sort((a,b)=>a.s-b.s);
+  }
   const o=timeOpts(d);if(!o)return [];
   const sel=d[o.f]||[],rec=d.t==="leicht";
   if(rec&&!sel.length)return [];
@@ -929,6 +950,11 @@ function sessionsOf(d){
   list.sort((a,b)=>a.s-b.s);
   const word=d.t==="spiel"?"spiel":"training";
   return list.map(x=>Object.assign({},x,{rec,label:rec?"Active Recovery Session":(x.s<720?"Morgen":x.s<1020?"Nachmittags":"Abend")+word}));
+}
+function migratePlan(plan){
+  let ch=false;
+  Object.values(plan||{}).forEach(d=>{if(!Array.isArray(d.ses)){d.ses=sessionsOf(d).map(x=>({s:fmtTime(x.s),e:fmtTime(x.e)}));ch=true}});
+  return ch;
 }
 function planTimes(k,wake){
   const d=state.plan[k],S=sessionsOf(d),sport=S.filter(x=>!x.rec);
@@ -958,6 +984,39 @@ function planTimes(k,wake){
   Object.keys(T).forEach(x=>{T[x]=Math.min(Math.max(T[x],300),1425)});
   return {T,H,L,S};
 }
+
+/* ---------- Trainings- und Spielzeiten erfassen ---------- */
+function addLabel(t){return t==="spiel"?"+ Spiel":t==="leicht"?"+ Recovery Session":"+ Training"}
+function sesEditor(k,pre){
+  const d=state.plan[k];if(!Array.isArray(d.ses))d.ses=[];
+  const n=DAYS.find(x=>x[0]===k)[1];
+  return `<div class="sesed" id="${pre}sesed-${k}">${d.ses.map((x,i)=>`<div class="sesrow">
+      <span class="seslabel" id="${pre}seslbl-${k}-${i}">${esc(sesLabel(d.t,toMin(x.s)))}</span>
+      <span class="sestimes"><label for="${pre}ses-${k}-${i}-s">von</label><input type="time" id="${pre}ses-${k}-${i}-s" data-ses="${k}|${i}|s" data-pre="${pre}" value="${esc(x.s||"")}" aria-label="Start ${n}">
+      <button type="button" class="iconbtn" id="${pre}sesdel-${k}-${i}" data-sesdel="${k}|${i}" data-pre="${pre}" aria-label="Einheit entfernen">×</button>
+      <label for="${pre}ses-${k}-${i}-e">bis</label><input type="time" id="${pre}ses-${k}-${i}-e" data-ses="${k}|${i}|e" data-pre="${pre}" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
+    </div>`).join("")}<button type="button" class="linkbtn sesadd" id="${pre}sesadd-${k}" data-sesadd="${k}" data-pre="${pre}">${addLabel(d.t)}</button></div>`;
+}
+function refreshSesEditor(k,pre,focusId){
+  const el=document.getElementById(pre+"sesed-"+k);if(el)el.outerHTML=sesEditor(k,pre);
+  if(pre==="m"&&menu.day)positionMenu();
+  const f=focusId&&document.getElementById(focusId);if(f)f.focus();
+}
+document.addEventListener("input",e=>{
+  const el=e.target;if(!el.dataset||!el.dataset.ses)return;
+  const [k,i,f]=el.dataset.ses.split("|"),d=state.plan[k];
+  if(el.dataset.pre==="m"&&menu.sub&&d.t!==menu.sub){d.t=menu.sub}
+  d.ses[+i][f]=el.value;save();
+  const lb=document.getElementById(el.dataset.pre+"seslbl-"+k+"-"+i);if(lb)lb.textContent=sesLabel(d.t,toMin(d.ses[+i].s));
+  renderToday();renderText();
+});
+document.addEventListener("click",e=>{
+  const ad=e.target.closest("[data-sesadd]");
+  if(ad){const k=ad.dataset.sesadd,pre=ad.dataset.pre,d=state.plan[k];if(pre==="m"&&menu.sub&&d.t!==menu.sub)d.t=menu.sub;
+    if(!Array.isArray(d.ses))d.ses=[];d.ses.push({s:"",e:""});save();refreshSesEditor(k,pre,`${pre}ses-${k}-${d.ses.length-1}-s`);return}
+  const dl=e.target.closest("[data-sesdel]");
+  if(dl){const [k,i]=dl.dataset.sesdel.split("|"),pre=dl.dataset.pre;state.plan[k].ses.splice(+i,1);save();refreshSesEditor(k,pre,`${pre}sesadd-${k}`);renderToday();renderText();return}
+});
 
 /* ---------- Woche automatisch füllen ---------- */
 const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis","Pasta mit Thon-Tomatensauce","Pasta mit Poulet und Pesto","Hörnli mit Hüttenkäse und Gemüse","Lasagne mit Linsen oder Hackfleisch","Poulet-Reis-Pfanne mit Ei (Fried Rice)","Chili sin Carne mit Reis","Risotto mit Poulet und Erbsen","Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Poulet-Wraps mit Bohnen und Salat","Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse"];
@@ -1038,7 +1097,7 @@ function renderToday(){
     <span class="hicon">${d.t?icon(d.t,32):""}</span>
     <h3>${d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
     <p>${d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
-    <div class="hmeta">${d.tr?`<span class="pill">${esc(d.tr)}</span>`:S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}</span>`).join("")}
+    <div class="hmeta">${S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}–${fmtTime(x.e)}</span>`).join("")}${d.tr?`<span class="pill">${esc(d.tr)}</span>`:""}${!S.length&&(d.t==="mittel"||d.t==="intensiv"||d.t==="spiel")?`<span class="pill">Uhrzeit fehlt: unter «Tagestyp ändern» eintragen</span>`:""}
       <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button></div>
   </div>`;
   // Banner: Matchday heute oder morgen
@@ -1077,7 +1136,7 @@ function renderToday(){
       return `<li class="tl${ok?" done":""}"><div class="tltime">${fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${fmtTime(x.s)}–${fmtTime(x.e)}${x.guess?" · Zeit geschätzt. Trag sie im Wochenplan bei «Notizen» ein.":""}</div></div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${fmtTime(x.s)}–${fmtTime(x.e)}</div></div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
@@ -1232,5 +1291,6 @@ pdfBtn.addEventListener("click",()=>{
 
 document.getElementById("athlete").value=state.name||"";
 document.getElementById("vegToggle").checked=!!state.veg;
+if(migratePlan(state.plan))save();
 renderPlates();renderAll();showView(/^#plan=/.test(location.hash)?"heute":location.hash.slice(1));importFromHash();
 </script>
