@@ -21,6 +21,7 @@
   --t-mittel:#B7791F; --t-mittel-bg:#FAEFD9;
   --t-intensiv:#C2412D; --t-intensiv-bg:#FBE4DF;
   --t-ganztag:#7A3FC2; --t-ganztag-bg:#EFE5FB;
+  --k-schule:#4B5D73; --k-schule-bg:#E6EBF1; --k-well:#0E8A85; --k-well-bg:#DDF3F1;
   --t-spiel:#1D63C9; --t-spiel-bg:#E3ECFA;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -32,6 +33,7 @@
   --t-mittel:#E3AE5B; --t-mittel-bg:#3A2D17;
   --t-intensiv:#F08A77; --t-intensiv-bg:#3D211C;
   --t-ganztag:#B99AF2; --t-ganztag-bg:#2B2140;
+  --k-schule:#A9B8CA; --k-schule-bg:#222C38; --k-well:#5FD1C9; --k-well-bg:#163533;
   --t-spiel:#6EA4F2; --t-spiel-bg:#1B2D46; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
@@ -40,6 +42,7 @@
   --t-mittel:#E3AE5B; --t-mittel-bg:#3A2D17;
   --t-intensiv:#F08A77; --t-intensiv-bg:#3D211C;
   --t-ganztag:#B99AF2; --t-ganztag-bg:#2B2140;
+  --k-schule:#A9B8CA; --k-schule-bg:#222C38; --k-well:#5FD1C9; --k-well-bg:#163533;
   --t-spiel:#6EA4F2; --t-spiel-bg:#1B2D46; color-scheme:dark}
 
 [hidden]{display:none!important}
@@ -349,6 +352,26 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .stab.add{font-family:var(--body);font-size:.88rem;color:var(--accent);border-style:dashed}
 .warnbanner{background:var(--t-mittel-bg);border-color:var(--t-mittel)}
 .modalbox input[type=url],.modalbox input[type=text]{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+.witem.act{--c:var(--k-well);--cbg:var(--k-well-bg)}
+.witem.act[data-k="schule"]{--c:var(--k-schule);--cbg:var(--k-schule-bg)}
+.witem.act .wbody{background:var(--cbg);border-color:var(--c);border-left:5px solid var(--c)}
+.witem.act .wtime{color:var(--c)}
+.witem.act .whead svg{flex:none;align-self:center}
+.witem.act .sestimes input{background:var(--surface)}
+.tl.act .tlbody{--c:var(--k-well);--cbg:var(--k-well-bg);background:var(--cbg);border-color:var(--c);border-left:6px solid var(--c);flex-direction:row;align-items:center;gap:10px}
+.tl.act[data-k="schule"] .tlbody{--c:var(--k-schule);--cbg:var(--k-schule-bg)}
+.tl.act .tltime{color:var(--c)}
+.tl.act b{font-family:var(--display);font-size:1.1rem}
+.addentry{align-self:flex-start;font-size:.85rem;font-weight:600;padding:5px 10px;border-style:dashed;color:var(--accent)}
+.addlist{display:flex;flex-direction:column;gap:6px}
+.addopt{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border-radius:10px}
+.addopt span{display:flex;flex-direction:column}
+.addopt small{font-weight:400;font-size:.78rem;color:var(--muted)}
+.modalbox.wide{max-width:640px}
+.implist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto}
+.improw{display:grid;grid-template-columns:auto 110px 92px 92px minmax(0,1fr);gap:6px;align-items:center}
+.improw input[type=time],.improw input[type=text],.improw select{font:inherit;font-size:.85rem;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);min-width:0;width:100%;box-sizing:border-box}
+@media (max-width:560px){.improw{grid-template-columns:auto 1fr 1fr;}.improw input[type=text]{grid-column:1/-1}}
 .recipesteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 
 @media (max-width:760px){
@@ -434,6 +457,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
       <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
       <button id="shareBtn" type="button">Plan als Link teilen</button>
       <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
+      <button id="impBtn" type="button">Trainingsplan-PDF importieren</button>
     </div>
     <p class="hint">Tipp: Trag in der Zeile «Training / Spiel» die Uhrzeiten ein. Ob Morgen, Nachmittag oder Abend, erkennt die App selbst, und die Heute-Ansicht rechnet aus, wann du essen solltest.</p>
 
@@ -542,6 +566,26 @@ details.info[open] summary{margin-bottom:4px;display:block}
   </form>
 </div>
 
+<div id="addModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="addTitle">Eintrag hinzufügen</h3>
+    <div class="addlist" id="addList"></div>
+  </div>
+</div>
+
+<div id="impModal" class="modal" hidden>
+  <div class="modalbox wide" role="dialog" aria-modal="true" aria-labelledby="impTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="impTitle">Trainingsplan importieren</h3>
+    <p class="hint" id="impHint"></p>
+    <div id="impList" class="implist"></div>
+    <label class="tzopt"><input type="checkbox" id="impReplace" checked> Bisherige Trainings an diesen Tagen ersetzen</label>
+    <button type="button" class="primary" id="impGo">Trainings übernehmen</button>
+  </div>
+</div>
+<input type="file" id="impFile" accept="application/pdf,.pdf" hidden>
+
 <div id="recipeModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="recipeTitle">
     <button type="button" class="modalclose" data-close-recipe="1" aria-label="Rezept schliessen">×</button>
@@ -633,7 +677,19 @@ const RZ=[["recovery","Active Recovery Session"]];
 const SUBS={spiel:{f:"sz",l:SZ,a:"Spiele"},ganztag:{f:"tz",l:TZ,a:"Trainings"},intensiv:{f:"tz",l:TZ,a:"Trainings"},mittel:{f:"tz",l:TZ,a:"Trainings"},leicht:{f:"rz",l:RZ,a:"Erholung"}};
 function typeName(d){return d.t&&TYPES[d.t]?TYPES[d.t].n:""}
 function timeOpts(d){return SUBS[d.t]||null}
-function tzNames(d){return sessionsOf(d).map(x=>`${x.label} ${fmtTime(x.s)}–${fmtTime(x.e)}`)}
+const ACTS=[["schule","Schule"],["sauna","Sauna"],["recovery","Active Recovery"],["physio","Physio"],["massage","Massage"],["anderes","Anderes"]];
+const ACT_IC={
+  schule:["M4 4.5h6a3 3 0 0 1 3 3V20a2 2 0 0 0-2-2H4z","M20 4.5h-6a3 3 0 0 0-1 .2","M20 4.5V18h-7a2 2 0 0 0-1 .3"],
+  sauna:["M8 3c-1.2 1.6 1.2 2.6 0 4.5","M12 3c-1.2 1.6 1.2 2.6 0 4.5","M16 3c-1.2 1.6 1.2 2.6 0 4.5","M3 12h18v4H3z","M5 16v4M19 16v4"],
+  recovery:["M3 12a9 9 0 1 0 2.6-6.4L3 8","M3 3v5h5","M12 8v4l3 2"],
+  physio:["M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z","M12 7.5v9M7.5 12h9"],
+  massage:["M8 12V5.5a1.5 1.5 0 0 1 3 0V11","M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5","M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13","M17 11.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1.5a6 6 0 0 1-5-2.7L4 15.5a1.5 1.5 0 0 1 2.5-1.6L8 16"],
+  anderes:["M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z","M12 8v4.5l3 1.5"]
+};
+function actIcon(kd,size){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--k-${kd==="schule"?"schule":"well"})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(ACT_IC[kd]||ACT_IC.anderes).map(x=>`<path d="${x}"/>`).join("")}</svg>`}
+function actName(kd){const a=ACTS.find(x=>x[0]===kd);return a?a[1]:"Eintrag"}
+function actsOf(d){return (d&&Array.isArray(d.act)?d.act:[]).map((a,i)=>{const st=toMin(a.s);if(st===null)return null;let en=toMin(a.e);if(en===null||en<=st)en=st+60;return {i,k:a.k,s:st,e:en,label:String(a.n||"").trim()||actName(a.k)}}).filter(Boolean).sort((a,b)=>a.s-b.s)}
+function tzNames(d){return sessionsOf(d).map(x=>`${x.label} ${fmtTime(x.s)}–${fmtTime(x.e)}`).concat(actsOf(d).map(a=>`${a.label} ${fmtTime(a.s)}–${fmtTime(a.e)}`))}
 const EXAMPLE={
   mo:{t:"mittel",ses:[{s:"18:00",e:"19:30",n:"Clubtraining"}],tr:"",s:{fruehstueck:"Protein-Birchermüesli",znueni:"Apfel",mittag:"Couscous mit Gemüse",vor:"Banane",nach:"Schokoladenmilch",abend:"Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus"}},
   di:{t:"intensiv",ses:[{s:"18:30",e:"20:30",n:"Selektion"}],tr:"",s:{fruehstueck:"Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake",znueni:"Skyr mit Frucht",mittag:"Linsendal mit Reis",vor:"Sandwich mit Fleisch und/oder Käse",nach:"Schokoladenmilch und Sandwich",abend:"Reis mit Poulet und Gemüse"}},
@@ -733,8 +789,17 @@ function renderWeekTable(){
     const items=[];
     SLOTS.forEach(([sk],o)=>items.push({t:T[sk],o,kind:"meal",sk}));
     d.ses.forEach((x,i)=>{const st=toMin(x.s);items.push({t:st===null?2000+i:st,o:-1,kind:"ses",i})});
+    if(!Array.isArray(d.act))d.act=[];
+    d.act.forEach((x,i)=>{const st=toMin(x.s);items.push({t:st===null?2100+i:st,o:-2,kind:"act",i})});
     items.sort((a,b)=>a.t-b.t||a.o-b.o);
     const body=items.map(it=>{
+      if(it.kind==="act"){const x=d.act[it.i],st=toMin(x.s);
+        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"><div class="whead">${actIcon(x.k,15)}<span class="wtime">${st===null?"–":fmtTime(st)}</span><span class="wlabel">${esc(actName(x.k))}</span></div>
+          <input type="text" class="sesname" id="tactn-${k}-${it.i}" data-act="${k}|${it.i}|n" value="${esc(x.n||"")}" placeholder="${esc(actName(x.k))}" aria-label="Name">
+          <span class="sestimes"><label for="tact-${k}-${it.i}-s">von</label><input type="time" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}">
+          <button type="button" class="iconbtn" id="tactdel-${k}-${it.i}" data-actdel="${k}|${it.i}" aria-label="Eintrag entfernen">×</button>
+          <label for="tact-${k}-${it.i}-e">bis</label><input type="time" id="tact-${k}-${it.i}-e" data-act="${k}|${it.i}|e" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
+        </div></div>`}
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
         return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="wtime">${st===null?"–":fmtTime(st)}</span>
 </div>
@@ -762,7 +827,7 @@ function renderWeekTable(){
         <button type="button" class="typebtn" id="typebtn-${k}" data-t="${d.t}" data-typemenu="${k}" aria-haspopup="dialog" aria-expanded="${menu.day===k}" aria-label="Tagestyp ${n}: ${typeName(d)||"nicht gewählt"}"><span>${typeName(d)||"Tagestyp wählen"}</span><span class="caret">▾</span></button>
         <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen" aria-label="Notizen ${n}">
         ${d.t&&TYPES[d.t]?`<div class="platehint">${TYPES[d.t].h}</div>`:""}
-        <button type="button" class="linkbtn sesadd" id="tsesadd-${k}" data-sesadd="${k}" data-pre="t">${addLabel(d.t)}</button>
+        <button type="button" class="addentry" id="tadd-${k}" data-addentry="${k}">＋ Eintrag</button>
       </div>
       <div class="dayitems">${body}</div>
       <div class="sleepcell" data-night="${k}" data-level="${nt?nt.level:"leer"}" aria-current="${k===sleepSel}">
@@ -1183,6 +1248,16 @@ function planTimes(k,wake){
   // Znüni
   const z=within(T.znueni);
   if(z){const pre=z.s-60;if(pre>=T.fruehstueck+45){T.znueni=pre;H.znueni="Kleiner Snack ca. 1 h vor dem Start."}else T.znueni=z.e+20}
+  // Schule: Mittagessen in die Mittagspause, Znüni in die Pause
+  const school=actsOf(d).filter(a=>a.k==="schule"),inSchool=t=>school.find(b=>t>b.s&&t<b.e);
+  if(school.length){
+    if(school[0].s-T.fruehstueck<25&&school[0].s>T.fruehstueck-60)H.fruehstueck={w:1,t:"Die Schule beginnt um "+fmtTime(school[0].s)+": früh genug aufstehen und nicht ohne Frühstück los."};
+    if(inSchool(T.znueni))H.znueni="In der Pause, z. B. im Rucksack mitnehmen.";
+    const gaps=school.slice(1).map((b,i)=>({s:school[i].e,e:b.s})).filter(g=>g.e-g.s>=30);
+    const lunch=gaps.find(g=>g.s>=630&&g.s<=840);
+    if(lunch){T.mittag=lunch.s+10;H.mittag="In der Mittagspause ("+fmtTime(lunch.s)+"–"+fmtTime(lunch.e)+")."}
+    else{const blk=inSchool(T.mittag);if(blk){T.mittag=blk.e+10;H.mittag="Nach der Schule."}}
+  }
   // Mittagessen
   const mm=within(T.mittag);
   if(mm)T.mittag=mm.e+30;
@@ -1195,6 +1270,7 @@ function planTimes(k,wake){
     if(sport.length>=2&&d.t==="spiel"){T.vor=sport[0].e+10;L.vor="Zwischen den Spielen";H.vor="Kleine Portionen und regelmässig Wasser."}
     else{const tg=sport.find(x=>x.s>=780);if(tg){T.vor=Math.min(tg.s-45,Math.max(tg.s-120,T.mittag+60));H.vor="Ca. 1–2 h vor dem "+what+": etwas Leichtes mit Kohlenhydraten."}}
     T.nach=last.e+10;L.nach="Nach dem "+what;H.nach="Innerhalb von ca. 1 h: Kohlenhydrate und Protein.";
+    if(T.mittag>last.e&&T.mittag-last.e<=60)H.nach="Das Mittagessen kommt gleich danach, ein kleiner Snack oder gar nichts reicht.";
     const ev=sport.find(x=>x.e>T.abend-60&&x.s<T.abend+90);
     if(ev){R.dinnerChoice=true;
       if(d.dinner==="vor"){
@@ -1205,6 +1281,11 @@ function planTimes(k,wake){
         if(ev===last&&T.abend-T.nach<=50)H.nach="Das Nachtessen kommt bald, ein kleiner Snack reicht."}}
     if(d.t==="spiel"){H.fruehstueck=H.fruehstueck||"Matchday: nur Bekanntes essen, gut verdaulich.";}
   }else L.nach="Snack am Abend";
+  if(school.length){
+    const vb=inSchool(T.vor);
+    if(vb){const nx=sport.find(x=>x.s>=vb.e);if(!nx||nx.s-vb.e>=40){T.vor=vb.e+10;H.vor=H.vor?H.vor+" Direkt nach der Schule.":"Direkt nach der Schule."}else H.vor="In der letzten Pause vor dem Training."}
+    const zb=inSchool(T.znueni);if(zb&&!H.znueni)H.znueni="In der Pause.";
+  }
   if(d.mt)Object.keys(d.mt).forEach(x=>{if(x in T){T[x]=d.mt[x];delete H[x];(R.moved=R.moved||{})[x]=1}});
   Object.keys(T).forEach(x=>{T[x]=Math.min(Math.max(T[x],300),1425)});
   return {T,H,L,S,R};
@@ -1223,7 +1304,7 @@ function sesEditor(k,pre){
     </div>`).join("")}<button type="button" class="linkbtn sesadd" id="${pre}sesadd-${k}" data-sesadd="${k}" data-pre="${pre}">${addLabel(d.t)}</button></div>`;
 }
 document.getElementById("week").addEventListener("focusout",e=>{
-  const el=e.target;if(!el.dataset||el.dataset.pre!=="t"||!el.dataset.ses)return;
+  const el=e.target;if(!el.dataset||!((el.dataset.pre==="t"&&el.dataset.ses)||el.dataset.act))return;
   const card=el.closest(".witem");if(card&&e.relatedTarget&&card.contains(e.relatedTarget))return;
   setTimeout(()=>{const id=document.activeElement&&document.activeElement.id;renderWeekTable();if(id){const f=document.getElementById(id);if(f)f.focus()}},0);
 });
@@ -1329,6 +1410,88 @@ document.getElementById("dishForm").addEventListener("submit",e=>{e.preventDefau
   const f=document.getElementById(dishCtx.from);if(f)f.focus();flash(ex?`«${name}» ausgewählt`:`«${name}» hinzugefügt`)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!dishModal.hidden)closeDish();else if(!pasteModal.hidden)pasteModal.hidden=true}});
 
+/* ---------- Einträge hinzufügen (Training, Schule, Sauna, Physio …) ---------- */
+const addModal=document.getElementById("addModal");let addCtx=null;
+function openAdd(k,from){addCtx={k,from};const d=state.plan[k],n=DAYS.find(x=>x[0]===k)[1];
+  document.getElementById("addTitle").textContent="Eintrag am "+n;
+  document.getElementById("addList").innerHTML=`<button type="button" class="addopt" data-addkind="ses">${d.t?icon(d.t==="leicht"?"leicht":d.t,22):icon("mittel",22)}<span>${d.t==="spiel"?"Spiel":d.t==="leicht"?"Active Recovery Session (Tagestyp)":"Training"}<small>bestimmt Essenszeiten und Tagestyp</small></span></button>`+
+    ACTS.map(([kd,nm])=>`<button type="button" class="addopt" data-addkind="${kd}">${actIcon(kd,22)}<span>${nm}${kd==="schule"?"<small>Essen in den Pausen und nach der Schule</small>":""}</span></button>`).join("");
+  addModal.hidden=false;const f=addModal.querySelector(".addopt");if(f)f.focus()}
+function closeAdd(){addModal.hidden=true;const f=addCtx&&document.getElementById(addCtx.from);if(f)f.focus()}
+addModal.addEventListener("click",e=>{if(e.target===addModal||e.target.closest("[data-close]")){closeAdd();return}
+  const o=e.target.closest("[data-addkind]");if(!o||!addCtx)return;const k=addCtx.k,d=state.plan[k],kd=o.dataset.addkind;addModal.hidden=true;
+  if(kd==="ses"){if(!Array.isArray(d.ses))d.ses=[];if(!d.t)d.t="mittel";d.ses.push({s:"",e:""});var fid=`tses-${k}-${d.ses.length-1}-s`}
+  else{if(!Array.isArray(d.act))d.act=[];const def=kd==="schule"?{s:"",e:""}:{s:"",e:""};d.act.push(Object.assign({k:kd},def));var fid=`tact-${k}-${d.act.length-1}-s`}
+  save();activeDay=k;if(document.getElementById("view-woche").hidden)location.hash="#woche";
+  renderTabs();renderTable();renderText();setTimeout(()=>{const f=document.getElementById(fid);if(f){f.scrollIntoView({block:"center"});f.focus()}},80);
+  flash(kd==="ses"?"Zeit eintragen":actName(kd)+": Zeit eintragen")});
+document.addEventListener("click",e=>{
+  const ab=e.target.closest("[data-addentry]");if(ab){openAdd(ab.dataset.addentry,ab.id);return}
+  const ad=e.target.closest("[data-actdel]");if(ad){const [k,i]=ad.dataset.actdel.split("|");state.plan[k].act.splice(+i,1);save();renderTable();renderText();const f=document.getElementById("tadd-"+k);if(f)f.focus();return}
+});
+document.addEventListener("input",e=>{const el=e.target;if(!el.dataset||!el.dataset.act)return;
+  const [k,i,f]=el.dataset.act.split("|");state.plan[k].act[+i][f]=el.value;save();renderToday();renderText()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!addModal.hidden)closeAdd()});
+
+/* ---------- Trainingsplan aus PDF importieren (läuft komplett im Browser) ---------- */
+const PDFJS="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`)){res();return}const sc=document.createElement("script");sc.src=src;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)})}
+async function pdfLines(buf){
+  await loadScript(PDFJS+"pdf.min.js");await loadScript(PDFJS+"pdf.worker.min.js");
+  const lib=window.pdfjsLib;lib.GlobalWorkerOptions.workerSrc=PDFJS+"pdf.worker.min.js";
+  const pdf=await lib.getDocument({data:buf,disableWorker:true,isEvalSupported:false}).promise;const out=[];
+  for(let p=1;p<=Math.min(pdf.numPages,6);p++){const pg=await pdf.getPage(p);const tc=await pg.getTextContent();
+    const rows=[];tc.items.forEach(it=>{const t=String(it.str||"");if(!t)return;const x=it.transform[4],y=it.transform[5];
+      let r=rows.find(r=>Math.abs(r.y-y)<3);if(!r){r={y,items:[]};rows.push(r)}r.items.push({x,w:it.width||0,t})});
+    /* Buchstaben zu Wörtern, Wörter zu Zellen: grosse Lücken trennen die Tabellenspalten */
+    rows.sort((a,b)=>b.y-a.y).forEach(r=>{r.items.sort((a,b)=>a.x-b.x);let cur="",end=null;const cells=[];
+      r.items.forEach(it=>{if(end!==null){const gap=it.x-end;if(gap>12){cells.push(cur);cur=""}else if(gap>1.2&&!/\s$/.test(cur))cur+=" "}cur+=it.t;end=it.x+it.w});
+      cells.push(cur);const cl=cells.map(c=>c.replace(/\s+/g," ").trim()).filter(Boolean);if(cl.length)out.push(cl)})}
+  return out;
+}
+const DAYRE=[["mo",/^(montag|mo\.?)$/i],["di",/^(dienstag|di\.?)$/i],["mi",/^(mittwoch|mi\.?)$/i],["do",/^(donnerstag|do\.?)$/i],["fr",/^(freitag|fr\.?)$/i],["sa",/^(samstag|sa\.?)$/i],["so",/^(sonntag|so\.?)$/i]];
+function parseTraining(lines){
+  const res=[];let last=null;
+  lines.forEach(cells=>{
+    const txt=cells.join(" ");const tm=txt.match(/(\d{1,2})[:.](\d{2})\s*(?:–|-|—|bis)\s*(\d{1,2})[:.](\d{2})/);
+    let day=null;for(const c of cells.concat(txt.split(/\s+/))){const f=DAYRE.find(([,re])=>re.test(c.replace(/[:,]$/,"")));if(f){day=f[0];break}}
+    if(day)last=day;
+    if(!tm||!(day||last))return;
+    const s=`${tm[1].padStart(2,"0")}:${tm[2]}`,e=`${tm[3].padStart(2,"0")}:${tm[4]}`;
+    const rest=cells.filter(c=>!DAYRE.some(([,re])=>re.test(c.replace(/[:,]$/,"")))).map(c=>c.replace(/(\d{1,2})[:.](\d{2})\s*(?:–|-|—|bis)\s*(\d{1,2})[:.](\d{2})/,"").replace(/^[\s–—-]+|[\s–—-]+$/g,"").trim()).filter(c=>c&&!/^[\d:.\s–—-]+$/.test(c));
+    const nm=rest.length>=2?rest.slice(1).join(" ")+", "+rest[0]:rest.join(" ");
+    res.push({k:day||last,s,e,n:nm.slice(0,60)});
+  });
+  return res;
+}
+let impRows=[];
+function renderImp(){
+  document.getElementById("impList").innerHTML=impRows.map((r,i)=>`<div class="improw">
+    <input type="checkbox" id="imp-on-${i}" data-imp="${i}|on"${r.on?" checked":""} aria-label="Übernehmen">
+    <select data-imp="${i}|k" aria-label="Tag">${DAYS.map(([k,n])=>`<option value="${k}"${k===r.k?" selected":""}>${n}</option>`).join("")}</select>
+    <input type="time" data-imp="${i}|s" value="${r.s}" aria-label="Start"><input type="time" data-imp="${i}|e" value="${r.e}" aria-label="Ende">
+    <input type="text" data-imp="${i}|n" value="${esc(r.n)}" aria-label="Name">
+  </div>`).join("")||`<p class="empty">Keine Trainings gefunden.</p>`;
+}
+document.getElementById("impBtn").addEventListener("click",()=>document.getElementById("impFile").click());
+document.getElementById("impFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  flash("PDF wird gelesen …");
+  try{const lines=await pdfLines(await f.arrayBuffer());impRows=parseTraining(lines).map(r=>Object.assign(r,{on:true}));}
+  catch(err){flash("Das PDF konnte nicht gelesen werden. Ist es ein Foto oder Scan? Dann bitte die Zeiten von Hand eintragen.");return}
+  document.getElementById("impHint").textContent=impRows.length?`${impRows.length} Trainings erkannt in «${f.name}». Prüfe Tag, Zeit und Name und passe sie bei Bedarf an.`:"In diesem PDF wurden keine Trainings mit Wochentag und Uhrzeit gefunden. Gescannte PDFs und Fotos lassen sich nicht lesen.";
+  renderImp();document.getElementById("impModal").hidden=false;flash("")});
+document.getElementById("impList").addEventListener("input",e=>{const t=e.target.dataset.imp;if(!t)return;const [i,f]=t.split("|");impRows[+i][f]=f==="on"?e.target.checked:e.target.value});
+document.getElementById("impList").addEventListener("change",e=>{const t=e.target.dataset.imp;if(!t)return;const [i,f]=t.split("|");impRows[+i][f]=f==="on"?e.target.checked:e.target.value});
+document.getElementById("impModal").addEventListener("click",e=>{if(e.target.id==="impModal"||e.target.closest("[data-close]"))document.getElementById("impModal").hidden=true});
+document.getElementById("impGo").addEventListener("click",()=>{
+  const rows=impRows.filter(r=>r.on&&toMin(r.s)!==null);if(!rows.length){flash("Nichts ausgewählt.");return}
+  const repl=document.getElementById("impReplace").checked,days=new Set(rows.map(r=>r.k));
+  days.forEach(k=>{const d=state.plan[k];if(repl||!Array.isArray(d.ses))d.ses=[];
+    rows.filter(r=>r.k===k).forEach(r=>d.ses.push({s:r.s,e:r.e,n:r.n}));
+    const sp=d.ses.length;if(!d.t||d.t==="leicht")d.t=sp>=2?"intensiv":"mittel";else if(d.t==="mittel"&&sp>=2)d.t="intensiv"});
+  save();document.getElementById("impModal").hidden=true;renderAll();location.hash="#woche";
+  flash(`${rows.length} Trainings an ${days.size} Tagen übernommen. Tipp: «Woche automatisch füllen».`)});
+
 /* ---------- Woche automatisch füllen ---------- */
 const CARB=["Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus","Reis mit Poulet und Gemüse","Vegi-Bolognese mit Linsen oder Sojahack","Reis mit Tofu und Gemüse","Reis mit Ei und Gemüse","Pasta mit Tomatensauce","Linsendal mit Reis","Pasta mit Thon-Tomatensauce","Pasta mit Poulet und Pesto","Hörnli mit Hüttenkäse und Gemüse","Lasagne mit Linsen oder Hackfleisch","Poulet-Reis-Pfanne mit Ei (Fried Rice)","Chili sin Carne mit Reis","Risotto mit Poulet und Erbsen","Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Poulet-Wraps mit Bohnen und Salat","Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse"];
 const LIGHT=["Gemüsecurry mit Reis","Quinoa mit Gemüse oder Quinoa-Salat","Couscous mit Gemüse","Linsendal mit Reis","Reis mit Ei und Gemüse","Reis mit Tofu und Gemüse","Chili sin Carne mit Reis","Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen","Couscous-Salat mit Feta und Kichererbsen"];
@@ -1410,7 +1573,7 @@ function renderToday(){
     <h3>${d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
     <p>${d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
     <div class="hmeta">${S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}–${fmtTime(x.e)}</span>`).join("")}${d.tr?`<span class="pill">${esc(d.tr)}</span>`:""}${!S.length&&(d.t==="mittel"||d.t==="intensiv"||d.t==="ganztag"||d.t==="spiel")?`<span class="pill">Uhrzeit fehlt: unter «Tagestyp ändern» eintragen</span>`:""}
-      <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button></div>
+      <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button><button type="button" class="addentry" id="hadd-${k}" data-addentry="${k}">＋ Eintrag</button></div>
   </div>`;
   // Banner: Matchday heute oder morgen
   let ban="";
@@ -1441,12 +1604,15 @@ function renderToday(){
   items.push({t:wk-1,kind:"wake"});
   SLOTS.forEach(([sk],o)=>{const v=d.s[sk]||NONE;if(sk==="nach"&&!sport.length&&!v)return;items.push({t:T[sk],kind:"meal",sk,o})});
   S.forEach(x=>items.push({t:x.s,kind:"session",x}));
+  actsOf(d).forEach(a=>items.push({t:a.s,kind:"act",a}));
   const nt=nightOf(k);if(nt)items.push({t:nt.bed<720?nt.bed+1440:nt.bed,kind:"sleep",nt});
   items.sort((a,b)=>a.t-b.t||(a.kind==="session"?-1:0));
   tl.innerHTML=items.map(it=>{
     if(it.kind==="wake"){const ok=!!lg.s;
       return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
+    if(it.kind==="act"){const a=it.a;
+      return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime">${fmtTime(a.s)}</div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div></div></div></li>`}
     if(it.kind==="session"){const x=it.x;
       return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime">${fmtTime(x.s)}</div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div></div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
