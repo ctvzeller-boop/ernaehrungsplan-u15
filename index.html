@@ -306,6 +306,10 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dishpick.big .dishname{font-size:1.02rem}
 .dishpick.big{padding:9px 28px 9px 11px}
 .dishpick.empty .dishname{color:var(--muted);font-weight:500}
+.mptag{display:block;margin-top:3px;font-size:.74rem;font-weight:600;color:var(--k-well);line-height:1.25}
+.dishpick.mp{border-style:dashed;border-color:var(--k-well)}
+#vegBtn[aria-pressed="true"]{background:var(--t-leicht-bg);border-color:var(--t-leicht);color:var(--t-leicht)}
+#mpBtn[aria-pressed="true"]{background:var(--k-well-bg);border-color:var(--k-well);color:var(--k-well)}
 .dishpick select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0;border:none;font-size:16px}
 .wacts{display:flex;gap:4px;flex-wrap:wrap}
 .minibtn{padding:3px 8px;font-size:.78rem;font-weight:600;border-radius:999px;color:var(--muted);background:var(--surface);border:1px solid var(--line);line-height:1.3}
@@ -491,6 +495,8 @@ details.info[open] summary{margin-bottom:4px;display:block}
 
     <div class="toolbar">
       <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
+      <button id="vegBtn" type="button" aria-pressed="false" title="Nur vegetarische Gerichte vorschlagen">🌱 Vegetarisch</button>
+      <button id="mpBtn" type="button" aria-pressed="false" title="Zmittag ist immer der Rest vom Znacht am Vorabend">🍱 Mealprep</button>
       <button id="shareBtn" type="button">Plan als Link teilen</button>
       <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
       <button id="impBtn" type="button">Trainingsplan-PDF importieren</button>
@@ -763,7 +769,15 @@ function ensurePlans(){
   state.plans=[p];state.active=p.id;
 }
 function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.sleepWeek=state.sleepWeek||null}}
-function save(){if(Array.isArray(state.plans))syncActive();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
+function prevKey(k){return DAYS[(DAYS.findIndex(x=>x[0]===k)+6)%7][0]}
+function dayName(k){return DAYS.find(x=>x[0]===k)[1]}
+/* Mealprep: Zmittag = Reste vom Znacht am Vorabend */
+function syncMP(){if(!state.plan)return;DAYS.forEach(([k])=>{const d=state.plan[k];if(d&&d.mp){const p=state.plan[prevKey(k)];d.s.mittag=(p&&p.s.abend)||""}})}
+function mpAll(){return DAYS.every(([k])=>state.plan[k]&&state.plan[k].mp)}
+function renderMPBtn(){const b=document.getElementById("mpBtn");if(!b)return;const on=mpAll(),some=DAYS.some(([k])=>state.plan[k]&&state.plan[k].mp);
+  b.setAttribute("aria-pressed",on);b.textContent=on?"🍱 Mealprep: an":some?"🍱 Mealprep: teilweise":"🍱 Mealprep"}
+function renderVegBtn(){const b=document.getElementById("vegBtn");if(b){b.setAttribute("aria-pressed",!!state.veg);b.textContent=state.veg?"🌱 Vegetarisch: an":"🌱 Vegetarisch"}const c=document.getElementById("vegToggle");if(c)c.checked=!!state.veg}
+function save(){syncMP();if(Array.isArray(state.plans))syncActive();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
 /* Nur in Claude: Pläne zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
    Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles im Browser. */
 var cloud=null,cloudReady=false,cloudT=null,cloudLast="";
@@ -812,9 +826,11 @@ function renderPlates(){
 
 const SHORT={fruehstueck:"Frühstück",znueni:"Znüni",mittag:"Zmittag",vor:"Zvieri",abend:"Znacht",nach:"Nach Training"};
 function dishPick(id,k,sk,v,label,big){
-  const opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
-  return `<span class="dishpick${big?" big":""}${v?"":" empty"}"><span class="dishname" aria-hidden="true">${v?esc(v):"Gericht wählen"}</span><select id="${id}" data-day="${k}" data-slot="${sk}" aria-label="${esc(label)}${v?": "+esc(v):""}">
-    <option value=""${v?"":" selected"}>– keine –</option>${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}<option value="__add__">＋ Eigenes Gericht hinzufügen …</option>
+  const opts=optionsFor(sk),mp=sk==="mittag"&&!!state.plan[k].mp,known=mp||!v||opts.some(o=>o.n===v),pk=prevKey(k);
+  const mpOpt=sk==="mittag"?`<option value="__mp__"${mp?" selected":""}>🍱 Reste vom Znacht am ${dayName(pk)}</option>`:"";
+  const tag=mp?`<span class="mptag">🍱 Reste vom Znacht am ${dayName(pk)}</span>`:sk==="abend"&&state.plan[nextKey(k)].mp&&v?`<span class="mptag">🍱 1 Portion mehr kochen für Zmittag am ${dayName(nextKey(k))}</span>`:"";
+  return `<span class="dishpick${big?" big":""}${v?"":" empty"}${mp?" mp":""}"><span class="dishname" aria-hidden="true">${v?esc(v):mp?"Znacht am Vorabend noch leer":"Gericht wählen"}${tag}</span><select id="${id}" data-day="${k}" data-slot="${sk}" aria-label="${esc(label)}${v?": "+esc(v):""}${mp?" (Reste vom Vorabend)":""}">
+    <option value=""${v||mp?"":" selected"}>– keine –</option>${mpOpt}${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v&&!mp?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}<option value="__add__">＋ Eigenes Gericht hinzufügen …</option>
   </select></span>`;
 }
 function renderTabs(){
@@ -822,7 +838,7 @@ function renderTabs(){
     `<button type="button" data-tab="${k}" aria-pressed="${k===activeDay}">${s}</button>`).join("");
 }
 
-function renderTable(){renderWeekTable();if(typeof renderToday==="function")renderToday()}
+function renderTable(){syncMP();renderMPBtn();renderVegBtn();renderWeekTable();if(typeof renderToday==="function")renderToday()}
 function dinnerSeg(k,d,id){
   return `<div class="seg" role="group" aria-label="Nachtessen"><button type="button" id="${id}-vor" data-dinner="${k}|vor" aria-pressed="${d.dinner==="vor"}">vor Training</button><button type="button" id="${id}-nach" data-dinner="${k}|nach" aria-pressed="${d.dinner!=="vor"}">nach Training</button></div>`;
 }
@@ -901,7 +917,7 @@ function planText(){
     const d=state.plan[k];
     lines.push("");
     {const info=[typeName(d)].concat(tzNames(d),d.tr?[d.tr]:[]).filter(Boolean);lines.push(info.length?`${n} (${info.join(", ")})`:n)}
-    SLOTS.forEach(([sk,sn])=>{const v=d.s[sk];if(v)lines.push(`• ${sn}: ${v}`)});
+    SLOTS.forEach(([sk,sn])=>{const v=d.s[sk];if(v)lines.push(`• ${sn}: ${v}${sk==="mittag"&&d.mp?" (Reste vom Vorabend)":""}`)});
   });
   return lines.join("\n");
 }
@@ -918,7 +934,9 @@ document.addEventListener("change",e=>{
   if(el.dataset.train){renderToday();return}
   if(el.dataset.tick){const lg=ensureLog(dkey(hDate));if(el.dataset.tick==="sleep")lg.s=el.checked;else lg.m[el.dataset.tick]=el.checked;pruneLog();save();renderToday();const a=document.getElementById(el.id);if(a)a.focus();return}
   if(el.id==="vegToggle"){state.veg=el.checked;save();renderTable();renderText();renderLikes();return}
-  if(el.dataset.slot&&el.value==="__add__"){const k=el.dataset.day,sk=el.dataset.slot;el.value=state.plan[k].s[sk]||"";openDish(k,sk,el.id);return}
+  if(el.dataset.slot&&el.value==="__add__"){const k=el.dataset.day,sk=el.dataset.slot;el.value=state.plan[k].mp&&sk==="mittag"?"__mp__":state.plan[k].s[sk]||"";openDish(k,sk,el.id);return}
+  if(el.dataset.slot&&el.value==="__mp__"){const k=el.dataset.day;state.plan[k].mp=true;save();renderTable();renderText();flash(`Zmittag = Reste vom Znacht am ${dayName(prevKey(k))}`);const a=document.getElementById(el.id);if(a)a.focus();return}
+  if(el.dataset.slot==="mittag")state.plan[el.dataset.day].mp=false;
   if(el.dataset.slot){state.plan[el.dataset.day].s[el.dataset.slot]=el.value;save();renderTable();renderText();
     const again=document.getElementById(el.id);if(again)again.focus()}
   else if(el.dataset.tmsub){const d=state.plan[menu.day];const sub=SUBS[menu.sub];d.t=menu.sub;const cur=new Set(d[sub.f]||[]);el.checked?cur.add(el.value):cur.delete(el.value);d[sub.f]=sub.l.map(([k])=>k).filter(k=>cur.has(k));save();renderTable();renderText();renderMenu();
@@ -971,7 +989,7 @@ document.getElementById("clearBtn").addEventListener("click",e=>{
   if(!clearArmed){clearArmed=true;b.textContent="Wirklich alles leeren?";b.classList.add("warn");
     setTimeout(()=>{clearArmed=false;b.textContent="Plan leeren";b.classList.remove("warn")},4000);return}
   clearArmed=false;b.textContent="Plan leeren";b.classList.remove("warn");
-  DAYS.forEach(([k])=>{const d=state.plan[k];d.t="";d.tr="";d.tz=[];d.sz=[];d.rz=[];d.ses=[];d.mt={};SLOTS.forEach(([sk])=>d.s[sk]=NONE)});
+  DAYS.forEach(([k])=>{const d=state.plan[k];d.t="";d.tr="";d.tz=[];d.sz=[];d.rz=[];d.ses=[];d.mt={};d.mp=false;SLOTS.forEach(([sk])=>d.s[sk]=NONE)});
   save();renderAll();flash("Plan geleert");
 });
 let resetArmed=false;
@@ -1676,6 +1694,7 @@ function autoFill(){
   const used={};
   DAYS.forEach(([k])=>{const d=state.plan[k];
     SLOTS.forEach(([sk])=>{
+      if(sk==="mittag"&&d.mp)return;
       const c=candidates(k,sk);if(!c.length){d.s[sk]=NONE;return}
       let pool=c.filter(n=>!(sk==="abend"&&n===d.s.mittag));if(!pool.length)pool=c;
       if(!((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel")))pool=preferred(k,sk,pool);
@@ -1687,6 +1706,7 @@ function autoFill(){
   save();renderTable();renderText();
 }
 function reroll(k,sk,btnId){
+  if(sk==="mittag"&&state.plan[k].mp){reroll(prevKey(k),"abend",btnId);flash(`Znacht am ${dayName(prevKey(k))} und Zmittag am ${dayName(k)} neu`);return}
   const d=state.plan[k],cur=d.s[sk];
   let c=candidates(k,sk);if(!c.length)c=optionsFor(sk).map(o=>o.n);
   let pool=c.filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
@@ -1699,6 +1719,12 @@ function reroll(k,sk,btnId){
   const b=document.getElementById(btnId);if(b)b.focus();
 }
 let autoArmed=false;
+document.getElementById("vegBtn").addEventListener("click",()=>{state.veg=!state.veg;save();renderTable();renderText();renderLikes();
+  const n=state.veg?DAYS.reduce((a,[k])=>a+SLOTS.filter(([sk])=>isMeat(sk,state.plan[k].s[sk])).length,0):0;
+  flash(state.veg?(n?`Vegetarisch an · ${n} Gerichte mit Fleisch markiert, mit ↻ ersetzen`:"Vegetarisch an"):"Vegetarisch aus");});
+document.getElementById("mpBtn").addEventListener("click",()=>{const on=!mpAll();
+  DAYS.forEach(([k])=>{state.plan[k].mp=on});save();renderTable();renderText();
+  flash(on?"Mealprep an: Zmittag = Reste vom Znacht am Vorabend":"Mealprep aus");});
 document.getElementById("autoBtn").addEventListener("click",e=>{
   const b=e.currentTarget;
   if(!autoArmed){autoArmed=true;b.textContent="Alle Mahlzeiten ersetzen?";b.classList.add("warn");
@@ -1840,7 +1866,7 @@ function buildPDF(){
   const links=[];
   const head=[["Mahlzeit"].concat(DAYS.map(()=>""))];
   const PT={};DAYS.forEach(([k])=>{PT[k]=planTimes(k,wakeFor(k)).T});
-  const body=SLOTS.map(([sk,sn])=>[T(sn)].concat(DAYS.map(([k])=>{const v=state.plan[k].s[sk];if(!v)return "–";return fmtTime(PT[k][sk])+"  "+T(v)+(recipeFor(sk,v)?"\n» Rezept":"")})));
+  const body=SLOTS.map(([sk,sn])=>[T(sn)].concat(DAYS.map(([k])=>{const v=state.plan[k].s[sk];if(!v)return "–";return fmtTime(PT[k][sk])+"  "+T(v)+(sk==="mittag"&&state.plan[k].mp?"\n(Reste vom Vorabend)":"")+(recipeFor(sk,v)?"\n» Rezept":"")})));
   doc.setFontSize(7.2);const colW0=(W-2*M-32)/7-4.4;
   const headH=Math.max(24,...DAYS.map(([k])=>{const d=state.plan[k];const tl=d.t?Math.min(2,doc.splitTextToSize(T(typeName(d)),colW0).length):0;
     const ex=tzNames(d).concat(d.tr?[d.tr]:[]).reduce((a,e)=>a+Math.min(2,doc.splitTextToSize(T(e),colW0).length),0);return 9+4.4+tl*3.6+ex*3+2}));
