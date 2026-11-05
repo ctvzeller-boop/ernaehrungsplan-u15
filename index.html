@@ -316,10 +316,10 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .xchip{display:inline-flex;align-items:center;gap:2px;font-size:.82rem;font-weight:600;background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:2px 2px 2px 9px;line-height:1.3}
 .xchip button{border:none;background:none;color:var(--muted);padding:0 6px;font-size:.95rem;line-height:1;border-radius:999px}
 .xchip button:hover{color:var(--t-intensiv)}
-.addx{position:relative;cursor:pointer}
+.addx{position:relative;cursor:pointer;display:inline-block;width:32px;box-sizing:border-box;padding-left:0;padding-right:0;overflow:hidden}
 .addx select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;margin:0;padding:0;border:none}
 .addx:focus-within{outline:2px solid var(--accent);outline-offset:1px}
-.minibtn{padding:3px 8px;font-size:.78rem;font-weight:600;border-radius:999px;color:var(--muted);background:var(--surface);border:1px solid var(--line);line-height:1.3}
+.minibtn{padding:3px 8px;min-width:30px;text-align:center;font-size:.78rem;font-weight:600;border-radius:999px;color:var(--muted);background:var(--surface);border:1px solid var(--line);line-height:1.3}
 .minibtn:hover{color:var(--ink);border-color:var(--muted)}
 .minibtn.favbtn[aria-pressed="true"]{color:var(--t-intensiv);border-color:var(--t-intensiv)}
 .trow{display:flex;align-items:center;gap:4px;font-size:.85rem;color:var(--muted)}
@@ -842,7 +842,7 @@ function fullDish(k,sk){const v=state.plan[k].s[sk]||"";return [v].concat(extras
 function extraChips(k,sk,pre){const x=extrasOf(k,sk);if(!x.length)return "";
   return `<div class="xchips">${x.map((n,i)=>`<span class="xchip">+ ${esc(n)}<button type="button" id="${pre}xdel-${k}-${sk}-${i}" data-xdel="${k}|${sk}|${i}" aria-label="${esc(n)} entfernen" title="Entfernen">×</button></span>`).join("")}</div>`}
 function extraAdd(k,sk,pre){if(!SNACKS.includes(sk))return "";const have=new Set([state.plan[k].s[sk]].concat(extrasOf(k,sk)));
-  return `<span class="minibtn addx">＋ dazu<select id="${pre}xadd-${k}-${sk}" data-xadd="${k}|${sk}" aria-label="Weiteren Snack hinzufügen"><option value="" selected>Weiteren Snack wählen …</option>${optList(optionsFor(sk).filter(o=>!have.has(o.n)),()=>false)}</select></span>`}
+  return `<span class="minibtn addx">＋<select id="${pre}xadd-${k}-${sk}" data-xadd="${k}|${sk}" aria-label="Weiteren Snack hinzufügen" title="Weiteren Snack hinzufügen"><option value="" selected>Weiteren Snack wählen …</option>${optList(optionsFor(sk).filter(o=>!have.has(o.n)),()=>false)}</select></span>`}
 function dishPick(id,k,sk,v,label,big){
   const opts=optionsFor(sk),mp=sk==="mittag"&&!!state.plan[k].mp,known=mp||!v||opts.some(o=>o.n===v),pk=prevKey(k);
   const mpOpt=sk==="mittag"?`<option value="__mp__"${mp?" selected":""}>🍱 Reste vom Znacht am ${dayName(pk)}</option>`:"";
@@ -895,7 +895,7 @@ function renderWeekTable(){
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
         ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${extraChips(k,sk,"w")}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:""}
-        <div class="wacts"><button type="button" class="minibtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻ Anderes</button>${extraAdd(k,sk,"w")}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>
+        <div class="wacts"><button type="button" class="minibtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"w")}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>
       </div></div>`;
     }).join("");
     const v=state.sleepWeek[k],nt=nightOf(k),nx=DAYS[(di+1)%7];
@@ -1830,7 +1830,7 @@ function renderToday(){
       <div class="tlhead"><span class="tlgrip"><button type="button" class="draghandle" id="hdh-${sk}" data-drag="${k}|${sk}" aria-label="${esc(slotName(sk))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span></span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
       ${dishPick(`hsel-${sk}`,k,sk,v,slotName(sk),true)}${extraChips(k,sk,"h")}
       ${warn}${hint}
-      <div class="tlactions"><button type="button" class="minibtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}">↻ Anderes</button>${extraAdd(k,sk,"h")}${v?`<button type="button" class="minibtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit">${isFav(v)?"♥":"♡"} Favorit</button>`:""}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}</div>
+      <div class="tlactions"><button type="button" class="minibtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"h")}${v?`<button type="button" class="minibtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit">${isFav(v)?"♥":"♡"} Favorit</button>`:""}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}</div>
     </div></li>`;
   }).join("");
   // Wasser
