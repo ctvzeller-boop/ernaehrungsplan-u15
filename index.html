@@ -833,18 +833,22 @@ function renderPlates(){
 
 const SHORT={fruehstueck:"Frühstück",znueni:"Znüni",mittag:"Zmittag",vor:"Zvieri",abend:"Znacht",nach:"Nach Training"};
 /* Mehrere Snacks: zusätzliche Gerichte in d.x[slot] */
+/* Auswahl-Liste: Favoriten zuerst */
+function optList(list,sel){const f=list.filter(o=>isFav(o.n)),r=list.filter(o=>!isFav(o.n));
+  const one=o=>`<option value="${esc(o.n)}"${sel(o)?" selected":""}>${isFav(o.n)?"♥ ":""}${esc(o.n)}${o.custom?" ★":""}</option>`;
+  return f.length?`<optgroup label="Favoriten">${f.map(one).join("")}</optgroup><optgroup label="Alle Gerichte">${r.map(one).join("")}</optgroup>`:r.map(one).join("")}
 function extrasOf(k,sk){const d=state.plan[k];return (d&&d.x&&Array.isArray(d.x[sk]))?d.x[sk]:[]}
 function fullDish(k,sk){const v=state.plan[k].s[sk]||"";return [v].concat(extrasOf(k,sk)).filter(Boolean).join(" + ")}
 function extraChips(k,sk,pre){const x=extrasOf(k,sk);if(!x.length)return "";
   return `<div class="xchips">${x.map((n,i)=>`<span class="xchip">+ ${esc(n)}<button type="button" id="${pre}xdel-${k}-${sk}-${i}" data-xdel="${k}|${sk}|${i}" aria-label="${esc(n)} entfernen" title="Entfernen">×</button></span>`).join("")}</div>`}
 function extraAdd(k,sk,pre){if(!SNACKS.includes(sk))return "";const have=new Set([state.plan[k].s[sk]].concat(extrasOf(k,sk)));
-  return `<span class="minibtn addx">＋ dazu<select id="${pre}xadd-${k}-${sk}" data-xadd="${k}|${sk}" aria-label="Weiteren Snack hinzufügen"><option value="" selected>Weiteren Snack wählen …</option>${optionsFor(sk).filter(o=>!have.has(o.n)).map(o=>`<option value="${esc(o.n)}">${esc(o.n)}</option>`).join("")}</select></span>`}
+  return `<span class="minibtn addx">＋ dazu<select id="${pre}xadd-${k}-${sk}" data-xadd="${k}|${sk}" aria-label="Weiteren Snack hinzufügen"><option value="" selected>Weiteren Snack wählen …</option>${optList(optionsFor(sk).filter(o=>!have.has(o.n)),()=>false)}</select></span>`}
 function dishPick(id,k,sk,v,label,big){
   const opts=optionsFor(sk),mp=sk==="mittag"&&!!state.plan[k].mp,known=mp||!v||opts.some(o=>o.n===v),pk=prevKey(k);
   const mpOpt=sk==="mittag"?`<option value="__mp__"${mp?" selected":""}>🍱 Reste vom Znacht am ${dayName(pk)}</option>`:"";
   const tag=mp?`<span class="mptag">🍱 Reste vom Znacht am ${dayName(pk)}</span>`:sk==="abend"&&state.plan[nextKey(k)].mp&&v?`<span class="mptag">🍱 1 Portion mehr kochen für Zmittag am ${dayName(nextKey(k))}</span>`:"";
   return `<span class="dishpick${big?" big":""}${v?"":" empty"}${mp?" mp":""}"><span class="dishname" aria-hidden="true">${v?esc(v):mp?"Znacht am Vorabend noch leer":"Gericht wählen"}${tag}</span><select id="${id}" data-day="${k}" data-slot="${sk}" aria-label="${esc(label)}${v?": "+esc(v):""}${mp?" (Reste vom Vorabend)":""}">
-    <option value=""${v||mp?"":" selected"}>– keine –</option>${mpOpt}${opts.map(o=>`<option value="${esc(o.n)}"${o.n===v&&!mp?" selected":""}>${esc(o.n)}${o.custom?" ★":""}</option>`).join("")}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}<option value="__add__">＋ Eigenes Gericht hinzufügen …</option>
+    <option value=""${v||mp?"":" selected"}>– keine –</option>${mpOpt}${optList(opts,o=>o.n===v&&!mp)}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}<option value="__add__">＋ Eigenes Gericht hinzufügen …</option>
   </select></span>`;
 }
 function renderTabs(){
