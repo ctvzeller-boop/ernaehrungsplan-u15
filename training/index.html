@@ -603,7 +603,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   <button type="button" id="restSkip">Weiter</button>
 </div>
 <div class="prtoast" id="prToast" role="status" aria-live="polite"></div>
-<input type="file" id="bkFile" accept="application/json,.json" hidden>
+<input type="file" id="bkFile" accept=".xlsx,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/json" hidden>
 
 <div id="pasteModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
@@ -1111,20 +1111,62 @@ function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setHours(0,
 function wkOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
 function streak(){const W=new Set(hist().map(h=>wkOf(h.d)));let w=wkOf(Date.now());if(!W.has(w)){const d=new Date(w);d.setDate(d.getDate()-7);w=d.getTime()}
   let n=0;while(W.has(w)){n++;const d=new Date(w);d.setDate(d.getDate()-7);w=wkOf(d.getTime())}return n}
-function backupCard(){return `<div class="card"><h2>Backup</h2><p class="hint">Speichert alle Einheiten und deinen ganzen Verlauf als Datei, z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Backup laden».</p>
-  <div class="bkrow"><button type="button" class="primary" id="bkSave">💾 Backup speichern</button><button type="button" id="bkLoad">📂 Backup laden</button></div></div>`}
-async function saveBackup(){const data=JSON.stringify(Object.assign({app:"cz-training",v:1,saved:Date.now()},state));const d=new Date();
-  const filename=`CZ-Training-Backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
-  const blob=new Blob([data],{type:"application/json"});
+function backupCard(){return `<div class="card"><h2>Backup</h2><p class="hint">Speichert alle Einheiten, eigenen Übungen und deinen ganzen Verlauf als Excel-Datei – z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Backup importieren».</p>
+  <div class="bkrow"><button type="button" class="primary" id="bkSave">📊 Backup erstellen (Excel)</button><button type="button" id="bkLoad">📂 Backup importieren</button></div></div>`}
+/* Excel-Bibliothek erst bei Bedarf laden */
+function loadXLSX(){if(window.XLSX)return Promise.resolve(window.XLSX);if(loadXLSX.p)return loadXLSX.p;
+  loadXLSX.p=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>window.XLSX?res(window.XLSX):rej();sc.onerror=()=>{loadXLSX.p=null;rej()};document.head.appendChild(sc)});return loadXLSX.p}
+const STN={ok:"im Plan",less:"weniger",more:"mehr"};
+function buildWorkbook(X){const wb=X.utils.book_new();const dt=ms=>new Date(ms);
+  /* 1. Trainings: eine Zeile pro Satz */
+  const tr=[["Datum","Uhrzeit","Training","Übung","Satz","Wdh / Zeit","Gewicht (kg)","Ergebnis","Bestwert","Ziel","Übungs-ID","Zeitstempel"]];
+  hist().slice().sort((a,b)=>a.d-b.d).forEach(h=>h.items.forEach(y=>{const e=exById(y.id);const nm=(e&&e.n)||y.n||y.id;
+    (y.log||[]).forEach((z,k)=>{const kg=numOf(z.kg);tr.push([dt(h.d),new Date(h.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"}),h.t||"",nm,k+1,isSimpleId(y.id)?"erledigt":(z.v||planShort({w:y.w})),kg!==null?kg:(z.kg||""),isSimpleId(y.id)?"":STN[z.st]||"",z.pr?"🏆":"",y.w||"",y.id,h.d])})}));
+  const ws1=X.utils.aoa_to_sheet(tr,{cellDates:true});ws1["!cols"]=[12,8,22,40,6,11,12,10,9,14,12,15].map(w=>({wch:w}));
+  for(let r=1;r<tr.length;r++){const c=ws1[X.utils.encode_cell({r,c:0})];if(c)c.z="dd.mm.yyyy"}
+  X.utils.book_append_sheet(wb,ws1,"Trainings");
+  /* 2. Einheiten: eine Zeile pro Übung */
+  const se=[["Einheit","Athlet/in","Block","Übung","Sätze","Wdh / Zeit","Pause","RIR","Gewicht","Optional","Hinweise","Übungs-ID"]];
+  state.sessions.forEach(c=>{const lab=labels(c.items);if(!c.items.length)se.push([c.t||"",c.a||"","","","","","","","","",c.h||"",""]);
+    c.items.forEach((it,k)=>se.push([c.t||"",c.a||"",lab[k],it.n,it.s||"",it.w||"",it.p||"",it.r||"",kgTxt(it.kg),it.opt?"ja":"",k===0?(c.h||""):"",it.id]))});
+  const ws2=X.utils.aoa_to_sheet(se);ws2["!cols"]=[22,14,6,40,6,12,12,6,10,8,30,12].map(w=>({wch:w}));X.utils.book_append_sheet(wb,ws2,"Einheiten");
+  /* 3. Eigene Übungen */
+  const cu=[["Name","Kategorie","Belastung","Sätze","Wdh / Zeit","Pause","Material","Muskeln","Video","Ausführung","Übungs-ID"]];
+  (state.custom||[]).forEach(e=>cu.push([e.n,(CATS.find(c=>c[0]===e.k)||[,""])[1],(e.l||[]).map(l=>LOADN[l]).join(", "),e.s||"",e.w||"",e.p||"",(e.m||[]).join(", "),e.mu||"",(e.v||[]).join(" "),e.b||"",e.id]));
+  const ws3=X.utils.aoa_to_sheet(cu);ws3["!cols"]=[30,18,14,6,12,10,16,22,30,30,12].map(w=>({wch:w}));X.utils.book_append_sheet(wb,ws3,"Eigene Übungen");
+  /* 4. Vollständige Daten für den Import (bitte nicht ändern) */
+  const js=JSON.stringify(Object.assign({app:"cz-training",v:1,saved:Date.now()},state));const rows=[["CZ Training – Daten für «Backup importieren». Bitte nicht verändern."]];
+  for(let k=0;k<js.length;k+=30000)rows.push([js.slice(k,k+30000)]);
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rows),"_daten");wb.Workbook={Sheets:[{},{},{},{Hidden:1}]};
+  return wb}
+async function saveBackup(){let X;try{X=await loadXLSX()}catch(e){flash("Excel braucht einmal Internet – bitte später nochmals.");return}
+  const d=new Date();const filename=`CZ-Training-Backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.xlsx`;
+  const type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const blob=new Blob([X.write(buildWorkbook(X),{bookType:"xlsx",type:"array",cellDates:true})],{type});
   if(downloadsApi){try{const r=await downloadsApi.save({filename,data:blob});flash(r&&r.status==="saved"?"Backup gespeichert ✓":"Backup übergeben")}catch(e){flash(e&&e.code==="declined"?"Abgebrochen":"Speichern hier nicht möglich")}return}
-  try{const f=new File([blob],filename,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Training Backup"});flash("Backup übergeben ✓");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
+  try{const f=new File([blob],filename,{type});if(navigator.canShare&&navigator.canShare({files:[f]})&&matchMedia("(pointer:coarse)").matches){await navigator.share({files:[f],title:"CZ Training Backup"});flash("Backup übergeben ✓");return}}catch(e){if(e&&e.name==="AbortError"){flash("Abgebrochen");return}}
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);flash("Backup gespeichert ✓")}
+function applyBackup(d){if(!d||!Array.isArray(d.sessions))throw 0;delete d.app;delete d.v;delete d.saved;d.mode=state.mode;
+  /* Verlauf zusammenführen statt überschreiben */
+  const seen=new Set(hist().map(h=>h.d+"|"+h.sid));const merged=hist().concat((d.hist||[]).filter(h=>!seen.has(h.d+"|"+h.sid)));
+  const ids=new Set(d.sessions.map(x=>x.id));const extra=state.sessions.filter(x=>!ids.has(x.id)&&x.items.length);
+  const cid=new Set((d.custom||[]).map(c=>c.id));const custom=(d.custom||[]).concat((state.custom||[]).filter(c=>!cid.has(c.id)));
+  const sessions=d.sessions.concat(extra);if(!sessions.length)sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
+  state=Object.assign(d,{hist:merged,sessions,custom,imgs:Object.assign({},state.imgs||{},d.imgs||{})});if(!state.sessions.some(x=>x.id===state.active))state.active=state.sessions[0].id;
+  syncNames(state);save();renderCustom();renderAll();flash(`Backup importiert ✓ – ${state.sessions.length} Einheiten, ${merged.length} Trainings`)}
+/* Excel ohne _daten (z. B. von Hand bearbeitet): Trainings aus der Tabelle lesen */
+function fromSheets(X,wb){const ws=wb.Sheets["Trainings"];if(!ws)throw 0;const rows=X.utils.sheet_to_json(ws,{defval:""});const by={};
+  rows.forEach(r=>{const ts=+r["Zeitstempel"]||(r["Datum"] instanceof Date?r["Datum"].getTime():Date.parse(r["Datum"]));if(!ts)return;
+    const h=by[ts]||(by[ts]={d:ts,sid:"import",t:r["Training"]||"Training",items:[]});const id=r["Übungs-ID"]||String(r["Übung"]);let y=h.items.find(x=>x.id===id);
+    if(!y){y={id,n:r["Übung"],w:r["Ziel"]||"",log:[]};h.items.push(y)}const st=Object.keys(STN).find(k=>STN[k]===r["Ergebnis"])||"ok";const v=String(r["Wdh / Zeit"]||"");
+    y.log.push(Object.assign({st,v:v==="erledigt"?"":v},r["Gewicht (kg)"]!==""?{kg:String(r["Gewicht (kg)"])}:{},r["Bestwert"]?{pr:1}:{}))});
+  return Object.assign({},state,{hist:Object.values(by),sessions:state.sessions.slice()})}
 document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.sessions)||!d.sessions.length)throw 0;delete d.app;delete d.v;delete d.saved;
-    /* Verlauf zusammenführen statt überschreiben */
-    const seen=new Set(hist().map(h=>h.d+"|"+h.sid));const merged=hist().concat((d.hist||[]).filter(h=>!seen.has(h.d+"|"+h.sid)));
-    const ids=new Set(d.sessions.map(x=>x.id));const extra=state.sessions.filter(x=>!ids.has(x.id)&&x.items.length);
-    state=Object.assign(d,{hist:merged,sessions:d.sessions.concat(extra)});syncNames(state);save();renderCustom();renderAll();flash(`Backup geladen ✓ – ${state.sessions.length} Einheiten, ${merged.length} Trainings`)}
+  try{if(/\.json$/i.test(f.name)||f.type==="application/json"){applyBackup(JSON.parse(await f.text()));return}
+    let X;try{X=await loadXLSX()}catch(err){flash("Excel braucht einmal Internet – bitte später nochmals.");return}
+    const wb=X.read(await f.arrayBuffer(),{type:"array",cellDates:true});const ds=wb.Sheets["_daten"];
+    if(ds){const rows=X.utils.sheet_to_json(ds,{header:1,defval:""});applyBackup(JSON.parse(rows.slice(1).map(r=>r[0]).join("")));return}
+    applyBackup(fromSheets(X,wb))}
   catch(err){flash("Diese Datei ist kein CZ-Training-Backup.")}});
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
