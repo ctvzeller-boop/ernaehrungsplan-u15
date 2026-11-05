@@ -152,6 +152,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 #pickFilters .cats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 #pickFilters .cat{white-space:nowrap;flex:none}
 #pickFilters .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.addcoach.newex{width:100%;margin-top:10px;text-align:center}
 .addrow{display:flex;flex-wrap:wrap;gap:8px}
 .addcoach.free{border-color:var(--ink);color:var(--ink);background:var(--surface)}
 .picklist{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:55vh;margin:0 -4px;padding:0 4px}
@@ -465,6 +466,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <button type="button" class="addcoach addex train-only" id="addExBtn">＋ Übung hinzufügen</button>
       <div class="toolbar train-only">
         <button class="primary" id="finishBtn" type="button">✓ Training abschliessen &amp; speichern</button>
+        <button id="saveSessBtn" type="button" hidden>📌 Als Einheit speichern</button>
         <button id="resultBtn" type="button">Ergebnis an Coach senden</button>
         <button id="resetLogBtn" type="button">Sätze zurücksetzen</button>
         <span class="status" role="status"></span>
@@ -563,6 +565,27 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <input type="search" id="pickSearch" placeholder="Übung suchen, z. B. bench, schulter" aria-label="Übung suchen" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <div id="pickFilters"></div>
     <div class="picklist" id="pickList"></div>
+  </div>
+</div>
+
+<div id="newExModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="newExTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="newExTitle">Eigene Übung erstellen</h3>
+    <div class="addgrid">
+      <div class="field full"><label class="small" for="nxName">Name *</label><input type="text" id="nxName" placeholder="z. B. Goblet Squat" autocomplete="off"></div>
+      <div class="field"><label class="small" for="nxCat">Kategorie</label><select id="nxCat"></select></div>
+      <div class="field"><label class="small" for="nxLoad">Belastung</label><select id="nxLoad"><option value="kw">Körpergewicht</option><option value="gew">Gewicht</option><option value="band">Resistance Band</option></select></div>
+      <div class="field"><label class="small" for="nxSets">Sätze</label><input type="text" id="nxSets" inputmode="numeric" value="3"></div>
+      <div class="field"><label class="small" for="nxReps">Wdh oder Zeit</label><input type="text" id="nxReps" placeholder="z. B. 8–10 oder 30 s"></div>
+      <div class="field"><label class="small" for="nxPause">Pause</label><input type="text" id="nxPause" placeholder="z. B. 90 s"></div>
+      <div class="field"><label class="small" for="nxMat">Material</label><input type="text" id="nxMat" placeholder="z. B. Kettlebell"></div>
+      <div class="field full"><label class="small" for="nxMus">Muskeln</label><input type="text" id="nxMus" placeholder="z. B. Quadrizeps, Gesäss"></div>
+      <div class="field full"><label class="small" for="nxVid">Video-Link</label><input type="url" id="nxVid" placeholder="https://youtu.be/…"></div>
+      <div class="field full"><label class="small" for="nxNote">Ausführung</label><input type="text" id="nxNote" placeholder="Worauf achten?"></div>
+    </div>
+    <button type="button" class="primary" id="nxSave">＋ Erstellen &amp; zum Training hinzufügen</button>
+    <p class="hint">Danach kannst du die Übung unter «Infos» mit «📤 An Coach schicken» weiterleiten.</p>
   </div>
 </div>
 
@@ -685,10 +708,12 @@ function shortN(n){return String(n||"").split(" (")[0]}
 function moreHTML(it){const e=exById(it.id);const desc=e&&e.b?e.b:"";const info=infoHTML(it.id),vids=vidLinks(it.v);
   const can=!(it.log||[]).length;const alts=can?altsOf(it.id).filter(a=>a!==it.orig):[];
   const back=can&&it.orig&&EXBY[it.orig]?`<button type="button" data-swap="${esc(it.orig)}">↩ Zurück zu ${esc(shortN(EXBY[it.orig].n))}</button>`:"";
-  if(!info&&!vids&&!desc&&!alts.length&&!back)return "";
-  const lab=[vids?"Video":"",desc?"Ausführung":"",(info)?"Infos":"",(alts.length||back)?"Alternative":""].filter(Boolean);
+  const own=/^c_/.test(it.id)&&exById(it.id);
+  if(!info&&!vids&&!desc&&!alts.length&&!back&&!own)return "";
+  const lab=[vids?"Video":"",desc?"Ausführung":"",(info||own)?"Infos":"",(alts.length||back)?"Alternative":"",own?"An Coach schicken":""].filter(Boolean);
   return `<details class="more"><summary>${lab.join(" · ")}</summary><div class="morebody">${vids?`<div>${vids}</div>`:""}${desc?`<p class="desc">${esc(desc)}</p>`:""}${info}
-    ${alts.length||back?`<div class="alts"><span class="small">Geht nicht oder Material fehlt? Tauschen:</span>${alts.map(a=>`<button type="button" data-swap="${esc(a)}">⇄ ${esc(shortN(EXBY[a].n))}</button>`).join("")}${back}</div>`:""}</div></details>`}
+    ${alts.length||back?`<div class="alts"><span class="small">Geht nicht oder Material fehlt? Tauschen:</span>${alts.map(a=>`<button type="button" data-swap="${esc(a)}">⇄ ${esc(shortN(EXBY[a].n))}</button>`).join("")}${back}</div>`:""}
+    ${own?`<div class="alts"><span class="small">Eigene Übung – soll sie für alle in die Liste?</span><button type="button" class="primary" data-sendex="${esc(it.id)}">📤 An Coach schicken</button></div>`:""}</div></details>`}
 function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return false;
   if(to===it.orig){delete it.orig;if(it.ob!==undefined){it.b=it.ob;delete it.ob}}else{if(!it.orig){it.orig=it.id;it.ob=it.b||""}it.b=""}
   const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
@@ -891,7 +916,7 @@ function sessMat(c){const out=[];c.items.forEach(it=>matOf(it.id).forEach(m=>{if
 function doneCardHTML(){const c=cur();if(c.items.some(it=>(it.log||[]).length))return "";const h=lastSessHist(c);if(!h||Date.now()-h.d>36*3600e3)return "";
   let n=0;h.items.forEach(x=>n+=x.log.length);
   return `<div class="donecard" id="doneCard"><div><b>✓ Training gespeichert</b><span>${new Date(h.d).toLocaleDateString("de-CH")} · ${n} Sätze · alle Details unter «Stats»</span></div><button type="button" class="primary" data-sendlast="1">Ergebnis an Coach senden</button></div>`}
-function renderProgress(){const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
+function renderProgress(){const sb=document.getElementById("saveSessBtn");if(sb)sb.hidden=!(cur().free&&cur().items.length);const el=document.getElementById("progress");if(!el)return;const t=totals(cur());
   const dc=document.getElementById("doneSlot");if(dc)dc.innerHTML=doneCardHTML();
   const pct=t.plan?Math.round(100*t.done/t.plan):0;
   el.innerHTML=`<div class="progline"><span class="eyebrow">Fortschritt</span><span><b>${t.done}</b> von ${t.plan} Sätzen${t.plan&&t.done>=t.plan?" · fertig 💪":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${t.plan}" aria-valuenow="${t.done}" aria-label="Erledigte Sätze"><i style="width:${pct}%"></i></div>`}
@@ -924,7 +949,7 @@ function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&
   for(const se of state.sessions)for(const x of se.items){if(x===it||x.id!==it.id)continue;const w=[...(x.log||[])].reverse().find(y=>y.kg);if(w)return w.kg}
   return ""}
 function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
-function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,w:it.w,log:it.log.map(e=>Object.assign({},e))}));
+function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,s:it.s,w:it.w,p:it.p,r:it.r,ss:!!it.ss,log:it.log.map(e=>Object.assign({},e))}));
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
   hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free)c.items=[];else c.items.forEach(it=>{delete it.added});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
@@ -1132,7 +1157,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="items">${x.items.map(y=>{const e=EXBY[y.id]||{n:y.n,k:"eigen"};const fake={w:y.w};
         return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div>${miniSpark(y.id)}</div>
           <div class="sets">${isSimpleId(y.id)?`<span class="donetag">✓ Erledigt</span>`:y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
-      <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
+      <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hsess="${statSel}">📌 Als Einheit speichern</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
     </div>${backupCard()}`;
 }
 function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
@@ -1157,6 +1182,8 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  const hss=t.closest("[data-hsess]");if(hss){const h=hist()[+hss.dataset.hsess];if(!h)return;const s=sessFromItems(h.items,(h.t&&h.t!=="Freies Training"?h.t+" ":"Mein Training ")+fmtDate(h.d));save();renderBar();savedMsg(s);return}
+  const sx=t.closest("[data-sendex]");if(sx){copyOrShare(exSendText(sx.dataset.sendex),"Übung kopiert – jetzt dem Coach schicken.","Neue Übung");return}
   if(t.closest("[data-sslink]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<1)return;const it=c.items[i];it.ss=!it.ss;save();renderItems(`[data-u="${u}"] [data-sslink]`);
     flash(it.ss?`Superset: ${labels(c.items)[i-1]} und ${labels(c.items)[i]} abwechselnd`:"Superset aufgehoben");return}
   if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const it=c.items.find(x=>x.u===u);c.items=c.items.filter(x=>x.u!==u);if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();flash(`${shortN(it.n)} entfernt`);return}
@@ -1431,6 +1458,28 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+/* Eigene Übung direkt im Training erstellen */
+const newExModal=document.getElementById("newExModal");
+function openNewEx(name){document.getElementById("nxCat").innerHTML=CATS.map(([k,n])=>`<option value="${k}"${k==="eigen"?" selected":""}>${n}</option>`).join("");
+  ["nxReps","nxPause","nxMat","nxMus","nxVid","nxNote"].forEach(id=>document.getElementById(id).value="");document.getElementById("nxSets").value="3";document.getElementById("nxLoad").value="kw";
+  document.getElementById("nxName").value=name||"";pickModal.hidden=true;newExModal.hidden=false;document.getElementById("nxName").focus({preventScroll:true})}
+newExModal.addEventListener("click",e=>{if(e.target===newExModal||e.target.closest("[data-close]")){newExModal.hidden=true;return}
+  if(!e.target.closest("#nxSave"))return;const g=id=>document.getElementById(id).value.trim();
+  const n=g("nxName");if(!n){flash("Bitte einen Namen eingeben.");document.getElementById("nxName").focus();return}const v=g("nxVid");
+  const ex={id:"c_"+uid(),n,k:g("nxCat")||"eigen",s:g("nxSets"),w:g("nxReps"),p:g("nxPause"),r:"",b:g("nxNote"),v:/^https?:\/\//.test(v)?[v]:[],l:[g("nxLoad")],mu:g("nxMus"),m:g("nxMat").split(",").map(x=>x.trim()).filter(Boolean),own:1};
+  (state.custom=state.custom||[]).push(ex);const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();newExModal.hidden=true;
+  renderCustom();renderItems();renderBar();renderProgress();flash(`„${n}“ erstellt und hinzugefügt`);
+  const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
+function exSendText(id){const e=exById(id);if(!e)return "";const cat=(CATS.find(c=>c[0]===e.k)||[,""])[1];
+  return ["Neue Übung für CZ Training (bitte in die Übungsliste aufnehmen):","Name: "+e.n,"Kategorie: "+cat,"Belastung: "+(e.l||[]).map(l=>LOADN[l]).join(", "),
+    "Sätze × Wdh/Zeit: "+[e.s,e.w].filter(Boolean).join(" × "),e.p?"Pause: "+e.p:"",(e.m||[]).length?"Material: "+e.m.join(", "):"",e.mu?"Muskeln: "+e.mu:"",(e.v||[]).length?"Video: "+e.v.join(" "):"",e.b?"Ausführung: "+e.b:""].filter(Boolean).join("\n")}
+/* Training als feste Einheit speichern (aus freiem Training oder aus dem Verlauf) */
+function sessFromItems(list,title){const s={id:uid(),t:title,a:"",h:"",items:list.map((x,i)=>{const e=exById(x.id)||{};
+  return {u:uid(),id:x.id,n:e.n||x.n,k:e.k||x.k||"eigen",s:x.s!=null?x.s:(x.log?String(x.log.length):e.s||""),w:x.w||e.w||"",p:x.p!=null?x.p:(e.p||""),r:x.r!=null?x.r:(e.r||""),b:x.b||"",v:(x.v||e.v||[]).slice(),ss:i>0&&!!x.ss,goal:x.goal||"",kg:"",log:[]}})};
+  state.sessions.push(s);return s}
+function savedMsg(s){flash(`Gespeichert als «${s.t}» – oben bei den Einheiten. Umbenennen im Tab «Bearbeiten».`)}
+document.getElementById("saveSessBtn").addEventListener("click",()=>{const c=cur();if(!c.items.length)return;
+  const s=sessFromItems(c.items,"Mein Training "+fmtDate(Date.now()));save();renderBar();savedMsg(s)});
 /* Freies Training: im Gym spontan Übung für Übung zusammenstellen */
 document.getElementById("freeBtn").addEventListener("click",()=>{
   let s=state.sessions.find(x=>x.free&&!x.items.some(it=>(it.log||[]).length));
@@ -1449,6 +1498,8 @@ function renderPick(){const q=document.getElementById("pickSearch").value.trim()
   if(toks.length||pickF.foc.length||pickF.load.length){const hit=all.filter(e=>{const hay=pickHay(e);return toks.every(t=>hay.includes(t))});h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
   else{const rec=recentIds();if(rec.length)h+=`<h4>Zuletzt gemacht</h4>`+rec.map(id=>pickRow(exById(id))).join("");
     CATS.forEach(([k,n])=>{const L=all.filter(e=>(e.k||"eigen")===k);if(L.length)h+=`<h4>${esc(n)}</h4>`+L.map(pickRow).join("")})}
+  const qq=document.getElementById("pickSearch").value.trim();
+  h+=`<button type="button" class="addcoach newex" data-newex="1">＋ Übung nicht gefunden? Eigene erstellen${qq?` «${esc(qq)}»`:""}</button>`;
   document.getElementById("pickList").innerHTML=h}
 function openPick(){document.getElementById("pickSearch").value="";renderPickFilters();renderPick();pickModal.hidden=false;document.getElementById("pickList").scrollTop=0}
 document.getElementById("addExBtn").addEventListener("click",openPick);
@@ -1456,6 +1507,7 @@ document.getElementById("pickSearch").addEventListener("input",renderPick);
 pickModal.addEventListener("click",e=>{if(e.target===pickModal||e.target.closest("[data-close]")){pickModal.hidden=true;return}
   const pf=e.target.closest("[data-pfoc],[data-pload]");if(pf){const [arr,k]=pf.dataset.pfoc?[pickF.foc,pf.dataset.pfoc]:[pickF.load,pf.dataset.pload];const i=arr.indexOf(k);if(i>=0)arr.splice(i,1);else arr.push(k);
     const sl=[...document.querySelectorAll("#pickFilters .cats")].map(x=>x.scrollLeft);renderPickFilters();document.querySelectorAll("#pickFilters .cats").forEach((x,i)=>x.scrollLeft=sl[i]);renderPick();return}
+  if(e.target.closest("[data-newex]")){openNewEx(document.getElementById("pickSearch").value.trim());return}
   const b=e.target.closest("[data-pick]");if(!b)return;const ex=exById(b.dataset.pick);if(!ex)return;
   const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();pickModal.hidden=true;renderItems();renderBar();renderProgress();
   flash(`${shortN(ex.n)} hinzugefügt`);const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
