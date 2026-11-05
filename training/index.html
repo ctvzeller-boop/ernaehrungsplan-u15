@@ -1027,7 +1027,7 @@ function renderLoads(){
 function renderLib(){
   const q=filter.q.trim().toLowerCase();const inSess=new Set(cur().items.map(i=>i.id));
   const html=CATS.map(([k,n])=>{
-    const list=exAll().filter(e=>e.k===k&&(!filter.foc.length||focOf(e).some(x=>filter.foc.includes(x)))&&(!filter.load.length||(e.l||[]).some(x=>filter.load.includes(x)))&&(!q||[e.n,e.b,(e.m||[]).join(" "),e.mu].join(" ").toLowerCase().includes(q)));
+    const list=exAll().filter(e=>e.k===k&&(!filter.foc.length||focOf(e).some(x=>filter.foc.includes(x)))&&(!filter.load.length||(e.l||[]).some(x=>filter.load.includes(x)))&&(!q||exMatch(e,q)));
     if(!list.length)return "";
     return `<div class="libgroup c-${k}"><h3><span class="dot"></span>${n}</h3>${list.map(e=>`
       <div class="ex">${thumbHTML(e.id,e.n)}<details><summary>${nameHTML(e.n)}<span class="dose">${esc(dose(e))}</span>${infoHTML(e.id)}</summary>
@@ -1489,13 +1489,30 @@ const pickModal=document.getElementById("pickModal");
 function recentIds(){const out=[];hist().slice().sort((a,b)=>b.d-a.d).forEach(h=>h.items.forEach(x=>{if(!out.includes(x.id)&&exById(x.id))out.push(x.id)}));return out.slice(0,8)}
 function pickRow(e){return `<button type="button" class="pickrow" data-pick="${esc(e.id)}"><span class="pn">${nameHTML(e.n)}</span><span class="pd">${esc([e.s&&e.w?e.s+" × "+e.w:e.w].filter(Boolean).join(""))}</span></button>`}
 const pickF={foc:[],load:[]};
+/* Suche: Deutsch/Englisch-Synonyme + kleine Tippfehler (bizep, biceps, schulter, shoulder …) */
+const SYN=[["bizeps","biceps","bicep","bizep"],["trizeps","triceps","tricep"],["schulter","shoulder","delt","delts","deltoid"],["brust","chest","pec","pecs","brustmuskel"],
+ ["rucken","back","lats","latissimus"],["bein","beine","leg","legs"],["gesass","glute","glutes","po","hintern"],["bauch","abs","core","rumpf","bauchmuskeln","sixpack"],
+ ["quadrizeps","quad","quads","oberschenkel","quadriceps"],["hamstrings","hamstring","beinbeuger","beinruckseite","oberschenkelruckseite"],["wade","waden","calf","calves"],
+ ["adduktoren","adductor","adductors","adduktor"],["kniebeuge","squat","squats"],["kreuzheben","deadlift","deadlifts"],["rudern","row","rows","rowing"],
+ ["klimmzug","klimmzuge","pullup","pullups"],["liegestutz","liegestutze","pushup","pushups"],["drucken","press","presse"],["sprung","sprunge","jump","jumps","plyo","springen"],
+ ["ausfallschritt","lunge","lunges"],["hufte","hip","hips","hufheben"],["unterarm","unterarme","forearm","forearms","grip"],["dehnen","stretch","stretching","mobility","mobilitat","beweglichkeit"],
+ ["aufwarmen","warmup","aufwarmung","activation","aktivierung"],["schnelligkeit","speed","sprint","sprints","schnell"],["band","resistance","theraband","bander"],
+ ["kurzhantel","kurzhanteln","dumbbell","dumbbells","kh"],["langhantel","barbell","lh"],["kabel","kabelzug","cable"],["korpergewicht","bodyweight"],["rotation","drehen","rotieren"],["stutz","plank","planks"]];
+function normS(x){return String(x||"").toLowerCase().replace(/ä/g,"a").replace(/ö/g,"o").replace(/ü/g,"u").replace(/ß/g,"ss").replace(/[-‐–]/g,"")}
+function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let pr=Array.from({length:n+1},(_,j)=>j);
+  let pp=null;for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++){c[j]=Math.min(pr[j]+1,c[j-1]+1,pr[j-1]+(a[i-1]===b[j-1]?0:1));if(pp&&i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])c[j]=Math.min(c[j],pp[j-2]+1)}pp=pr;pr=c}return pr[n]}
+function tokAlts(t){const out=new Set([t]);SYN.forEach(g=>{if(g.some(w=>w===t||(t.length>=4&&(w.startsWith(t)||t.startsWith(w)&&w.length>=4))||(t.length>=5&&lev(t,w)<=1)))g.forEach(w=>out.add(w))});return [...out]}
+function tokMatch(t,hay,words){return tokAlts(t).some(a=>a.length<=3?words.some(w=>w.startsWith(a)):hay.includes(a))||(t.length>=6&&words.join("").includes(t))||
+  (t.length>=5&&words.some(w=>w.length>=t.length-1&&lev(t,w.slice(0,t.length))<=(t.length>=8?2:1)))}
+function exMatch(e,q){const toks=normS(q).split(/[\s,]+/).filter(Boolean);if(!toks.length)return true;const hay=normS(pickHay(e));const words=hay.split(/[^a-z0-9]+/).filter(Boolean);return toks.every(t=>tokMatch(t,hay,words))}
+function nameHit(e,q){const n=normS(e.n);return normS(q).split(/\s+/).filter(Boolean).every(t=>tokAlts(t).some(a=>n.includes(a)))}
 function pickHay(e){const fn=focOf(e).map(f=>(FOCI.find(x=>x[0]===f)||[,""])[1]);return [e.n,e.b,musOf(e.id),matLine(e.id),fn.join(" "),(e.l||[]).map(l=>LOADN[l]).join(" ")].join(" ").toLowerCase()}
 function renderPickFilters(){document.getElementById("pickFilters").innerHTML=
   `<div class="cats" role="group" aria-label="Fokus">${FOCI.map(([k,n])=>`<button type="button" class="cat" data-pfoc="${k}" aria-pressed="${pickF.foc.includes(k)}">${n}</button>`).join("")}</div>`+
   `<div class="cats" role="group" aria-label="Belastung">${LOADS.map(([k,n])=>`<button type="button" class="cat" data-pload="${k}" aria-pressed="${pickF.load.includes(k)}">${n}</button>`).join("")}</div>`}
 function renderPick(){const q=document.getElementById("pickSearch").value.trim().toLowerCase();const toks=q.split(/\s+/).filter(Boolean);
   const all=exAll().filter(e=>(!pickF.foc.length||focOf(e).some(x=>pickF.foc.includes(x)))&&(!pickF.load.length||(e.l||[]).some(x=>pickF.load.includes(x))));let h="";
-  if(toks.length||pickF.foc.length||pickF.load.length){const hit=all.filter(e=>{const hay=pickHay(e);return toks.every(t=>hay.includes(t))});h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
+  if(toks.length||pickF.foc.length||pickF.load.length){const hit=all.filter(e=>exMatch(e,q)).sort((a,b)=>(nameHit(b,q)?1:0)-(nameHit(a,q)?1:0));h=hit.length?hit.map(pickRow).join(""):`<p class="empty">Nichts gefunden.</p>`}
   else{const rec=recentIds();if(rec.length)h+=`<h4>Zuletzt gemacht</h4>`+rec.map(id=>pickRow(exById(id))).join("");
     CATS.forEach(([k,n])=>{const L=all.filter(e=>(e.k||"eigen")===k);if(L.length)h+=`<h4>${esc(n)}</h4>`+L.map(pickRow).join("")})}
   const qq=document.getElementById("pickSearch").value.trim();
