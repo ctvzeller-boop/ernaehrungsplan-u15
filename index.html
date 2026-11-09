@@ -445,8 +445,11 @@ details.info[open] summary{margin-bottom:4px;display:block}
   .brand h1{overflow-wrap:anywhere}
   .daynav-title h2{font-size:1.6rem}
   h1{font-size:1.75rem}
-  .tl{grid-template-columns:50px minmax(0,1fr);gap:8px}
-  .tltime{font-size:1.1rem}
+  .tl{grid-template-columns:minmax(0,1fr);gap:3px}
+  .tltime{font-size:1rem;text-align:left;padding:0 2px}
+  .tltime:has(.tedit){justify-content:flex-start}
+  .tltime .tedit:focus{left:0;right:auto}
+  .tltime:empty{display:none}
 }
 @media (max-width:760px){.planbar{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}.planbar::-webkit-scrollbar{display:none}.weekgrid{grid-template-columns:minmax(0,1fr);min-width:0}.daycol:not(.active){display:none}.daycol{border-right:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -1948,7 +1951,7 @@ function renderToday(){
   items.sort((a,b)=>a.t-b.t||(a.kind==="session"?-1:0));
   tl.innerHTML=items.map(it=>{
     if(it.kind==="wake"){const ok=!!lg.s;
-      return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"–":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
+      return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
         <label class="tick"><input type="checkbox" id="tick-sleep" data-tick="sleep"${ok?" checked":""}${canTick?"":" disabled"}><span>${ok?"Mind. 8 h geschlafen":"Mind. 8 h geschlafen?"}</span></label></div></div></li>`}
     if(it.kind==="act"){const a=it.a;
       return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(a.s)}</span><input type="time" class="tedit" id="hat-${a.i}" data-itime="${k}|act|${a.i}" value="${fmtTime(a.s)}" aria-label="Startzeit ${esc(a.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><button type="button" class="draghandle tldh" id="hdha-${a.i}" data-drag="${k}|act|${a.i}" aria-label="${esc(a.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
