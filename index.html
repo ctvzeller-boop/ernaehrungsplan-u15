@@ -59,6 +59,9 @@ h2{font-size:1.5rem;text-transform:uppercase;letter-spacing:.04em}
 @media (max-width:760px){.logo{width:52px;height:52px;border-radius:12px}}
 header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
 .namefield{display:flex;flex-direction:column;gap:4px;min-width:0}
+.namerow{display:flex;gap:6px;min-width:0}.namerow #athlete{flex:1;min-width:0}
+.kgfield{display:flex;align-items:center;gap:4px;font-size:.85rem;color:var(--muted);flex:none}
+.kgfield input{width:4.6em;text-align:right;padding:10px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;color:var(--ink);background:var(--surface)}
 label.small,.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 input[type=text],select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;box-sizing:border-box;min-width:0}
 input[type=text]:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -306,6 +309,15 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dishpick.big .dishname{font-size:1.02rem}
 .dishpick.big{padding:9px 28px 9px 11px}
 .dishpick.empty .dishname{color:var(--muted);font-weight:500}
+.protpill{align-self:flex-start;font-size:.75rem;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.protpill.ok{color:var(--t-leicht);border-color:var(--t-leicht)}
+.chipname{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px}
+.nbs{display:flex;flex-wrap:wrap;gap:3px}
+.nb{font-size:.68rem;font-weight:600;line-height:1.2;padding:1px 6px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.nb.p.hi{color:var(--accent);border-color:var(--accent)}
+.nb.kl,.nb.fg{color:var(--t-leicht);border-color:var(--t-leicht)}
+.nb.fu{color:var(--t-mittel);border-color:var(--t-mittel)}
+.nb.s-match{color:var(--t-spiel);border-color:var(--t-spiel)}
 .mptag{display:block;margin-top:3px;font-size:.74rem;font-weight:600;color:var(--k-well);line-height:1.25}
 .dishpick.mp{border-style:dashed;border-color:var(--k-well)}
 #vegBtn[aria-pressed="true"]{background:var(--t-leicht-bg);border-color:var(--t-leicht);color:var(--t-leicht)}
@@ -451,7 +463,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
     </div>
     <div class="namefield">
       <label class="small" for="athlete">Athlet/in</label>
-      <input type="text" id="athlete" placeholder="Name">
+      <div class="namerow"><input type="text" id="athlete" placeholder="Name"><label class="kgfield" title="Körpergewicht für den Proteinbedarf"><input type="number" id="kg" inputmode="decimal" min="25" max="120" step="1" placeholder="55" aria-label="Körpergewicht in kg"><span>kg</span></label></div>
     </div>
   </header>
 
@@ -493,6 +505,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
     <div id="hHero"></div>
     <div class="streaks" id="hStreaks"></div>
     <ol class="timeline" id="hTimeline"></ol>
+    <div class="card water" id="hProt"></div>
     <div class="card water" id="hWater"></div>
   </section>
 
@@ -536,7 +549,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> P = Protein pro Portion (ca.). KH schnell = Weissmehl, Zucker, Früchte; KH langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -660,6 +673,138 @@ const SLOTS=[
   ["abend","Nachtessen",""],
   ["nach","Nach-Training-Snack","innerhalb ca. 1 h"]
 ];
+/* Eigenschaften der Gerichte:
+   pre  = leicht verdaulich, gut 2–3 h vor Training/Spiel
+   fast = schnelle Kohlenhydrate, als Snack bis kurz vor der Belastung
+   fib  = viele Nahrungsfasern (Vollkorn, Hülsenfrüchte, Gemüse): gut mit Abstand zum Training
+   rec  = Kohlenhydrate und Protein: gut nach dem Training
+   heavy= fett- oder ballaststoffreich, schwer verdaulich */
+const DP={
+  "Protein-Birchermüesli":{fib:1,rec:1},
+  "Vollkornbrot mit Avocado und Eiern":{fib:1,rec:1},
+  "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake":{pre:1,rec:1},
+  "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken":{rec:1},
+  "Pfannen-Oats mit Beeren und Skyr":{pre:1,rec:1},
+  "Zopf mit Konfi oder Honig":{pre:1,fast:1},
+  "Protein-Birchermüesli (kleine Portion)":{fib:1,rec:1},
+  "Frucht und eine Handvoll Nüsse":{fib:1},
+  "Skyr mit Frucht":{pre:1,rec:1},
+  "Darvida":{pre:1,fast:1},
+  "Studentenfutter":{heavy:1},
+  "Banane":{pre:1,fast:1},
+  "Apfel":{pre:1},"Birne":{pre:1},"Kaki":{pre:1},"Orange":{pre:1},"Mandarine/Clementine":{pre:1},"Nektarine/Pfirsich":{pre:1},
+  "Proteinshake":{rec:1},
+  "Sandwich mit Fleisch und/oder Käse":{pre:1,rec:1},
+  "Getreidewaffeln (Mais, Reis, Amaranth usw.)":{pre:1,fast:1},
+  "Riegel":{pre:1,fast:1},
+  "Dörrfrüchte":{pre:1,fast:1},
+  "Schokoladenmilch":{rec:1,fast:1},
+  "Brötli":{pre:1,fast:1},
+  "Schokoladenmilch und Sandwich":{rec:1},
+  "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus":{rec:1},
+  "Reis mit Poulet und Gemüse":{pre:1,rec:1},
+  "Vegi-Bolognese mit Linsen oder Sojahack":{fib:1,rec:1},
+  "Reis mit Tofu und Gemüse":{pre:1,rec:1},
+  "Reis mit Ei und Gemüse":{pre:1,rec:1},
+  "Pasta mit Tomatensauce":{pre:1},
+  "Gemüsecurry mit Reis":{fib:1},
+  "Quinoa mit Gemüse oder Quinoa-Salat":{fib:1},
+  "Couscous mit Gemüse":{fib:1},
+  "Linsendal mit Reis":{fib:1,rec:1},
+  "Pasta mit Thon-Tomatensauce":{pre:1,rec:1},
+  "Pasta mit Poulet und Pesto":{rec:1},
+  "Hörnli mit Hüttenkäse und Gemüse":{rec:1},
+  "Lasagne mit Linsen oder Hackfleisch":{heavy:1,rec:1},
+  "Poulet-Reis-Pfanne mit Ei (Fried Rice)":{rec:1},
+  "Chili sin Carne mit Reis":{fib:1,rec:1},
+  "Risotto mit Poulet und Erbsen":{pre:1,rec:1},
+  "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch":{fib:1,rec:1},
+  "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen":{fib:1,rec:1},
+  "Poulet-Wraps mit Bohnen und Salat":{fib:1,rec:1},
+  "Couscous-Salat mit Feta und Kichererbsen":{fib:1},
+  "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse":{rec:1}
+};
+/* Nährwert-Profil pro Portion (Richtwerte für 13–16-jährige Athleten):
+   p = Protein in g (ca.)
+   k = Kohlenhydrate: s = schnell verdaulich (Weissmehl, Zucker, Früchte), l = langsam (Vollkorn, Dinkel, Hafer, Hülsenfrüchte), m = gemischt
+   f = Fett: g = vor allem gesunde Fette (Nüsse, Avocado, Oliven-/Rapsöl, Fisch), u = eher gesättigte Fette (Butter, Rahm, Käse, Wurst), 0 = wenig Fett
+   h = Gesundheitswert 3 = sehr gut, 2 = gut, 1 = ab und zu */
+const NUT={
+  "Protein-Birchermüesli":{p:28,k:"l",f:"g",h:3},
+  "Vollkornbrot mit Avocado und Eiern":{p:18,k:"l",f:"g",h:3},
+  "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake":{p:28,k:"m",f:"u",h:2},
+  "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken":{p:24,k:"l",f:"u",h:2},
+  "Pfannen-Oats mit Beeren und Skyr":{p:24,k:"l",f:0,h:3},
+  "Zopf mit Konfi oder Honig":{p:8,k:"s",f:"u",h:1},
+  "Protein-Birchermüesli (kleine Portion)":{p:14,k:"l",f:"g",h:3},
+  "Frucht und eine Handvoll Nüsse":{p:5,k:"m",f:"g",h:3},
+  "Skyr mit Frucht":{p:17,k:"s",f:0,h:3},
+  "Darvida":{p:3,k:"m",f:0,h:2},
+  "Studentenfutter":{p:6,k:"m",f:"g",h:2},
+  "Banane":{p:1,k:"s",f:0,h:3},"Apfel":{p:0,k:"s",f:0,h:3},"Orange":{p:1,k:"s",f:0,h:3},"Mandarine/Clementine":{p:1,k:"s",f:0,h:3},
+  "Kaki":{p:1,k:"s",f:0,h:3},"Nektarine/Pfirsich":{p:1,k:"s",f:0,h:3},"Birne":{p:0,k:"s",f:0,h:3},
+  "Proteinshake":{p:25,k:"m",f:"g",h:2},
+  "Sandwich mit Fleisch und/oder Käse":{p:15,k:"m",f:"u",h:2},
+  "Getreidewaffeln (Mais, Reis, Amaranth usw.)":{p:2,k:"s",f:0,h:2},
+  "Riegel":{p:4,k:"s",f:"u",h:1},
+  "Dörrfrüchte":{p:1,k:"s",f:0,h:2},
+  "Schokoladenmilch":{p:10,k:"s",f:"u",h:2},
+  "Brötli":{p:5,k:"s",f:0,h:1},
+  "Schokoladenmilch und Sandwich":{p:24,k:"s",f:"u",h:2},
+  "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus":{p:28,k:"m",f:"u",h:2},
+  "Reis mit Poulet und Gemüse":{p:32,k:"m",f:0,h:3},
+  "Vegi-Bolognese mit Linsen oder Sojahack":{p:24,k:"l",f:0,h:3},
+  "Reis mit Tofu und Gemüse":{p:20,k:"m",f:"g",h:3},
+  "Reis mit Ei und Gemüse":{p:17,k:"m",f:"g",h:3},
+  "Pasta mit Tomatensauce":{p:12,k:"s",f:0,h:2},
+  "Gemüsecurry mit Reis":{p:10,k:"m",f:"u",h:2},
+  "Quinoa mit Gemüse oder Quinoa-Salat":{p:13,k:"l",f:"g",h:3},
+  "Couscous mit Gemüse":{p:10,k:"m",f:"g",h:2},
+  "Linsendal mit Reis":{p:20,k:"l",f:0,h:3},
+  "Pasta mit Thon-Tomatensauce":{p:30,k:"m",f:0,h:3},
+  "Pasta mit Poulet und Pesto":{p:30,k:"m",f:"g",h:2},
+  "Hörnli mit Hüttenkäse und Gemüse":{p:26,k:"m",f:0,h:3},
+  "Lasagne mit Linsen oder Hackfleisch":{p:26,k:"m",f:"u",h:1},
+  "Poulet-Reis-Pfanne mit Ei (Fried Rice)":{p:30,k:"m",f:"g",h:2},
+  "Chili sin Carne mit Reis":{p:18,k:"l",f:0,h:3},
+  "Risotto mit Poulet und Erbsen":{p:28,k:"s",f:"u",h:2},
+  "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch":{p:34,k:"l",f:"g",h:3},
+  "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen":{p:26,k:"m",f:"g",h:3},
+  "Poulet-Wraps mit Bohnen und Salat":{p:30,k:"l",f:0,h:3},
+  "Couscous-Salat mit Feta und Kichererbsen":{p:18,k:"l",f:"g",h:3},
+  "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse":{p:26,k:"m",f:0,h:2}
+};
+const KTXT={s:"schnelle Kohlenhydrate",l:"langsame Kohlenhydrate (Vollkorn, Hafer, Hülsenfrüchte)",m:"gemischte Kohlenhydrate"};
+const FTXT={g:"gesunde Fette",u:"eher gesättigte Fette (Butter, Käse, Fleisch)"};
+function nutOf(n){return NUT[n]||null}
+function protOf(n){const x=NUT[n];return x?x.p:0}
+function healthOf(n){const x=NUT[n];return x?x.h:2}
+function isProtRich(n,sk){const x=NUT[n];return !!x&&x.p>=(MAINS.includes(sk)||sk==="fruehstueck"?22:12)}
+/* Eignung: aus Verdaulichkeit (DP) und Profil abgeleitet */
+function suitOf(n){const p=DP[n]||{},x=NUT[n]||{},r=[];
+  if(p.fast)r.push(["kurz","bis 1 h vor dem Training"]);
+  if(p.pre&&!p.fib&&!p.heavy)r.push(["vor","2–3 h vor Training/Match"]);
+  if(p.pre&&!p.fib&&!p.heavy&&x.f!=="u"&&x.k!=="l")r.push(["match","Matchday"]);
+  if(p.rec)r.push(["nach","nach dem Training"]);
+  if(p.fib||x.k==="l")r.push(["frei","mit Abstand zum Training / Restday"]);
+  return r}
+const SUIT_SHORT={kurz:"bis 1 h vorher",vor:"2–3 h vorher",match:"Matchday",nach:"nach Training",frei:"Restday"};
+function nutBadges(n,sk){const x=NUT[n];if(!x)return "";const b=[];
+  b.push(`<span class="nb p${isProtRich(n,sk)?" hi":""}" title="Protein ca. ${x.p} g">P ${x.p} g</span>`);
+  if(x.k)b.push(`<span class="nb k${x.k}" title="${KTXT[x.k]}">${x.k==="s"?"KH schnell":x.k==="l"?"KH langsam":"KH gemischt"}</span>`);
+  if(x.f)b.push(`<span class="nb f${x.f}" title="${FTXT[x.f]}">${x.f==="g"?"gesunde Fette":"gesättigte Fette"}</span>`);
+  suitOf(n).forEach(([c,t])=>b.push(`<span class="nb s-${c}" title="Geeignet: ${t}">${SUIT_SHORT[c]}</span>`));
+  return `<span class="nbs">${b.join("")}</span>`}
+function nutLine(n,sk){const x=NUT[n];if(!x)return "";const t=[`Protein ca. ${x.p} g${isProtRich(n,sk)?" (proteinreich)":""}`];
+  if(x.k)t.push(KTXT[x.k]);if(x.f)t.push(FTXT[x.f]);const su=suitOf(n).map(a=>a[1]);if(su.length)t.push("geeignet: "+su.join(", "));
+  return t.join(" · ")+"."}
+/* Proteinbedarf: ca. 1,3–1,6 g pro kg Körpergewicht, je nach Belastung */
+const PROT_KG={leicht:1.3,mittel:1.5,intensiv:1.6,ganztag:1.7,spiel:1.6};
+function weightKg(){const w=+state.kg;return w>=25&&w<=120?w:55}
+function protTarget(k){const t=state.plan[k].t||"leicht";return Math.round(weightKg()*(PROT_KG[t]||1.4)/5)*5}
+function protDay(k){const d=state.plan[k];let g=0;SLOTS.forEach(([sk])=>{if(d.s[sk])g+=protOf(d.s[sk]);extrasOf(k,sk).forEach(n=>g+=protOf(n))});return g}
+function protPill(k){const g=protDay(k),t=protTarget(k),ok=g>=t*0.9;
+  return `<span class="protpill${ok?" ok":""}" title="Protein ca. ${g} g, Bedarf ca. ${t} g">Protein ${g}/${t} g</span>`}
 const OPTIONS={
   fruehstueck:[
     {n:"Protein-Birchermüesli",r:"Protein-Birchermüesli",d:"Magerquark oder Skyr, Haferflocken, geraffelter Apfel, geschnittene Banane, saisonale Früchte, eine Handvoll Nüsse. Mit Zimt, Honig oder Datteln verfeinern."},
@@ -775,7 +920,7 @@ function ensurePlans(){
   const p={id:uid(),name:state.name||"",plan:state.plan,veg:!!state.veg,sleepWeek:state.sleepWeek||null};
   state.plans=[p];state.active=p.id;
 }
-function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.sleepWeek=state.sleepWeek||null}}
+function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.kg=state.kg||null;a.sleepWeek=state.sleepWeek||null}}
 function prevKey(k){return DAYS[(DAYS.findIndex(x=>x[0]===k)+6)%7][0]}
 function dayName(k){return DAYS.find(x=>x[0]===k)[1]}
 /* Mealprep: Zmittag = Reste vom Znacht am Vorabend */
@@ -806,7 +951,7 @@ function isMeat(cat,name){return OPTIONS[cat].some(o=>o.n===name&&o.m)}
 function isHidden(name){return (state.hidden||[]).includes(name)}
 function isFav(name){return !!name&&(state.fav||[]).includes(name)}
 function optionsFor(cat){return OPTIONS[cat].filter(o=>!(state.veg&&o.m)&&!isHidden(o.n)).concat((state.custom[cat]||[]).map(n=>({n,custom:true})))}
-function detailFor(cat,name){const o=optionsFor(cat).find(x=>x.n===name);const tg=typeof dishTags==="function"?dishTags(name):"";return [o&&o.d?o.d:"",tg].filter(Boolean).join(" ")}
+function detailFor(cat,name){const o=optionsFor(cat).find(x=>x.n===name);const tg=typeof dishTags==="function"?dishTags(name):"";return [o&&o.d?o.d:"",tg,typeof nutLine==="function"?nutLine(name,cat):""].filter(Boolean).join(" ")}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 const ICONS={
@@ -834,7 +979,7 @@ function renderPlates(){
 const SHORT={fruehstueck:"Frühstück",znueni:"Znüni",mittag:"Zmittag",vor:"Zvieri",abend:"Znacht",nach:"Nach Training"};
 /* Mehrere Snacks: zusätzliche Gerichte in d.x[slot] */
 /* Auswahl-Liste: Favoriten zuerst */
-function optList(list,sel){const f=list.filter(o=>isFav(o.n)),r=list.filter(o=>!isFav(o.n));
+function optList(list,sel){const hs=(a,b)=>healthOf(b.n)-healthOf(a.n);const f=list.filter(o=>isFav(o.n)).sort(hs),r=list.filter(o=>!isFav(o.n)).sort(hs);
   const one=o=>`<option value="${esc(o.n)}"${sel(o)?" selected":""}>${isFav(o.n)?"♥ ":""}${esc(o.n)}${o.custom?" ★":""}</option>`;
   return f.length?`<optgroup label="Favoriten">${f.map(one).join("")}</optgroup><optgroup label="Alle Gerichte">${r.map(one).join("")}</optgroup>`:r.map(one).join("")}
 function extrasOf(k,sk){const d=state.plan[k];return (d&&d.x&&Array.isArray(d.x[sk]))?d.x[sk]:[]}
@@ -902,6 +1047,7 @@ function renderWeekTable(){
     return `<div class="daycol${k===activeDay?" active":""}" data-day="${k}">
       <div class="dayhead"><span class="dayname">${n}</span>
         <button type="button" class="typebtn" id="typebtn-${k}" data-t="${d.t}" data-typemenu="${k}" aria-haspopup="dialog" aria-expanded="${menu.day===k}" aria-label="Tagestyp ${n}: ${typeName(d)||"nicht gewählt"}"><span>${typeName(d)||"Tagestyp wählen"}</span><span class="caret">▾</span></button>
+        ${protPill(k)}
         <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen" aria-label="Notizen ${n}">
         <button type="button" class="addentry" id="tadd-${k}" data-addentry="${k}">＋ Eintrag</button>
       </div>
@@ -966,6 +1112,7 @@ document.addEventListener("input",e=>{
   const el=e.target;
   if(el.dataset.train){state.plan[el.dataset.train].tr=el.value;save();renderText()}
   if(el.id==="athlete"){state.name=el.value;save();renderText();renderPlanBar()}
+  if(el.id==="kg"){const v=parseFloat(el.value);state.kg=v>=25&&v<=120?Math.round(v):null;save();renderTable()}
 });
 document.addEventListener("click",e=>{
   const tab=e.target.closest("[data-tab]");
@@ -1027,10 +1174,11 @@ function likeGroups(){
   const cu=ks=>ks.flatMap(k=>((state.custom||{})[k]||[]).map(n=>({n,custom:true})));
   return [["Frühstück",uniq(OPTIONS.fruehstueck.concat(cu(["fruehstueck"])))],["Mittag- und Nachtessen",uniq(HAUPT.concat(cu(MAINS)))],["Snacks",uniq(OPTIONS.znueni.concat(OPTIONS.vor,OPTIONS.nach,cu(SNACKS)))]];
 }
+function listSlot(n){return ["fruehstueck","znueni","vor","nach","mittag"].find(sk=>OPTIONS[sk].some(o=>o.n===n))||"znueni"}
 function renderLikes(){
   document.getElementById("likeGroups").innerHTML=likeGroups().map(([title,list])=>{
     const on=list.filter(o=>!isHidden(o.n)),off=list.filter(o=>isHidden(o.n));
-    return `<div class="likegroup"><h3>${title} <span class="empty">(${on.length}${on.filter(o=>isFav(o.n)).length?` · ${on.filter(o=>isFav(o.n)).length} ♥`:""})</span></h3><div class="chips">${on.slice().sort((a,b)=>isFav(b.n)-isFav(a.n)).map(o=>`<span class="chip${state.veg&&o.m?" meat":""}${isFav(o.n)?" fav":""}"><button type="button" class="favbtn" data-fav="${esc(o.n)}" aria-pressed="${isFav(o.n)}" aria-label="${esc(o.n)} als Favorit">${isFav(o.n)?"♥":"♡"}</button>${esc(o.n)}<button type="button" data-hide="${esc(o.n)}" aria-label="${esc(o.n)} ausblenden">×</button></span>`).join("")||`<span class="empty">Alles ausgeblendet.</span>`}</div>${off.length?`<div class="eyebrow">Ausgeblendet</div><div class="chips">${off.map(o=>`<span class="chip off">${esc(o.n)}<button type="button" data-unhide="${esc(o.n)}" aria-label="${esc(o.n)} wieder einblenden">+</button></span>`).join("")}</div>`:""}</div>`}).join("");
+    return `<div class="likegroup"><h3>${title} <span class="empty">(${on.length}${on.filter(o=>isFav(o.n)).length?` · ${on.filter(o=>isFav(o.n)).length} ♥`:""})</span></h3><div class="chips">${on.slice().sort((a,b)=>isFav(b.n)-isFav(a.n)||healthOf(b.n)-healthOf(a.n)).map(o=>`<span class="chip${state.veg&&o.m?" meat":""}${isFav(o.n)?" fav":""}"><button type="button" class="favbtn" data-fav="${esc(o.n)}" aria-pressed="${isFav(o.n)}" aria-label="${esc(o.n)} als Favorit">${isFav(o.n)?"♥":"♡"}</button><span class="chipname">${esc(o.n)}${nutBadges(o.n,listSlot(o.n))}</span><button type="button" data-hide="${esc(o.n)}" aria-label="${esc(o.n)} ausblenden">×</button></span>`).join("")||`<span class="empty">Alles ausgeblendet.</span>`}</div>${off.length?`<div class="eyebrow">Ausgeblendet</div><div class="chips">${off.map(o=>`<span class="chip off">${esc(o.n)}<button type="button" data-unhide="${esc(o.n)}" aria-label="${esc(o.n)} wieder einblenden">+</button></span>`).join("")}</div>`:""}</div>`}).join("");
 }
 
 /* Rezepte */
@@ -1168,7 +1316,7 @@ function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
 async function encodePlan(){
-  const o={n:state.name||"",v:!!state.veg,p:state.plan};
+  const o={n:state.name||"",v:!!state.veg,p:state.plan};if(state.kg)o.kg=state.kg;
   const data=new TextEncoder().encode(JSON.stringify(o));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data);
@@ -1187,8 +1335,8 @@ document.getElementById("shareBtn").addEventListener("click",async()=>{
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
 });
 /* Pläne verwalten */
-function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.sleepWeek=p.sleepWeek||null;clearDefaultSleep(state.sleepWeek);migratePlan(state.plan)}
-function refreshAll(){document.getElementById("athlete").value=state.name||"";document.getElementById("vegToggle").checked=!!state.veg;
+function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.kg=p.kg||null;state.sleepWeek=p.sleepWeek||null;clearDefaultSleep(state.sleepWeek);migratePlan(state.plan)}
+function refreshAll(){document.getElementById("athlete").value=state.name||"";document.getElementById("kg").value=state.kg||"";document.getElementById("vegToggle").checked=!!state.veg;
   if(typeof sleepSel!=="undefined")sleepSel=null;renderPlanBar();renderAll();renderLikes()}
 function switchPlan(id){if(id===state.active)return;save();state.active=id;loadActive();save();refreshAll()}
 function emptyPlan(){const o={};DAYS.forEach(([k])=>{o[k]={t:"",tr:"",ses:[],s:{}};SLOTS.forEach(([sk])=>o[k].s[sk]=NONE)});return o}
@@ -1211,13 +1359,13 @@ async function importCode(code){
     const txt=document.getElementById("shareBannerText"),undo=document.getElementById("undoImport");
     if(old){
       replacedBackup=JSON.parse(JSON.stringify(old));
-      old.plan=d.p;old.veg=!!d.v;if(d.n)old.name=d.n;
+      old.plan=d.p;old.veg=!!d.v;if(d.n)old.name=d.n;if(d.kg)old.kg=d.kg;
       state.imported[code]=old.id;importedId=null;state.active=old.id;loadActive();save();refreshAll();
       txt.textContent=fresh&&!norm(replacedBackup.name)?"Du hast einen Ernährungsplan erhalten. Er ersetzt die Beispielwoche.":`«${old.name||"Plan"}» wurde vom Coach aktualisiert. Deine abgehakten Mahlzeiten bleiben erhalten.`;
       undo.textContent=fresh&&!norm(replacedBackup.name)?"Beispielwoche zurückholen":"Alte Version zurückholen";
     }else{
       replacedBackup=null;
-      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,sleepWeek:null};
+      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,kg:d.kg||null,sleepWeek:null};
       state.plans.push(p);state.imported[code]=p.id;importedId=p.id;state.active=p.id;loadActive();save();refreshAll();
       txt.textContent="Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.";undo.textContent="Wieder entfernen";
     }
@@ -1623,57 +1771,6 @@ const PREF={
   nach:{spiel:["Schokoladenmilch und Sandwich","Schokoladenmilch","Proteinshake"],intensiv:["Schokoladenmilch und Sandwich","Proteinshake","Schokoladenmilch","Protein-Birchermüesli (kleine Portion)"],mittel:["Schokoladenmilch","Proteinshake","Brötli","Protein-Birchermüesli (kleine Portion)"],leicht:[]}
 };
 Object.values(PREF).forEach(o=>{if(o.intensiv)o.ganztag=o.intensiv});
-/* Eigenschaften der Gerichte:
-   pre  = leicht verdaulich, gut 2–3 h vor Training/Spiel
-   fast = schnelle Kohlenhydrate, als Snack bis kurz vor der Belastung
-   fib  = viele Nahrungsfasern (Vollkorn, Hülsenfrüchte, Gemüse): gut mit Abstand zum Training
-   rec  = Kohlenhydrate und Protein: gut nach dem Training
-   heavy= fett- oder ballaststoffreich, schwer verdaulich */
-const DP={
-  "Protein-Birchermüesli":{fib:1,rec:1},
-  "Vollkornbrot mit Avocado und Eiern":{fib:1,rec:1},
-  "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake":{pre:1,rec:1},
-  "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken":{rec:1},
-  "Pfannen-Oats mit Beeren und Skyr":{pre:1,rec:1},
-  "Zopf mit Konfi oder Honig":{pre:1,fast:1},
-  "Protein-Birchermüesli (kleine Portion)":{fib:1,rec:1},
-  "Frucht und eine Handvoll Nüsse":{fib:1},
-  "Skyr mit Frucht":{pre:1,rec:1},
-  "Darvida":{pre:1,fast:1},
-  "Studentenfutter":{heavy:1},
-  "Banane":{pre:1,fast:1},
-  "Apfel":{pre:1},"Birne":{pre:1},"Kaki":{pre:1},"Orange":{pre:1},"Mandarine/Clementine":{pre:1},"Nektarine/Pfirsich":{pre:1},
-  "Proteinshake":{rec:1},
-  "Sandwich mit Fleisch und/oder Käse":{pre:1,rec:1},
-  "Getreidewaffeln (Mais, Reis, Amaranth usw.)":{pre:1,fast:1},
-  "Riegel":{pre:1,fast:1},
-  "Dörrfrüchte":{pre:1,fast:1},
-  "Schokoladenmilch":{rec:1,fast:1},
-  "Brötli":{pre:1,fast:1},
-  "Schokoladenmilch und Sandwich":{rec:1},
-  "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus":{rec:1},
-  "Reis mit Poulet und Gemüse":{pre:1,rec:1},
-  "Vegi-Bolognese mit Linsen oder Sojahack":{fib:1,rec:1},
-  "Reis mit Tofu und Gemüse":{pre:1,rec:1},
-  "Reis mit Ei und Gemüse":{pre:1,rec:1},
-  "Pasta mit Tomatensauce":{pre:1},
-  "Gemüsecurry mit Reis":{fib:1},
-  "Quinoa mit Gemüse oder Quinoa-Salat":{fib:1},
-  "Couscous mit Gemüse":{fib:1},
-  "Linsendal mit Reis":{fib:1,rec:1},
-  "Pasta mit Thon-Tomatensauce":{pre:1,rec:1},
-  "Pasta mit Poulet und Pesto":{rec:1},
-  "Hörnli mit Hüttenkäse und Gemüse":{rec:1},
-  "Lasagne mit Linsen oder Hackfleisch":{heavy:1,rec:1},
-  "Poulet-Reis-Pfanne mit Ei (Fried Rice)":{rec:1},
-  "Chili sin Carne mit Reis":{fib:1,rec:1},
-  "Risotto mit Poulet und Erbsen":{pre:1,rec:1},
-  "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch":{fib:1,rec:1},
-  "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen":{fib:1,rec:1},
-  "Poulet-Wraps mit Bohnen und Salat":{fib:1,rec:1},
-  "Couscous-Salat mit Feta und Kichererbsen":{fib:1},
-  "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse":{rec:1}
-};
 const HARD=["intensiv","ganztag","spiel"];
 function dishTags(n){const p=DP[n];if(!p)return "";const t=[];
   if(p.fast)t.push("schnelle Kohlenhydrate, gut kurz vor dem Training");else if(p.pre)t.push("leicht verdaulich, gut 2–3 h vor dem Training");
@@ -1720,10 +1817,20 @@ function autoFill(){
       if(!((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel")))pool=preferred(k,sk,pool);
       let pick;
       if((sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel"))pick=pool[0];
-      else{const eff=n=>(used[n]||0)-(isFav(n)?1:0);const min=Math.min(...pool.map(eff));const best=pool.filter(n=>eff(n)===min);pick=best[Math.floor(Math.random()*best.length)]}
+      else{const eff=n=>(used[n]||0)-(isFav(n)?1:0)-(healthOf(n)-2)*0.5;const min=Math.min(...pool.map(eff));const best=pool.filter(n=>eff(n)===min);pick=best[Math.floor(Math.random()*best.length)]}
       d.s[sk]=pick;used[pick]=(used[pick]||0)+1;
-    })});
+    });
+    balanceProtein(k,used)});
   save();renderTable();renderText();
+}
+/* Protein auffüllen: tauscht Gerichte gegen passende, proteinreichere, bis der Tagesbedarf ungefähr gedeckt ist */
+function balanceProtein(k,used){const d=state.plan[k],target=protTarget(k);
+  const fixed=sk=>(sk==="mittag"&&d.mp)||(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel")||(sk==="abend"&&DAYS.some(([j])=>j===nextKey(k)&&state.plan[j].mp));
+  for(let round=0;round<4&&protDay(k)<target;round++){let best=null;
+    SLOTS.forEach(([sk])=>{if(fixed(sk)||!d.s[sk])return;const cur=d.s[sk];
+      let pool=preferred(k,sk,candidates(k,sk)).filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
+      pool.forEach(n=>{const gain=protOf(n)-protOf(cur);if(gain<=0)return;const sc=gain+healthOf(n)*2-((used&&used[n])||0)*8+(isFav(n)?4:0);if(!best||sc>best.sc)best={sk,n,sc,cur}})});
+    if(!best)break;d.s[best.sk]=best.n;if(used){used[best.cur]=Math.max(0,(used[best.cur]||1)-1);used[best.n]=(used[best.n]||0)+1}}
 }
 function reroll(k,sk,btnId){
   if(sk==="mittag"&&state.plan[k].mp){reroll(prevKey(k),"abend",btnId);flash(`Znacht am ${dayName(prevKey(k))} und Zmittag am ${dayName(k)} neu`);return}
@@ -1835,6 +1942,10 @@ function renderToday(){
   }).join("");
   // Wasser
   const ml=waterMl(lg),pct=Math.min(100,Math.round(ml/WATER_GOAL*100)),full=ml>=WATER_GOAL,hasE=(lg.e&&lg.e.length)||(lg.ml==null&&lg.w);
+  {const g=protDay(k),t=protTarget(k),pp=Math.min(100,Math.round(g/t*100)),ok=g>=t*0.9;
+  document.getElementById("hProt").innerHTML=`<div class="tlhead"><h2>Protein</h2><span class="pill">ca. ${g} g von ${t} g</span></div>
+    <div class="wbar${ok?" full":""}" role="progressbar" aria-label="Protein heute laut Plan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pp}"><div class="wfill" style="width:${pp}%"></div></div>
+    <p class="hint">${ok?"Der Plan deckt den Proteinbedarf für heute.":`Es fehlen noch ca. ${t-g} g. Ein proteinreicher Snack hilft, z. B. Skyr mit Frucht.`} Richtwert: ${String(PROT_KG[state.plan[k].t||"leicht"]||1.4).replace(".",",")} g pro kg bei ${weightKg()} kg.</p>`}
   document.getElementById("hWater").innerHTML=`<div class="tlhead"><h2>Wasser</h2><span class="pill">${fmtL(ml)} von 2 l</span></div>
     <p class="hint">Tippe an, was du getrunken hast. Ziel: mind. 2&nbsp;l ausserhalb des Trainings.</p>
     <div class="drinks" role="group" aria-label="Getränk hinzufügen">${DRINKS.map(([v,l,ic])=>`<button type="button" class="drink" id="drink-${v}" data-drink="${v}" aria-label="${l} Wasser hinzufügen"${canTick?"":" disabled"}>${ic}<span>${l}</span></button>`).join("")}</div>
@@ -1976,7 +2087,7 @@ pdfBtn.addEventListener("click",()=>{
 });
 
 ensurePlans();loadActive();
-document.getElementById("athlete").value=state.name||"";
+document.getElementById("athlete").value=state.name||"";document.getElementById("kg").value=state.kg||"";
 document.getElementById("vegToggle").checked=!!state.veg;
 save();
 renderPlates();renderPlanBar();renderAll();showView(codeFrom(location.hash)?"heute":location.hash.slice(1));
