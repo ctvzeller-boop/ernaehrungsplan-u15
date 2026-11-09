@@ -283,6 +283,12 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .item.linked{margin-top:0;border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
 .item.haslink{border-bottom-left-radius:0;border-bottom-right-radius:0}
 .ihead{display:flex;gap:10px;align-items:flex-start}
+.draghandle{flex:none;align-self:stretch;min-width:28px;min-height:44px;margin:-6px 0 -6px -6px;padding:0 4px;border:none;background:transparent;color:var(--muted);font-size:1.25rem;line-height:1;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-radius:8px}
+.draghandle:hover{color:var(--ink);background:var(--bg)}
+.items.sorting .item{transition:transform .15s ease}
+.items .item.dragging{transition:none;position:relative;z-index:20;box-shadow:0 12px 28px rgba(0,0,0,.22);cursor:grabbing;opacity:.97}
+.items.sorting{-webkit-user-select:none;user-select:none}
+body.dragging-active{cursor:grabbing}
 .badge{flex:none;min-width:40px;text-align:center;font-family:var(--display);font-weight:700;font-size:1.15rem;background:var(--cbg);color:var(--c);border-radius:6px;padding:2px 6px}
 .item.done .badge{background:var(--ok);color:#fff}
 .iname{flex:1;min-width:0;font-weight:600;font-size:1.05rem;line-height:1.3}
@@ -980,7 +986,7 @@ function renderItems(focusSel){
   else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
-      <div class="ihead"><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
+      <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
         <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div></div>
       ${it.b&&it.b!==(exById(it.id)||{}).b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${moreHTML(it)}
@@ -991,7 +997,7 @@ function renderItems(focusSel){
       ${chartDetails(it.id,false)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
-      <div class="ihead"><span class="badge">${lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
+      <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
         <div class="iname">${nameHTML(it.n)}${vidLinks(it.v)}${infoHTML(it.id)}</div>
         <div class="imove">
           <button type="button" class="iconbtn" data-act="up" aria-label="${esc(it.n)} nach oben"${i===0?" disabled":""}>↑</button>
@@ -1500,6 +1506,24 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+/* Übungen per Drag & Drop verschieben (Griff ⠿, Maus und Finger) */
+(function(){const box=document.getElementById("items");let d=null,raf=null;
+  function frame(){if(!d)return;const m=60,y=d.y;let v=0;if(y<m)v=-Math.ceil((m-y)/6);else if(y>innerHeight-m)v=Math.ceil((y-(innerHeight-m))/6);if(v){scrollBy(0,v);move()}raf=requestAnimationFrame(frame)}
+  function move(){const dy=d.y-d.y0+(scrollY-d.sy);d.el.style.transform=`translateY(${dy}px)`;const top=d.r[d.from].top+dy,bot=d.r[d.from].bottom+dy;let to=d.from;
+    d.list.forEach((x,i)=>{if(i===d.from)return;const xm=d.r[i].top+d.r[i].height/2;let sh=0;if(i>d.from&&bot>xm){sh=-d.h;to=Math.max(to,i)}else if(i<d.from&&top<xm){sh=d.h;to=Math.min(to,i)}x.style.transform=sh?`translateY(${sh}px)`:""});d.to=to}
+  box.addEventListener("pointerdown",e=>{const h=e.target.closest("[data-drag]");if(!h||e.button>0)return;e.preventDefault();
+    const el=h.closest(".item");const list=[...box.querySelectorAll(":scope > .item")];if(list.length<2)return;const r=list.map(x=>{const b=x.getBoundingClientRect();return {top:b.top,height:b.height,bottom:b.bottom}});
+    const from=list.indexOf(el);const gap=list.length>1?Math.max(0,(from<list.length-1?r[from+1].top-r[from].bottom:r[from].top-r[from-1].bottom)):0;
+    d={el,list,r,from,to:from,h:r[from].height+gap,y0:e.clientY,y:e.clientY,sy:scrollY,id:e.pointerId};try{h.setPointerCapture(e.pointerId)}catch(_){}
+    box.classList.add("sorting");el.classList.add("dragging");document.body.classList.add("dragging-active");if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}raf=requestAnimationFrame(frame)});
+  box.addEventListener("pointermove",e=>{if(!d||e.pointerId!==d.id)return;e.preventDefault();d.y=e.clientY;move()});
+  function end(e){if(!d||(e&&e.pointerId!==d.id))return;cancelAnimationFrame(raf);const {from,to,list}=d;list.forEach(x=>x.style.transform="");box.classList.remove("sorting");d.el.classList.remove("dragging");document.body.classList.remove("dragging-active");const u=d.el.dataset.u;d=null;
+    if(to===from)return;const items=cur().items;const [it]=items.splice(from,1);items.splice(to,0,it);if(items[0])items[0].ss=false;save();renderItems();if(typeof renderText==="function")renderText();
+    flash(`${shortN(it.n)} verschoben`);const h=document.querySelector(`[data-u="${u}"] [data-drag]`);if(h)h.focus({preventScroll:true})}
+  box.addEventListener("pointerup",end);box.addEventListener("pointercancel",end);
+  /* Tastatur: Griff fokussieren und Pfeiltasten */
+  box.addEventListener("keydown",e=>{const h=e.target.closest("[data-drag]");if(!h||(e.key!=="ArrowUp"&&e.key!=="ArrowDown"))return;e.preventDefault();const u=h.closest("[data-u]").dataset.u;const items=cur().items;const i=items.findIndex(x=>x.u===u);const j=e.key==="ArrowUp"?i-1:i+1;if(j<0||j>=items.length)return;
+    [items[i],items[j]]=[items[j],items[i]];if(items[0])items[0].ss=false;save();renderItems();if(typeof renderText==="function")renderText();const nh=document.querySelector(`[data-u="${u}"] [data-drag]`);if(nh)nh.focus()})})();
 /* Eigene Übung direkt im Training erstellen */
 const newExModal=document.getElementById("newExModal");
 function openNewEx(name){document.getElementById("nxCat").innerHTML=CATS.map(([k,n])=>`<option value="${k}"${k==="eigen"?" selected":""}>${n}</option>`).join("");
