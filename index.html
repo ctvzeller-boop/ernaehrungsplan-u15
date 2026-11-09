@@ -988,10 +988,18 @@ function extraChips(k,sk,pre){const x=extrasOf(k,sk);if(!x.length)return "";
   return `<div class="xchips">${x.map((n,i)=>`<span class="xchip">+ ${esc(n)}<button type="button" id="${pre}xdel-${k}-${sk}-${i}" data-xdel="${k}|${sk}|${i}" aria-label="${esc(n)} entfernen" title="Entfernen">×</button></span>`).join("")}</div>`}
 function extraAdd(k,sk,pre){if(!SNACKS.includes(sk))return "";const have=new Set([state.plan[k].s[sk]].concat(extrasOf(k,sk)));
   return `<span class="minibtn addx">＋<select id="${pre}xadd-${k}-${sk}" data-xadd="${k}|${sk}" aria-label="Weiteren Snack hinzufügen" title="Weiteren Snack hinzufügen"><option value="" selected>Weiteren Snack wählen …</option>${optList(optionsFor(sk).filter(o=>!have.has(o.n)),()=>false)}</select></span>`}
+function bmTag(k,sk,v){const d=state.plan[k];if(!d.mp)return "";const t=x=>`<span class="mptag">🍱 ${x}</span>`;
+  if(sk==="fruehstueck"&&v===BM){const pv=state.plan[prevKey(k)],nx=state.plan[nextKey(k)];
+    if(pv.mp&&pv.s.fruehstueck===BM&&!(state.plan[prevKey(prevKey(k))].s.fruehstueck===BM&&state.plan[prevKey(prevKey(k))].mp))return t(`Vom ${dayName(prevKey(k))} vorbereitet`);
+    const more=[];if(nx.mp&&nx.s.fruehstueck===BM)more.push(`Frühstück am ${dayName(nextKey(k))}`);
+    ["vor","nach"].forEach(x=>{if(d.s[x]===BMS)more.push(x==="vor"?"Zvieri":"Snack nach dem Training")});
+    return more.length?t(`Am Vorabend mehr machen, reicht auch für: ${more.join(" und ")}`):""}
+  if((sk==="vor"||sk==="nach")&&v===BMS&&d.s.fruehstueck===BM)return t("Aus der Frühstücksportion");
+  return ""}
 function dishPick(id,k,sk,v,label,big){
   const opts=optionsFor(sk),mp=sk==="mittag"&&!!state.plan[k].mp,known=mp||!v||opts.some(o=>o.n===v),pk=prevKey(k);
   const mpOpt=sk==="mittag"?`<option value="__mp__"${mp?" selected":""}>🍱 Reste vom Znacht am ${dayName(pk)}</option>`:"";
-  const tag=mp?`<span class="mptag">🍱 Reste vom Znacht am ${dayName(pk)}</span>`:sk==="abend"&&state.plan[nextKey(k)].mp&&v?`<span class="mptag">🍱 1 Portion mehr kochen für Zmittag am ${dayName(nextKey(k))}</span>`:"";
+  const tag=mp?`<span class="mptag">🍱 Reste vom Znacht am ${dayName(pk)}</span>`:sk==="abend"&&state.plan[nextKey(k)].mp&&v?`<span class="mptag">🍱 1 Portion mehr kochen für Zmittag am ${dayName(nextKey(k))}</span>`:bmTag(k,sk,v);
   return `<span class="dishpick${big?" big":""}${v?"":" empty"}${mp?" mp":""}"><span class="dishname" aria-hidden="true">${v?esc(v):mp?"Znacht am Vorabend noch leer":"Gericht wählen"}${tag}</span><select id="${id}" data-day="${k}" data-slot="${sk}" aria-label="${esc(label)}${v?": "+esc(v):""}${mp?" (Reste vom Vorabend)":""}">
     <option value=""${v||mp?"":" selected"}>– keine –</option>${mpOpt}${optList(opts,o=>o.n===v&&!mp)}${known?"":`<option value="${esc(v)}" selected>${esc(v)}</option>`}<option value="__add__">＋ Eigenes Gericht hinzufügen …</option>
   </select></span>`;
@@ -1809,7 +1817,7 @@ function candidates(k,sk){
 function preferred(k,sk,pool){const ctx=dishContext(k,sk),p=pool.filter(n=>prefCtx(n,sk,ctx));return p.length?p:pool}
 function autoFill(){
   const used={};
-  DAYS.forEach(([k])=>{const d=state.plan[k];d.x={};
+  DAYS.forEach(([k])=>{const d=state.plan[k];d.x={};if(d.mp){const pv=state.plan[prevKey(k)];d.s.mittag=pv.s.abend||""}
     SLOTS.forEach(([sk])=>{
       if(sk==="mittag"&&d.mp)return;
       const c=candidates(k,sk);if(!c.length){d.s[sk]=NONE;return}
@@ -1821,16 +1829,35 @@ function autoFill(){
       d.s[sk]=pick;used[pick]=(used[pick]||0)+1;
     });
     balanceProtein(k,used)});
+  mealprepBircher();
+  syncMP();DAYS.forEach(([k])=>balanceProtein(k,used));syncMP();bmLock=new Set();
   save();renderTable();renderText();
 }
+/* Mealprep: Protein-Birchermüesli auf Vorrat. Grosse Portion am Vorabend machen,
+   dann Frühstück an zwei Tagen hintereinander und/oder eine kleine Portion als Zvieri bzw. nach dem Training. */
+const BM="Protein-Birchermüesli",BMS="Protein-Birchermüesli (kleine Portion)";
+function bmOK(k,sk){if(isHidden(sk==="fruehstueck"?BM:BMS))return false;if(sk==="fruehstueck"&&state.plan[k].t==="spiel")return false;
+  return fitsCtx(sk==="fruehstueck"?BM:BMS,sk,dishContext(k,sk))}
+let bmLock=new Set();
+function mealprepBircher(){let skip=0,batches=0;bmLock=new Set();
+  DAYS.forEach(([k],i)=>{const d=state.plan[k];if(skip){skip--;return}
+    if(batches>=2||!d.mp||!bmOK(k,"fruehstueck"))return;
+    const nk=nextKey(k),nd=state.plan[nk],two=i<6&&nd.mp&&bmOK(nk,"fruehstueck");
+    if(d.s.fruehstueck!==BM&&!(two&&Math.random()<0.6))return;
+    d.s.fruehstueck=BM;bmLock.add(k+"|fruehstueck");batches++;skip=1;
+    if(two){nd.s.fruehstueck=BM;bmLock.add(nk+"|fruehstueck");skip=2}
+    const sn=["nach","vor"].find(sk=>d.s[sk]&&d.s[sk]!==BMS&&bmOK(k,sk)&&(sk==="nach"||!isProtRich(d.s[sk],sk)));
+    if(sn&&(!two||Math.random()<0.5)){d.s[sn]=BMS;bmLock.add(k+"|"+sn)}
+    else if(!two){/* nur ein Tag: dann mindestens als Snack wiederverwenden */const s2=["nach","vor"].find(sk=>d.s[sk]&&bmOK(k,sk));if(s2){d.s[s2]=BMS;bmLock.add(k+"|"+s2)}}
+  })}
 /* Protein auffüllen: tauscht Gerichte gegen passende, proteinreichere, bis der Tagesbedarf ungefähr gedeckt ist */
 function balanceProtein(k,used){const d=state.plan[k],target=protTarget(k);
-  const fixed=sk=>(sk==="mittag"&&d.mp)||(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel")||(sk==="abend"&&DAYS.some(([j])=>j===nextKey(k)&&state.plan[j].mp));
+  const fixed=sk=>bmLock.has(k+"|"+sk)||(sk==="mittag"&&d.mp)||(sk==="abend"&&state.plan[nextKey(k)].t==="spiel")||(sk==="fruehstueck"&&d.t==="spiel");
   for(let round=0;round<4&&protDay(k)<target;round++){let best=null;
     SLOTS.forEach(([sk])=>{if(fixed(sk)||!d.s[sk])return;const cur=d.s[sk];
       let pool=preferred(k,sk,candidates(k,sk)).filter(n=>n!==cur&&!(sk==="abend"&&n===d.s.mittag)&&!(sk==="mittag"&&n===d.s.abend));
       pool.forEach(n=>{const gain=protOf(n)-protOf(cur);if(gain<=0)return;const sc=gain+healthOf(n)*2-((used&&used[n])||0)*8+(isFav(n)?4:0);if(!best||sc>best.sc)best={sk,n,sc,cur}})});
-    if(!best)break;d.s[best.sk]=best.n;if(used){used[best.cur]=Math.max(0,(used[best.cur]||1)-1);used[best.n]=(used[best.n]||0)+1}}
+    if(!best)break;d.s[best.sk]=best.n;if(best.sk==="abend")syncMP();if(used){used[best.cur]=Math.max(0,(used[best.cur]||1)-1);used[best.n]=(used[best.n]||0)+1}}
 }
 function reroll(k,sk,btnId){
   if(sk==="mittag"&&state.plan[k].mp){reroll(prevKey(k),"abend",btnId);flash(`Znacht am ${dayName(prevKey(k))} und Zmittag am ${dayName(k)} neu`);return}
