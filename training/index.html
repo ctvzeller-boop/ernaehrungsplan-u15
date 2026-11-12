@@ -66,6 +66,18 @@ body[data-mode="coach"] .wrap{max-width:860px}
 .chip.plain{padding-right:9px}
 .cbtns{display:flex;gap:6px;flex-wrap:wrap}
 .cbtns button{min-height:40px;padding:6px 12px;font-size:.88rem}
+.rank{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rank li{display:flex;align-items:baseline;gap:8px;padding:6px 8px;border-radius:8px}
+.rank li.me{background:var(--accent-soft)}
+.rank .rp{width:2em;color:var(--muted);font-weight:700}
+.rank .rn{flex:1;min-width:0;overflow-wrap:break-word}
+.rank b{font-family:var(--display);font-size:1.2rem}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.feed li{padding:8px 0;border-top:1px solid var(--line);font-size:.92rem}
+.feed li:first-child{border-top:none}
+.board .cats{flex-wrap:wrap}
+.board .cat[aria-pressed="true"],#coachView .cat[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.cbtns button.danger{color:var(--warn);border-color:var(--warn)}
 .checklist{display:flex;flex-direction:column;gap:2px;margin:8px 0 12px}
 .checklist label{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 6px;border-radius:8px;cursor:pointer}
 .checklist label:hover{background:var(--bg)}
@@ -1030,7 +1042,7 @@ function thumbHTML(id,name,v){const im=imgsFor(id,v);
    :`<button type="button" class="thumb none" data-show="${esc(id)}" aria-label="Bild und Ausführung: ${esc(name)}">＋</button>`}
 
 /* Modus */
-function setMode(m){if(m!=="stats"&&statsView){statsView=null;statSel=null}if(m==="coach")setTimeout(openCoach,0);state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
+function setMode(m){if(m!=="stats"&&statsView){statsView=null;statSel=null}if(m==="coach")setTimeout(openCoach,0);if(m==="stats"&&sbUser&&!isCoach)setTimeout(loadMyGroups,0);state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
 
 /* Einheiten-Leiste */
 function renderBar(){
@@ -1353,7 +1365,7 @@ function playerBar(){if(!coachPlayers.length)return "";
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const own=statsView?"":`${bwCard()}${backupCard()}`;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
-  if(!H.length){el.innerHTML=playerBar()+`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${own}`;return}
+  if(!H.length){el.innerHTML=playerBar()+myGroupsHTML()+`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${own}`;return}
   if(statSel===null||!hist()[statSel])statSel=H[0].i;
   let sets=0,fire=0;H.forEach(({x})=>x.items.forEach(y=>y.log.forEach(z=>{sets++;if(z.st==="more")fire++})));
   const ws=weekStart(),week=H.filter(({x})=>x.d>=ws).length;
@@ -1361,7 +1373,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
   const best={};H.forEach(({x})=>x.items.forEach(y=>{const k=bestKg(y.log);if(k!==null&&(!best[y.id]||k>best[y.id].k))best[y.id]={k,d:x.d}}));
   const bestRows=Object.entries(best).sort((a,b)=>b[1].d-a[1].d).slice(0,8);
   const x=hist()[statSel];let n=0;x.items.forEach(y=>n+=y.log.length);
-  el.innerHTML=playerBar()+`<div class="kpis">
+  el.innerHTML=playerBar()+myGroupsHTML()+`<div class="kpis">
       <div class="kpi"><b>${H.length}</b><span>Trainings</span></div>
       <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
       <div class="kpi"><b>${streak()}</b><span>🔥 Wochen in Folge</span></div>
@@ -1407,6 +1419,17 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  const xbp=t.closest("[data-bp]");if(xbp){boardPeriod=xbp.dataset.bp;if(state.mode==="coach")renderCoach();else renderStats();return}
+  const xcf=t.closest("[data-cfilter]");if(xcf){coachFilter=xcf.dataset.cfilter;renderCoach();return}
+  const xgm=t.closest("[data-gmem]");if(xgm){groupMembers(xgm.dataset.gmem);return}
+  const xgs=t.closest("[data-gses]");if(xgs){groupSessions(xgs.dataset.gses);return}
+  const xgb=t.closest("[data-gboard]");if(xgb){const id=xgb.dataset.gboard;if(openBoard===id){openBoard=null;renderCoach()}else{openBoard=id;renderCoach();loadFeed(id).then(renderCoach)}return}
+  if(t.closest("#gNew")){const row=document.getElementById("gNewRow");row.innerHTML=`<div class="acctrow" style="margin:6px 0 10px"><input type="text" id="gNewName" placeholder="z. B. U15" style="flex:1;min-width:120px;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:1rem"><button type="button" class="primary" id="gNewOk">Anlegen</button></div>`;document.getElementById("gNewName").focus();return}
+  if(t.closest("#gNewOk")){const n=document.getElementById("gNewName").value.trim();if(!n){flash("Bitte einen Namen eingeben.");return}sb.from("groups").insert({coach_id:sbUser.id,name:n}).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadGroups();renderCoach();flash(`Gruppe «${n}» angelegt`)});return}
+  const xgr=t.closest("[data-gren]");if(xgr){const g=coachGroups.find(x=>x.id===xgr.dataset.gren);const row=xgr.closest(".crow").querySelector(".cmain b");row.outerHTML=`<span class="acctrow"><input type="text" id="gRenName" value="${esc(g.name)}" style="flex:1;min-width:120px;min-height:40px;padding:6px 10px;border:1.5px solid var(--accent);border-radius:8px;font-size:1rem"><button type="button" class="primary" data-grenok="${esc(g.id)}">OK</button></span>`;document.getElementById("gRenName").focus();return}
+  const xgro=t.closest("[data-grenok]");if(xgro){const n=document.getElementById("gRenName").value.trim();if(!n)return;sb.from("groups").update({name:n}).eq("id",xgro.dataset.grenok).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadGroups();renderCoach();flash("Umbenannt")});return}
+  const xgd=t.closest("[data-gdel]");if(xgd){const g=coachGroups.find(x=>x.id===xgd.dataset.gdel);askChoice(`Gruppe «${g.name}» löschen?`,"Die Spieler bleiben erhalten. Einheiten, die sie nur über diese Gruppe hatten, werden bei ihnen entfernt.",[{key:"del",label:"Gruppe löschen",cls:"danger"}]).then(async k=>{if(k!=="del")return;
+      try{await revokeSids(g.members,g.sids,g.id);const r=await sb.from("groups").delete().eq("id",g.id);if(r.error)throw r.error;if(coachFilter===g.id)coachFilter="";if(openBoard===g.id)openBoard=null;flash(`Gruppe «${g.name}» gelöscht`)}catch(e){flash(sbMsg(e))}await Promise.all([loadGroups(),loadAssign()]);renderCoach()});return}
   const asg=t.closest("[data-assign]");if(asg){openAssign(asg.dataset.assign);return}
   const ua=t.closest("[data-unassign]");if(ua){const a=coachAssign.find(x=>x.id===ua.dataset.unassign);sb.from("assignments").delete().eq("id",ua.dataset.unassign).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadAssign();renderCoach();flash(a?`«${a.title}» bei ${pName(a.player_id)} entfernt`:"Entfernt")});return}
   const ce=t.closest("[data-cedit]");if(ce){state.active=ce.dataset.cedit;setMode("edit");scrollTo({top:0});return}
@@ -1705,10 +1728,17 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-gsocial]");if(!c)return;const id=c.dataset.gsocial,v=c.checked;sb.from("groups").update({social:v}).eq("id",id).then(async r=>{if(r.error){c.checked=!v;flash(sbMsg(r.error));return}await loadGroups();renderCoach();flash(v?"Mitglieder sehen jetzt Rangliste und Trainings":"Rangliste für Mitglieder ausgeschaltet")})});
+document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="gNewName"){e.preventDefault();document.getElementById("gNewOk").click()}else if(e.target.id==="gRenName"){e.preventDefault();const b=document.querySelector("[data-grenok]");if(b)b.click()}});
 document.getElementById("acctModal").addEventListener("change",async e=>{if(e.target.id!=="acOptOut")return;const v=e.target.checked;e.target.disabled=true;
   const {error}=await sb.from("profiles").update({share_opt_out:v}).eq("id",sbUser.id);e.target.disabled=false;
   if(error){e.target.checked=!v;document.getElementById("acShareMsg").textContent=sbMsg(error);return}flash(v?"Wird nicht mehr mit dem Coach geteilt":"Wird wieder mit dem Coach geteilt");acctCoach()});
-document.getElementById("assignModal").addEventListener("click",e=>{if(e.target.id==="assignModal"||e.target.closest("[data-close]")){document.getElementById("assignModal").hidden=true;return}if(e.target.closest("#assignSave"))saveAssign()});
+let assignCb=null;
+document.getElementById("assignModal").addEventListener("click",e=>{if(e.target.id==="assignModal"||e.target.closest("[data-close]")){document.getElementById("assignModal").hidden=true;if(assignCb){const f=assignCb;assignCb=null;f(null)}return}
+  if(e.target.closest("#assignSave")){if(assignCb){const f=assignCb;assignCb=null;document.getElementById("assignModal").hidden=true;f(new Set([...document.querySelectorAll("#assignList input:checked")].map(i=>i.value)))}else saveAssign()}});
+function pickChecks(title,hint,items){return new Promise(res=>{document.getElementById("assignTitle").textContent=title;document.getElementById("assignHint").textContent=hint||"";
+  document.getElementById("assignList").innerHTML=items.length?items.map(x=>`<label><input type="checkbox" value="${esc(x.id)}"${x.on?" checked":""}> ${esc(x.label)}</label>`).join(""):`<p class="empty">Nichts zum Auswählen.</p>`;
+  assignCb=res;document.getElementById("assignModal").hidden=false})}
 /* ===== Konto & Sync mit Supabase (freiwillig) ===== */
 const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl";
 let sb=null,sbUser=null,sbT=null,sbBusy=false,sbDirty=false,sbLast=0,sbErr="";
@@ -1758,11 +1788,11 @@ function acctRender(msg){const b=document.getElementById("acctBody");
     <div class="acctrow"><button type="submit" class="primary" id="acIn">Anmelden</button><button type="button" id="acUp">Neues Konto erstellen</button></div>
     <p class="accterr" id="acErr">${esc(msg||"")}</p><p class="small">Passwort vergessen? Dem Coach Bescheid geben.</p></form>`}
 async function checkCoach(){if(!sb||!sbUser){isCoach=false}else{try{const r=await sb.rpc("is_coach");isCoach=!r.error&&r.data===true}catch(e){isCoach=false}}
-  document.getElementById("coachTab").hidden=!isCoach;if(isCoach)await loadAssign();if(!isCoach&&state.mode==="coach")setMode("train")}
+  document.getElementById("coachTab").hidden=!isCoach;if(isCoach)await loadAssign();else loadMyGroups();if(!isCoach&&state.mode==="coach")setMode("train")}
 async function acctCoach(){const box=document.getElementById("acCoach");if(!box||!sb||!sbUser)return;
   if(isCoach){box.innerHTML=`<p class="small">Du bist als <b>Coach</b> angemeldet. Deine Spieler und ihre Trainings findest du im Tab «Coaching».</p>`;return}
   try{const {data,error}=await sb.from("profiles").select("share_opt_out").eq("id",sbUser.id).maybeSingle();if(error)throw error;const out=!!(data&&data.share_opt_out);
-    box.innerHTML=`<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="acOptOut"${out?" checked":""} style="width:20px;height:20px;margin-top:2px"><span><b>Nicht mit dem Coach teilen</b><br><span class="small">${out?"Dein Coach sieht deine Trainings nicht und kann dir keine Einheiten aufschalten.":"Dein Coach sieht deine absolvierten Trainings (nur lesen) und kann dir Einheiten aufschalten. Dein Körpergewicht sieht er nie."}</span></span></label><p class="accterr" id="acShareMsg"></p>`}
+    box.innerHTML=(myGroups.length?`<p class="small" style="margin:0 0 8px">Deine Gruppen: <b>${myGroups.map(g=>esc(g.name)).join(", ")}</b></p>`:"")+`<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="acOptOut"${out?" checked":""} style="width:20px;height:20px;margin-top:2px"><span><b>Nicht mit dem Coach teilen</b><br><span class="small">${out?"Dein Coach sieht deine Trainings nicht und kann dir keine Einheiten aufschalten.":"Dein Coach sieht deine absolvierten Trainings (nur lesen) und kann dir Einheiten aufschalten. Dein Körpergewicht sieht er nie."}</span></span></label><p class="accterr" id="acShareMsg"></p>`}
   catch(e){box.innerHTML=`<p class="small">Teilen mit dem Coach ist noch nicht eingerichtet.</p>`}}
 /* ===== Coaching: Einheiten planen und Spielern zuweisen ===== */
 var isCoach=false,coachAssign=[],coachPlayerData={},assignSid=null;
@@ -1770,7 +1800,46 @@ function sessPayload(x){return {id:x.id,t:x.t||"",a:x.a||"",h:x.h||"",items:(x.i
 async function loadAssign(){if(!isCoach)return;try{const {data,error}=await sb.from("assignments").select("id,player_id,sid,title,session,updated_at").eq("coach_id",sbUser.id);if(!error)coachAssign=data||[]}catch(e){}}
 async function loadPlayerData(){coachPlayerData={};const ids=coachPlayers.map(p=>p.player_id);if(!ids.length)return;
   try{const {data,error}=await sb.from("app_state").select("user_id,data,updated_at").in("user_id",ids);if(!error)(data||[]).forEach(r=>coachPlayerData[r.user_id]={hist:(r.data&&r.data.hist)||[],at:r.updated_at})}catch(e){}}
-async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign()]);await loadPlayerData();if(state.mode==="coach")renderCoach()}
+/* ===== Gruppen ===== */
+var coachGroups=[],myGroups=[],groupFeeds={},boardPeriod="w",coachFilter="",openBoard=null;
+async function loadGroups(){coachGroups=[];if(!isCoach)return;try{const g=await sb.from("groups").select("id,name,social,sids").eq("coach_id",sbUser.id);if(g.error)return;
+  const ids=(g.data||[]).map(x=>x.id);let mem=[];if(ids.length){const m=await sb.from("group_members").select("group_id,player_id").in("group_id",ids);if(!m.error)mem=m.data||[]}
+  coachGroups=(g.data||[]).map(x=>Object.assign({},x,{sids:x.sids||[],members:mem.filter(m=>m.group_id===x.id).map(m=>m.player_id)})).sort((a,b)=>a.name.localeCompare(b.name))}catch(e){}}
+async function loadMyGroups(){myGroups=[];groupFeeds={};if(!sb||!sbUser||isCoach)return;try{const r=await sb.rpc("my_groups");if(r.error)return;myGroups=r.data||[];
+  await Promise.all(myGroups.filter(g=>g.social).map(async g=>{const f=await sb.rpc("group_feed",{gid:g.id});if(!f.error)groupFeeds[g.id]=f.data||[]}))}catch(e){}if(state.mode==="stats")renderStats()}
+async function loadFeed(gid){try{const f=await sb.rpc("group_feed",{gid});if(!f.error)groupFeeds[gid]=f.data||[]}catch(e){}}
+function monthStart(){const d=new Date();d.setHours(0,0,0,0);d.setDate(1);return d.getTime()}
+function boardHTML(gid,title){const rows=groupFeeds[gid];if(!rows)return `<p class="small">Lädt …</p>`;const from=boardPeriod==="w"?wkOf(Date.now()):monthStart();
+  const rank=rows.map(r=>({id:r.player_id,name:r.name,n:(r.trainings||[]).filter(t=>+t.d>=from).length})).sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name));
+  let place=0,prev=null;rank.forEach((r,i)=>{if(r.n!==prev){place=i+1;prev=r.n}r.place=place});
+  const me=sbUser&&sbUser.id;
+  const feed=[];rows.forEach(r=>(r.trainings||[]).forEach(t=>feed.push(Object.assign({name:r.name,me:r.player_id===me},t))));feed.sort((a,b)=>b.d-a.d);
+  const prTxt=t=>(t.prs||[]).slice(0,2).map(x=>{const e=exById(x.id);return `🏆 ${esc(shortN((e&&e.n)||x.n||""))}${x.kg?" "+esc(kgTxt(x.kg)):x.v?" "+esc(x.v):""}`}).join(" · ");
+  return `<div class="board"><div class="cats" role="group" aria-label="Zeitraum"><button type="button" class="cat" data-bp="w" aria-pressed="${boardPeriod==="w"}">Diese Woche</button><button type="button" class="cat" data-bp="m" aria-pressed="${boardPeriod==="m"}">Dieser Monat</button></div>
+    <ol class="rank">${rank.map(r=>`<li class="${r.id===me?"me":""}"><span class="rp">${r.place}.</span><span class="rn">${esc(r.name)}${r.id===me?" (du)":""}</span><b>${r.n}</b><span class="small">Training${r.n===1?"":"s"}</span></li>`).join("")||`<li class="small">Noch keine Mitglieder.</li>`}</ol>
+    <h4 class="eyebrow" style="margin:14px 0 4px">Letzte Trainings</h4>
+    <ul class="feed">${feed.slice(0,25).map(t=>`<li><b>${esc(t.name)}</b> <span class="small">${fmtDate(+t.d)}</span><br>${esc(t.t||"Training")} · ${t.sets} Sätze${(t.prs||[]).length?` · ${prTxt(t)}`:""}</li>`).join("")||`<li class="small">In den letzten 60 Tagen noch keine Trainings.</li>`}</ul></div>`}
+function myGroupsHTML(){if(statsView||!myGroups.length)return "";return myGroups.map(g=>`<div class="card"><div class="dhead"><h2>${esc(g.name)}</h2><span class="small">Coach: ${esc(g.coach_name||"")}</span></div>
+  ${g.social?boardHTML(g.id):`<p class="small">Du bist Mitglied dieser Gruppe.</p>`}</div>`).join("")}
+/* Gruppen-Einheiten als Einzel-Zuweisungen pflegen */
+function sidsOfPlayer(pid,exceptG){const set=new Set();coachGroups.forEach(g=>{if(g.id!==exceptG&&g.members.includes(pid))g.sids.forEach(x=>set.add(x))});return set}
+async function grantSids(pids,sids){const now=new Date().toISOString();const rows=[];pids.forEach(pid=>sids.forEach(sid=>{const x=state.sessions.find(z=>z.id===sid);if(x)rows.push({coach_id:sbUser.id,player_id:pid,sid,title:x.t||"Einheit",session:sessPayload(x),updated_at:now})}));
+  if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)throw r.error}}
+async function revokeSids(pids,sids,g){for(const pid of pids){const keep=sidsOfPlayer(pid,g);for(const sid of sids){if(keep.has(sid))continue;const r=await sb.from("assignments").delete().eq("coach_id",sbUser.id).eq("player_id",pid).eq("sid",sid);if(r.error)throw r.error}}}
+async function groupMembers(gid){const g=coachGroups.find(x=>x.id===gid);if(!g)return;if(!coachPlayers.length){flash("Noch keine Spieler mit Konto.");return}
+  const want=await pickChecks(`Mitglieder von «${g.name}»`,"Neue Mitglieder bekommen die Einheiten der Gruppe automatisch.",coachPlayers.map(p=>({id:p.player_id,label:p.name||p.email||"Spieler",on:g.members.includes(p.player_id)})));if(!want)return;
+  const add=[...want].filter(x=>!g.members.includes(x)),rem=g.members.filter(x=>!want.has(x));
+  try{if(add.length){const r=await sb.from("group_members").upsert(add.map(pid=>({group_id:gid,player_id:pid})));if(r.error)throw r.error;await grantSids(add,g.sids)}
+    for(const pid of rem){const r=await sb.from("group_members").delete().eq("group_id",gid).eq("player_id",pid);if(r.error)throw r.error}
+    g.members=[...want];if(rem.length)await revokeSids(rem,g.sids,gid);flash(`«${g.name}»: ${want.size} Mitglied${want.size===1?"":"er"}`)}catch(e){flash("Speichern ging nicht: "+sbMsg(e))}
+  await Promise.all([loadGroups(),loadAssign()]);if(openBoard===gid)await loadFeed(gid);renderCoach()}
+async function groupSessions(gid){const g=coachGroups.find(x=>x.id===gid);if(!g)return;const S=state.sessions.filter(x=>!x.free);
+  const want=await pickChecks(`Einheiten für «${g.name}»`,"Alle Mitglieder bekommen diese Einheiten automatisch – auch Spieler, die später dazukommen.",S.map(x=>({id:x.id,label:x.t||"Ohne Titel",on:g.sids.includes(x.id)})));if(!want)return;
+  const add=[...want].filter(x=>!g.sids.includes(x)),rem=g.sids.filter(x=>!want.has(x));
+  try{const r=await sb.from("groups").update({sids:[...want]}).eq("id",gid);if(r.error)throw r.error;await grantSids(g.members,add);g.sids=[...want];await revokeSids(g.members,rem,gid);flash(`«${g.name}»: ${want.size} Einheit${want.size===1?"":"en"} zugewiesen`)}catch(e){flash("Speichern ging nicht: "+sbMsg(e))}
+  await Promise.all([loadGroups(),loadAssign()]);renderCoach()}
+/* Neue Einheiten des Coaches: Gruppen-Zuweisungen bei Änderungen mitnehmen (Titel/Inhalt via pushAssignUpdates) */
+async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign(),loadGroups()]);await loadPlayerData();if(openBoard)await loadFeed(openBoard);if(state.mode==="coach")renderCoach()}
 function pName(id){const p=coachPlayers.find(x=>x.player_id===id);return p?(p.name||p.email||"Spieler"):"Spieler"}
 function renderCoach(){const el=document.getElementById("coachView");if(!el)return;
   const S=state.sessions.filter(x=>!x.free);
@@ -1778,15 +1847,23 @@ function renderCoach(){const el=document.getElementById("coachView");if(!el)retu
     return `<div class="crow"><div class="cmain"><b>${esc(x.t||"Ohne Titel")}</b><span class="cmeta">${n} Übung${n===1?"":"en"}${x.a?" · "+esc(x.a):""}</span>
       ${as.length?`<div class="chips">${as.map(a=>`<span class="chip">${esc(pName(a.player_id))}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(pName(a.player_id))} entfernen" title="Zuweisung entfernen">×</button></span>`).join("")}</div>`:""}</div>
       <div class="cbtns"><button type="button" class="primary" data-assign="${esc(x.id)}">Spielern zuweisen</button><button type="button" data-cedit="${esc(x.id)}">Bearbeiten</button></div></div>`}).join("")||`<p class="empty">Noch keine Einheiten.</p>`;
-  const plRows=coachPlayers.map(p=>{const d=coachPlayerData[p.player_id]||{hist:[]};const H=d.hist.slice().sort((a,b)=>b.d-a.d);const last=H[0];const as=coachAssign.filter(a=>a.player_id===p.player_id);
+  const groupRows=coachGroups.map(g=>`<div class="crow"><div class="cmain"><b>${esc(g.name)}</b><span class="cmeta">${g.members.length} Mitglied${g.members.length===1?"":"er"} · ${g.sids.length} Einheit${g.sids.length===1?"":"en"}</span>
+      ${g.members.length?`<div class="chips">${g.members.map(pid=>`<span class="chip plain">${esc(pName(pid))}</span>`).join("")}</div>`:""}
+      ${g.sids.length?`<div class="chips">${g.sids.map(sid=>{const x=state.sessions.find(z=>z.id===sid);return `<span class="chip plain" style="background:var(--bg);color:var(--ink)">${esc(x?x.t:"(gelöscht)")}</span>`}).join("")}</div>`:""}
+      <label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" data-gsocial="${esc(g.id)}"${g.social?" checked":""}> Mitglieder sehen Rangliste und Trainings der anderen</label></div>
+      <div class="cbtns"><button type="button" class="primary" data-gmem="${esc(g.id)}">Mitglieder</button><button type="button" data-gses="${esc(g.id)}">Einheiten</button><button type="button" data-gboard="${esc(g.id)}" aria-expanded="${openBoard===g.id}">Rangliste</button><button type="button" data-gren="${esc(g.id)}">Umbenennen</button><button type="button" class="danger" data-gdel="${esc(g.id)}">Löschen</button></div>
+      ${openBoard===g.id?`<div style="flex-basis:100%">${boardHTML(g.id)}</div>`:""}</div>`).join("");
+  const fg=coachFilter&&coachGroups.find(g=>g.id===coachFilter);
+  const plRows=coachPlayers.filter(p=>!fg||fg.members.includes(p.player_id)).map(p=>{const d=coachPlayerData[p.player_id]||{hist:[]};const H=d.hist.slice().sort((a,b)=>b.d-a.d);const last=H[0];const as=coachAssign.filter(a=>a.player_id===p.player_id);
     const wk=H.filter(h=>Date.now()-h.d<7*864e5).length;
     return `<div class="crow"><div class="cmain"><b>${esc(p.name||p.email||"Spieler")}</b><span class="cmeta">${H.length} Training${H.length===1?"":"s"} · ${wk} in den letzten 7 Tagen${last?` · zuletzt ${fmtDate(last.d)}: ${esc(last.t||"Training")}`:""}</span>
       <div class="chips">${as.length?as.map(a=>`<span class="chip">${esc(a.title||"Einheit")}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(a.title||"Einheit")} entfernen" title="Zuweisung entfernen">×</button></span>`).join(""):`<span class="cmeta">Noch keine Einheit zugewiesen</span>`}</div></div>
       <div class="cbtns"><button type="button" data-cview="${esc(p.player_id)}">Trainings ansehen</button></div></div>`}).join("");
   el.innerHTML=`<div class="card"><div class="dhead"><h2>Einheiten</h2><button type="button" id="cNew">＋ Neue Einheit</button></div>${sessRows}</div>
-    <div class="card"><h2>Spieler</h2>${plRows||`<p class="empty">Noch keine Spieler. Sobald sich ein Spieler in der App ein Konto erstellt, erscheint er hier – ausser er wählt «Nicht mit dem Coach teilen».</p>`}
+    <div class="card"><div class="dhead"><h2>Gruppen</h2><button type="button" id="gNew">＋ Neue Gruppe</button></div><div id="gNewRow"></div>${groupRows||`<p class="empty">Noch keine Gruppen. Lege z. B. «U15» an und füge Spieler hinzu.</p>`}</div>
+    <div class="card"><h2>Spieler</h2>${coachGroups.length?`<div class="cats" role="group" aria-label="Nach Gruppe filtern" style="margin-bottom:6px"><button type="button" class="cat" data-cfilter="" aria-pressed="${!coachFilter}">Alle</button>${coachGroups.map(g=>`<button type="button" class="cat" data-cfilter="${esc(g.id)}" aria-pressed="${coachFilter===g.id}">${esc(g.name)}</button>`).join("")}</div>`:""}${plRows||`<p class="empty">Noch keine Spieler. Sobald sich ein Spieler in der App ein Konto erstellt, erscheint er hier – ausser er wählt «Nicht mit dem Coach teilen».</p>`}
     <div class="toolbar"><button type="button" id="cReload">↻ Aktualisieren</button></div></div>`}
-function openAssign(sid){const x=state.sessions.find(z=>z.id===sid);if(!x)return;assignSid=sid;if(!coachPlayers.length){flash("Noch keine Spieler – sie erscheinen, sobald sie ein Konto haben.");return}
+function openAssign(sid){const x=state.sessions.find(z=>z.id===sid);if(!x)return;assignSid=sid;assignCb=null;if(!coachPlayers.length){flash("Noch keine Spieler – sie erscheinen, sobald sie ein Konto haben.");return}
   document.getElementById("assignTitle").textContent=`«${x.t||"Einheit"}» zuweisen`;document.getElementById("assignHint").textContent="Die Einheit erscheint beim Spieler automatisch in der App. Änderungen, die du später machst, kommen auch automatisch an.";
   const on=new Set(coachAssign.filter(a=>a.sid===sid).map(a=>a.player_id));
   document.getElementById("assignList").innerHTML=coachPlayers.map(p=>`<label><input type="checkbox" value="${esc(p.player_id)}"${on.has(p.player_id)?" checked":""}> ${esc(p.name||p.email||"Spieler")}</label>`).join("");document.getElementById("assignModal").hidden=false}
@@ -1819,7 +1896,7 @@ function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/Email not confirmed/i.test(m))return "Die E-Mail ist noch nicht bestätigt.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
 acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});document.getElementById("acctWho").addEventListener("click",()=>{acctRender();acctModal.hidden=false});
 acctModal.addEventListener("click",async e=>{if(e.target===acctModal||e.target.closest("[data-close]")){acctModal.hidden=true;return}
-  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;coachPlayers=[];statsView=null;isCoach=false;coachAssign=[];document.getElementById("coachTab").hidden=true;if(state.mode==="coach")setMode("train");acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
+  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;coachPlayers=[];statsView=null;isCoach=false;coachAssign=[];myGroups=[];groupFeeds={};coachGroups=[];document.getElementById("coachTab").hidden=true;if(state.mode==="coach")setMode("train");acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
   if(e.target.closest("#acSync")){e.target.disabled=true;await sbPull(false);acctRender(sbErr?sbMsg(sbErr):"✓ Synchronisiert");return}
   if(e.target.closest("#acUp")){const f=document.getElementById("acForm");if(!f.reportValidity())return;const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value,name=document.getElementById("acName").value.trim();
     const {data,error}=await sb.auth.signUp({email,password,options:{data:{name}}});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}
