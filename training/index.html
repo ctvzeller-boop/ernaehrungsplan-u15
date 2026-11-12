@@ -153,6 +153,12 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 #pickFilters .cat{white-space:nowrap;flex:none}
 #pickFilters .cat[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
 .addcoach.newex{width:100%;margin-top:10px;text-align:center}
+.undotoast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--surface);border-radius:12px;padding:8px 8px 8px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100% - 24px)}
+.undotoast[hidden]{display:none}
+.undotoast button{min-height:40px;background:transparent;color:inherit;border:1.5px solid currentColor;border-radius:9px;padding:4px 10px;font-weight:700;white-space:nowrap}
+.freehead{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.freehead label{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);font-weight:600}
+.freehead input{font-size:1rem}
 .addrow{display:flex;flex-wrap:wrap;gap:8px}
 .addcoach.free{border-color:var(--ink);color:var(--ink);background:var(--surface)}
 .picklist{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:55vh;margin:0 -4px;padding:0 4px}
@@ -838,6 +844,9 @@ async function cloudInit(){
     for(const d of inbox.docs){const c=codeFrom("#e="+String((d.data()||{}).code||""));if(c&&!state.imported[c])await importCode(c)}
   }catch(e){cloudReady=true}}
 function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
+function undoToast(msg,fn){let t=document.getElementById("undoToast");if(!t){t=document.createElement("div");t.id="undoToast";t.className="undotoast";t.setAttribute("role","status");document.body.appendChild(t)}
+  t.innerHTML=`<span>${esc(msg)}</span><button type="button">↩ Rückgängig</button>`;t.hidden=false;clearTimeout(undoToast.t);
+  t.querySelector("button").onclick=()=>{t.hidden=true;clearTimeout(undoToast.t);fn();flash("Wiederhergestellt")};undoToast.t=setTimeout(()=>{t.hidden=true},6000)}
 function flash(msg){document.querySelectorAll(".status").forEach(s=>{s.textContent=msg});clearTimeout(flash.t);flash.t=setTimeout(()=>document.querySelectorAll(".status").forEach(s=>s.textContent=""),2600)}
 
 function labels(items){
@@ -890,7 +899,7 @@ function setMode(m){state.mode=m;save();document.body.dataset.mode=m;document.qu
 /* Einheiten-Leiste */
 function renderBar(){
   const s=state.sessions;
-  document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
+  document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${x.free?"⚡ ":""}${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
    `<button type="button" id="newSess" class="edit-only" style="flex:none">+ Neue Einheit</button>
     ${TPL.length?"":"<!--"}<select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>${TPL.length?"":"-->"}`;
   const a=document.querySelector(".stab[aria-pressed=true]"),bar=document.getElementById("sessionBar");if(a&&bar.scrollWidth>bar.clientWidth)bar.scrollLeft=Math.max(0,a.offsetLeft-bar.offsetLeft-(bar.clientWidth-a.offsetWidth)/2);
@@ -938,7 +947,7 @@ function histFor(id){const out=[];hist().forEach(h=>h.items.forEach(x=>{if(x.id=
 function lastFor(id){return histFor(id)[0]||null}
 function fmtDate(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit"})}
 function fmtDateY(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"2-digit"})}
-function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg):"")}
+function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg)+(e.lbs?` (${e.lbs} lbs)`:""):"")}
 function lastHTML(it){if(isSimple(it))return "";const l=lastFor(it.id);if(!l)return "";
   return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span></div>`}
 /* kleine Verlaufskurve rechts neben der Übung; Tipp darauf zeigt den grossen Verlauf */
@@ -957,7 +966,7 @@ function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&
 function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
 function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,s:it.s,w:it.w,p:it.p,r:it.r,ss:!!it.ss,log:it.log.map(e=>Object.assign({},e))}));
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
-  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free)c.items=[];else c.items.forEach(it=>{delete it.added});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
+  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free){c.items=[];c.t="Freies Training"}else c.items.forEach(it=>{delete it.added});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
 /* Aufwärmen & Mobilität: nur «erledigt», keine Werte und keine Stats */
 function isSimpleId(id){const e=exById(id);return !!e&&e.k==="warm"}
@@ -983,7 +992,7 @@ function setsHTML(it){
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
   if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?(c.free?"Freies Training: Tippe unten auf <b>＋ Übung hinzufügen</b> und wähle deine erste Übung. Danach einfach Sätze eintragen und die nächste Übung hinzufügen.":"Diese Einheit ist noch leer."):"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
-  else el.innerHTML=c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
+  else el.innerHTML=(train&&c.free?`<div class="freehead"><label>Name des Trainings<input type="text" id="freeName" value="${esc(c.t==="Freies Training"?"":c.t)}" placeholder="z. B. Oberkörper Push" autocomplete="off"></label><button type="button" class="primary" data-savesess="1">📌 Als Einheit speichern</button></div>`:"")+c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
@@ -993,7 +1002,7 @@ function renderItems(focusSel){
       ${lastHTML(it)}
       ${setsHTML(it)}
       ${(it.added||c.free)&&i>0?`<button type="button" class="ssbtn${it.ss?" on":""}" data-sslink="1" aria-pressed="${!!it.ss}">${it.ss?`✓ Superset mit ${esc(shortN(c.items[i-1].n))}`:`＋ Superset mit ${esc(shortN(c.items[i-1].n))}`}</button>`:""}
-      ${it.added&&!(it.log||[]).length?`<button type="button" class="linkbtn" data-rmfree="1" style="align-self:flex-start;padding:0">Übung wieder entfernen</button>`:""}
+      ${!(it.log||[]).length?`<button type="button" class="linkbtn" data-rmfree="1" style="align-self:flex-start;padding:0">✕ Übung ${it.added?"wieder entfernen":"auslassen (entfernen)"}</button>`:""}
       ${chartDetails(it.id,false)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
@@ -1232,9 +1241,11 @@ document.addEventListener("click",e=>{
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
   const hss=t.closest("[data-hsess]");if(hss){const h=hist()[+hss.dataset.hsess];if(!h)return;const s=sessFromItems(h.items,(h.t&&h.t!=="Freies Training"?h.t+" ":"Mein Training ")+fmtDate(h.d));save();renderBar();savedMsg(s);return}
   const sx=t.closest("[data-sendex]");if(sx){copyOrShare(exSendText(sx.dataset.sendex),"Übung kopiert – jetzt dem Coach schicken.","Neue Übung");return}
+  if(t.closest("[data-savesess]")){saveFreeAsSess();return}
   if(t.closest("[data-sslink]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<1)return;const it=c.items[i];it.ss=!it.ss;save();renderItems(`[data-u="${u}"] [data-sslink]`);
     flash(it.ss?`Superset: ${labels(c.items)[i-1]} und ${labels(c.items)[i]} abwechselnd`:"Superset aufgehoben");return}
-  if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const it=c.items.find(x=>x.u===u);c.items=c.items.filter(x=>x.u!==u);if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();flash(`${shortN(it.n)} entfernt`);return}
+  if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<0)return;const [it]=c.items.splice(i,1);const ss0=c.items[0]&&c.items[0].ss;if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();
+    undoToast(`${shortN(it.n)} entfernt`,()=>{if(c.items[0]&&i===0)c.items[0].ss=!!ss0;c.items.splice(i,0,it);save();renderItems();renderBar();renderProgress()});return}
   if(t.closest("#bkSave")){saveBackup();return}
   if(t.closest("#bkLoad")){document.getElementById("bkFile").click();return}
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
@@ -1302,7 +1313,7 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   const same=(()=>{const h=histFor(it.id)[0];return h&&h.log[pIdx]&&h.log[pIdx].kg?h.log[pIdx].kg:""})();
   const sug=same||(lastKg?lastKg.kg:"")||prevKg(it,pIdx)||it.kg||"";
   let pre=String(e?(e.kg||sug):sug).replace(/\s*kg$/i,"");
-  if(curUnit()==="lbs"&&numOf(pre)!==null)pre=String(Math.round(numOf(pre)/LB*2)/2);
+  if(curUnit()==="lbs"&&numOf(pre)!==null){const src=e&&e.kg?e:null;pre=src&&src.lbs?src.lbs:String(Math.round(numOf(pre)/LB*2)/2)}
   kgIn.value=pre;setUnitUI();const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
   document.getElementById("logHint").textContent=(pSet?`Letztes Mal (${fmtDate(prev.d)}), Satz ${Math.min(pIdx,prev.log.length-1)+1}: ${setTxt(pSet,prev.w)}. `:"")+`Leer lassen = ${planShort(it)} wie im Plan.`;
   updJudge();
@@ -1327,7 +1338,7 @@ logModal.addEventListener("click",e=>{
   if(e.target===logModal||e.target.closest("[data-close]")){closeLog();return}
   const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
   const sb=e.target.closest("#logSave");
-  if(sb){const entry={st:judge(it,document.getElementById("logVal").value),v:document.getElementById("logVal").value.trim(),kg:(()=>{let v=lbsToKgTxt(document.getElementById("logKg").value.trim().replace(/\s*kg$/i,""));if(curUnit()==="lbs"&&numOf(v)!==null)v=String(r1(numOf(v)*LB));return v})()};if(!entry.kg)delete entry.kg;
+  if(sb){let entry_lbs="";const entry={st:judge(it,document.getElementById("logVal").value),v:document.getElementById("logVal").value.trim(),kg:(()=>{let v=lbsToKgTxt(document.getElementById("logKg").value.trim().replace(/\s*kg$/i,""));if(curUnit()==="lbs"&&numOf(v)!==null){entry_lbs=String(numOf(v));v=String(r1(numOf(v)*LB))}return v})()};if(!entry.kg)delete entry.kg;else if(entry_lbs)entry.lbs=entry_lbs;
     const isNew=logCtx.idx==null;const pr=isNew?prCheck(it,entry):null;if(pr)entry.pr=1;
     if(isNew)it.log.push(entry);else it.log[logCtx.idx]=entry;
     save();renderItems();renderBar();closeLog();
@@ -1544,8 +1555,13 @@ function sessFromItems(list,title){const s={id:uid(),t:title,a:"",h:"",items:lis
   return {u:uid(),id:x.id,n:e.n||x.n,k:e.k||x.k||"eigen",s:x.s!=null?x.s:(x.log?String(x.log.length):e.s||""),w:x.w||e.w||"",p:x.p!=null?x.p:(e.p||""),r:x.r!=null?x.r:(e.r||""),b:x.b||"",v:(x.v||e.v||[]).slice(),ss:i>0&&!!x.ss,goal:x.goal||"",kg:"",log:[]}})};
   state.sessions.push(s);return s}
 function savedMsg(s){flash(`Gespeichert als «${s.t}» – oben bei den Einheiten. Umbenennen im Tab «Bearbeiten».`)}
-document.getElementById("saveSessBtn").addEventListener("click",()=>{const c=cur();if(!c.items.length)return;
-  const s=sessFromItems(c.items,"Mein Training "+fmtDate(Date.now()));save();renderBar();savedMsg(s)});
+function saveFreeAsSess(){const c=cur();if(!c.items.length){flash("Zuerst Übungen hinzufügen.");return}
+  const nm=c.t&&c.t!=="Freies Training"?c.t:"Mein Training "+fmtDate(Date.now());
+  const ex=state.sessions.find(x=>!x.free&&x.t===nm&&x.from===c.id);
+  if(ex){const keep=ex.id;const n=sessFromItems(c.items,nm);state.sessions=state.sessions.filter(x=>x!==n);ex.items=n.items;save();renderBar();flash(`«${nm}» aktualisiert ✓`);return}
+  const s=sessFromItems(c.items,nm);s.from=c.id;save();renderBar();flash(`Gespeichert als Einheit «${nm}» – oben in der Leiste, jederzeit wiederholbar.`)}
+document.getElementById("saveSessBtn").addEventListener("click",saveFreeAsSess);
+document.getElementById("items").addEventListener("input",e=>{if(e.target.id!=="freeName")return;const c=cur();c.t=e.target.value.trim()||"Freies Training";save();renderBar();const h=document.querySelector(".stitle");if(h)h.textContent=c.t});
 /* Freies Training: im Gym spontan Übung für Übung zusammenstellen */
 document.getElementById("freeBtn").addEventListener("click",()=>{
   let s=state.sessions.find(x=>x.free&&!x.items.some(it=>(it.log||[]).length));
