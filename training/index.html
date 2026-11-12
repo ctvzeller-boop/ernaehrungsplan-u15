@@ -133,6 +133,13 @@ button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 
 /* Einheiten-Leiste */
 .sessionbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.folderbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.folderbar:empty{display:none}
+.folderbar .cat{min-height:36px;padding:4px 12px;font-size:.85rem}
+.folderbar .cat small{opacity:.6;font-weight:400;margin-left:2px}
+.folderbar .cat[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.folderbar .addf{border-style:dashed}
+.folderbar .linkbtn{font-size:.85rem;padding:4px 6px}
 .stab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
 .stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
 .stab small{font-family:var(--body);font-weight:500;font-size:.75rem;color:var(--muted)}
@@ -544,6 +551,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <button type="button" class="linkbtn" id="installClose">Ausblenden</button>
   </div>
 
+  <div class="folderbar" id="folderBar" role="group" aria-label="Ordner"></div>
   <div class="sessionbar" id="sessionBar" role="group" aria-label="Meine Einheiten"></div>
   <div class="addrow train-only"><button type="button" class="addcoach" id="addCoachBtn">＋ Neue Einheit vom Coach hinzufügen</button><button type="button" class="addcoach free" id="freeBtn">Freies Training starten</button></div>
 
@@ -1045,8 +1053,16 @@ function thumbHTML(id,name,v){const im=imgsFor(id,v);
 function setMode(m){if(m!=="stats"&&statsView){statsView=null;statSel=null}if(m==="coach")setTimeout(openCoach,0);if(m==="stats"&&sbUser&&!isCoach)setTimeout(loadMyGroups,0);state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
 
 /* Einheiten-Leiste */
-function renderBar(){
-  const s=state.sessions;
+/* Ordner für Einheiten (z. B. «U15», «Finn», «Ich») */
+var folderSel=null;try{folderSel=localStorage.getItem("cz-folder")}catch(e){}
+function folders(){const set=new Set(state.folders||[]);state.sessions.forEach(x=>{if(x.folder)set.add(x.folder)});return [...set].sort((a,b)=>a.localeCompare(b,"de"))}
+function setFolder(f){folderSel=f;try{f?localStorage.setItem("cz-folder",f):localStorage.removeItem("cz-folder")}catch(e){}}
+function renderFolders(){const el=document.getElementById("folderBar");const F=folders();if(folderSel&&folderSel!=="__none"&&!F.includes(folderSel))setFolder(null);
+  const none=state.sessions.some(x=>!x.folder);
+  el.innerHTML=(F.length||state.mode==="edit")?`<button type="button" class="cat" data-folder="" aria-pressed="${!folderSel}">Alle</button>${F.map(f=>`<button type="button" class="cat" data-folder="${esc(f)}" aria-pressed="${folderSel===f}">${esc(f)} <small>${state.sessions.filter(x=>x.folder===f).length}</small></button>`).join("")}${F.length&&none?`<button type="button" class="cat" data-folder="__none" aria-pressed="${folderSel==="__none"}">Ohne Ordner</button>`:""}
+    <button type="button" class="cat addf edit-only" id="newFolder">＋ Ordner</button>${folderSel&&folderSel!=="__none"?`<button type="button" class="linkbtn edit-only" id="renFolder">Umbenennen</button><button type="button" class="linkbtn edit-only" id="delFolder" style="color:var(--warn)">Ordner löschen</button>`:""}`:"";}
+function renderBar(){renderFolders();
+  const s=state.sessions.filter(x=>!folderSel||(folderSel==="__none"?!x.folder:x.folder===folderSel)||x.id===state.active);
   document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab${x.free?" free":""}" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
    `<button type="button" id="newSess" class="edit-only" style="flex:none">+ Neue Einheit</button>
     ${TPL.length?"":"<!--"}<select id="tplPick" class="tplpick edit-only" aria-label="Neue Einheit aus Vorlage"><option value="">Aus Vorlage …</option>${TPL.map((t,i)=>`<option value="${i}">${esc(t.t)}</option>`).join("")}</select>${TPL.length?"":"-->"}`;
@@ -1059,6 +1075,7 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
     el.innerHTML=`<div class="sesshead">
       <div class="field"><label class="small" for="sTitle">Einheit</label><input type="text" id="sTitle" data-sf="t" value="${esc(c.t)}" placeholder="z. B. Oberkörper Kraft"></div>
       <div class="field"><label class="small" for="sAth">Athlet/in</label><input type="text" id="sAth" data-sf="a" value="${esc(c.a)}" placeholder="Name"></div>
+      <div class="field"><label class="small" for="sFolder">Ordner</label><select id="sFolder"><option value="">Ohne Ordner</option>${folders().map(f=>`<option value="${esc(f)}"${c.folder===f?" selected":""}>${esc(f)}</option>`).join("")}<option value="__new">＋ Neuer Ordner …</option></select></div>
       <div class="field full"><label class="small" for="sNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label><textarea id="sNotes" data-sf="h" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen">${esc(c.h)}</textarea></div>
     </div><div class="summary" id="summary" style="margin-top:10px"></div>
     <div class="goalpick" id="goalAll" role="group" aria-label="Ziel für alle passenden Übungen" style="margin-top:10px"><span class="eyebrow" title="Setzt das Ziel bei allen Übungen, für die es passt.">Alle passenden Übungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="pow">Schnellkraft</button><button type="button" data-goal="ausd">Kraftausdauer</button><button type="button" data-goal="rk">Rumpfkraft</button><button type="button" data-goal="ra">Rumpfausdauer</button><button type="button" data-goal="">Standard</button></div>`;
@@ -1419,6 +1436,11 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  const fo=t.closest("[data-folder]");if(fo){const f=fo.dataset.folder||null;setFolder(f);
+    if(f){const vis=state.sessions.filter(x=>f==="__none"?!x.folder:x.folder===f);if(vis.length&&!vis.some(x=>x.id===state.active)){state.active=vis[0].id;save();renderAll();return}}renderBar();return}
+  if(t.closest("#newFolder")){folderInput("Neuer Ordner","",n=>{(state.folders=state.folders||[]);if(!state.folders.includes(n))state.folders.push(n);setFolder(n);save();renderBar();flash(`Ordner «${n}» angelegt – Einheiten über «Ordner» im Kopf der Einheit zuordnen`)});return}
+  if(t.closest("#renFolder")){const old=folderSel;folderInput(`Ordner «${old}» umbenennen`,old,n=>{state.sessions.forEach(x=>{if(x.folder===old)x.folder=n});state.folders=(state.folders||[]).filter(f=>f!==old);if(!state.folders.includes(n))state.folders.push(n);setFolder(n);save();renderBar();renderHead();flash("Umbenannt")});return}
+  if(t.closest("#delFolder")){const old=folderSel;askChoice(`Ordner «${old}» löschen?`,"Die Einheiten bleiben erhalten und sind danach ohne Ordner.",[{key:"del",label:"Ordner löschen",cls:"danger"}]).then(k=>{if(k!=="del")return;state.sessions.forEach(x=>{if(x.folder===old)delete x.folder});state.folders=(state.folders||[]).filter(f=>f!==old);setFolder(null);save();renderBar();renderHead();flash(`Ordner «${old}» gelöscht`)});return}
   const xbp=t.closest("[data-bp]");if(xbp){boardPeriod=xbp.dataset.bp;if(state.mode==="coach")renderCoach();else renderStats();return}
   const xcf=t.closest("[data-cfilter]");if(xcf){coachFilter=xcf.dataset.cfilter;renderCoach();return}
   const xgm=t.closest("[data-gmem]");if(xgm){groupMembers(xgm.dataset.gmem);return}
@@ -1434,7 +1456,7 @@ document.addEventListener("click",e=>{
   const ua=t.closest("[data-unassign]");if(ua){const a=coachAssign.find(x=>x.id===ua.dataset.unassign);sb.from("assignments").delete().eq("id",ua.dataset.unassign).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadAssign();renderCoach();flash(a?`«${a.title}» bei ${pName(a.player_id)} entfernt`:"Entfernt")});return}
   const ce=t.closest("[data-cedit]");if(ce){state.active=ce.dataset.cedit;setMode("edit");scrollTo({top:0});return}
   const cv=t.closest("[data-cview]");if(cv){setMode("stats");viewPlayer(cv.dataset.cview);return}
-  if(t.closest("#cNew")){const x={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};state.sessions.push(x);state.active=x.id;setMode("edit");scrollTo({top:0});flash("Neue Einheit – Titel oben eintragen");return}
+  if(t.closest("#cNew")){const x={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};if(folderSel&&folderSel!=="__none")x.folder=folderSel;state.sessions.push(x);state.active=x.id;setMode("edit");scrollTo({top:0});flash("Neue Einheit – Titel oben eintragen");return}
   if(t.closest("#cReload")){openCoach().then(()=>flash("Aktualisiert"));return}
   const vp=t.closest("[data-viewp]");if(vp){viewPlayer(vp.dataset.viewp);return}
   if(t.closest("#bwSave")){bwSaveEntry();return}
@@ -1474,7 +1496,7 @@ document.addEventListener("click",e=>{
   const ed=t.closest("[data-edit]");if(ed){openLog(ed.closest("[data-u]").dataset.u,+ed.dataset.edit,ed);return}
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
   const stb=t.closest("[data-sess]");if(stb){state.active=stb.dataset.sess;save();renderAll();return}
-  if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
+  if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};if(folderSel&&folderSel!=="__none")s.folder=folderSel;state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
   const gb=t.closest("[data-goal]");if(gb){const g=gb.dataset.goal;
     if(gb.closest("#goalAll")){let n=0;cur().items.forEach(it=>{if(g?goalsFor(it).includes(g):goalable(it)){applyGoal(it,g);n++}});save();renderItems();renderText();flash(n?`${n} Übungen auf ${g?GOALS[g].n:"Standard"} gesetzt`:"Keine passenden Übungen in dieser Einheit");return}
     const u=gb.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);applyGoal(it,g);save();renderItems(`[data-u="${u}"] [data-goal="${g}"]`);renderText();return}
@@ -1728,6 +1750,13 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+function folderInput(title,val,cb){askChoice(title,"",[]).then(()=>{});const list=document.getElementById("choiceList");
+  list.innerHTML=`<input type="text" id="fName" value="${esc(val||"")}" placeholder="z. B. U15, Finn, Ich" autocomplete="off" style="min-height:48px;padding:10px 12px;border:1.5px solid var(--accent);border-radius:8px;font-size:1rem"><button type="button" class="primary" id="fOk"><b>Speichern</b></button>`;
+  const inp=document.getElementById("fName");inp.focus();inp.select();const go=()=>{const v=inp.value.trim();if(!v){inp.focus();return}document.getElementById("choiceModal").hidden=true;cb(v)};
+  document.getElementById("fOk").onclick=go;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();go()}}}
+document.addEventListener("change",e=>{if(e.target.id!=="sFolder")return;const c=cur();const v=e.target.value;
+  if(v==="__new"){e.target.value=c.folder||"";folderInput("Neuer Ordner",c.folder?"":"",n=>{(state.folders=state.folders||[]).includes(n)||state.folders.push(n);c.folder=n;save();renderBar();renderHead();flash(`«${c.t||"Einheit"}» liegt jetzt im Ordner «${n}»`)});return}
+  if(v)c.folder=v;else delete c.folder;save();renderBar();flash(v?`In Ordner «${v}» verschoben`:"Aus dem Ordner genommen")});
 document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-gsocial]");if(!c)return;const id=c.dataset.gsocial,v=c.checked;sb.from("groups").update({social:v}).eq("id",id).then(async r=>{if(r.error){c.checked=!v;flash(sbMsg(r.error));return}await loadGroups();renderCoach();flash(v?"Mitglieder sehen jetzt Rangliste und Trainings":"Rangliste für Mitglieder ausgeschaltet")})});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="gNewName"){e.preventDefault();document.getElementById("gNewOk").click()}else if(e.target.id==="gRenName"){e.preventDefault();const b=document.querySelector("[data-grenok]");if(b)b.click()}});
 document.getElementById("acctModal").addEventListener("change",async e=>{if(e.target.id!=="acOptOut")return;const v=e.target.checked;e.target.disabled=true;
@@ -1842,9 +1871,9 @@ async function groupSessions(gid){const g=coachGroups.find(x=>x.id===gid);if(!g)
 async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign(),loadGroups()]);await loadPlayerData();if(openBoard)await loadFeed(openBoard);if(state.mode==="coach")renderCoach()}
 function pName(id){const p=coachPlayers.find(x=>x.player_id===id);return p?(p.name||p.email||"Spieler"):"Spieler"}
 function renderCoach(){const el=document.getElementById("coachView");if(!el)return;
-  const S=state.sessions.filter(x=>!x.free);
-  const sessRows=S.map(x=>{const as=coachAssign.filter(a=>a.sid===x.id);const n=x.items.length;
-    return `<div class="crow"><div class="cmain"><b>${esc(x.t||"Ohne Titel")}</b><span class="cmeta">${n} Übung${n===1?"":"en"}${x.a?" · "+esc(x.a):""}</span>
+  const S=state.sessions.filter(x=>!x.free).sort((a,b)=>(a.folder||"\uffff").localeCompare(b.folder||"\uffff","de"));let lastF;
+  const sessRows=S.map(x=>{const fh=x.folder!==lastF&&(S.some(z=>z.folder))?`<h4 class="eyebrow" style="margin:14px 0 2px">${esc(x.folder||"Ohne Ordner")}</h4>`:"";lastF=x.folder;const as=coachAssign.filter(a=>a.sid===x.id);const n=x.items.length;
+    return fh+`<div class="crow"><div class="cmain"><b>${esc(x.t||"Ohne Titel")}</b><span class="cmeta">${n} Übung${n===1?"":"en"}${x.a?" · "+esc(x.a):""}</span>
       ${as.length?`<div class="chips">${as.map(a=>`<span class="chip">${esc(pName(a.player_id))}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(pName(a.player_id))} entfernen" title="Zuweisung entfernen">×</button></span>`).join("")}</div>`:""}</div>
       <div class="cbtns"><button type="button" class="primary" data-assign="${esc(x.id)}">Spielern zuweisen</button><button type="button" data-cedit="${esc(x.id)}">Bearbeiten</button></div></div>`}).join("")||`<p class="empty">Noch keine Einheiten.</p>`;
   const groupRows=coachGroups.map(g=>`<div class="crow"><div class="cmain"><b>${esc(g.name)}</b><span class="cmeta">${g.members.length} Mitglied${g.members.length===1?"":"er"} · ${g.sids.length} Einheit${g.sids.length===1?"":"en"}</span>
