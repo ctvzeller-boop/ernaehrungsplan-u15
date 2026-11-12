@@ -53,6 +53,23 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 body[data-mode="train"] .edit-only,body[data-mode="edit"] .train-only{display:none!important}
 body[data-mode="stats"] .edit-only,body[data-mode="stats"] .train-only,body[data-mode="stats"] .main,body[data-mode="stats"] .sessionbar,body[data-mode="stats"] .lower,body:not([data-mode="stats"]) .stats-only{display:none!important}
 body[data-mode="stats"] .wrap{max-width:760px}
+body[data-mode="coach"] .edit-only,body[data-mode="coach"] .train-only,body[data-mode="coach"] .main,body[data-mode="coach"] .sessionbar,body[data-mode="coach"] .lower,body:not([data-mode="coach"]) .coach-only{display:none!important}
+body[data-mode="coach"] .wrap{max-width:860px}
+.crow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.crow:first-of-type{border-top:none}
+.crow .cmain{flex:1 1 220px;min-width:0}
+.crow .cmain b{display:block;overflow-wrap:break-word}
+.crow .cmeta{font-size:.82rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 4px 2px 9px}
+.chip button{border:none;background:none;color:inherit;min-height:24px;min-width:24px;padding:0;font-size:1rem;line-height:1;cursor:pointer}
+.chip.plain{padding-right:9px}
+.cbtns{display:flex;gap:6px;flex-wrap:wrap}
+.cbtns button{min-height:40px;padding:6px 12px;font-size:.88rem}
+.checklist{display:flex;flex-direction:column;gap:2px;margin:8px 0 12px}
+.checklist label{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 6px;border-radius:8px;cursor:pointer}
+.checklist label:hover{background:var(--bg)}
+.checklist input{width:20px;height:20px}
 .wrap{max-width:1300px;margin:0 auto;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(48px,env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:18px}
@@ -483,6 +500,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="eyebrow">CZ Training · Unihockey Athletik</div>
       <h1>Trainingseinheit</h1>
       <p class="lead edit-only">Stelle eine Einheit aus der Übungsliste zusammen, passe Sätze, Wiederholungen und Pausen an und schicke sie als Link oder PDF.</p>
+      <p class="lead coach-only">Plane Einheiten und schalte sie deinen Spielern auf. Änderungen an einer zugewiesenen Einheit kommen automatisch bei den Spielern an.</p>
       <p class="lead stats-only">Alle abgeschlossenen Trainings. Tippe auf ein Training, um alle Sätze, Wiederholungen und Gewichte zu sehen.</p>
       <p class="lead train-only">Nach jedem Satz das nächste Feld antippen und die Wiederholungen eintragen. Am Schluss «Training abschliessen» – so siehst du beim nächsten Mal, was du geschafft hast.</p>
       </div>
@@ -491,6 +509,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <button type="button" data-mode="train" aria-pressed="false">Training</button>
       <button type="button" data-mode="edit" aria-pressed="true">Bearbeiten</button>
       <button type="button" data-mode="stats" aria-pressed="false">Stats</button>
+      <button type="button" data-mode="coach" aria-pressed="false" id="coachTab" hidden>Coaching</button>
       <button type="button" id="acctBtn" aria-haspopup="dialog" aria-pressed="false">Anmelden</button>
     </div>
   </header>
@@ -548,6 +567,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 
   <section class="stats-only" id="statsView" aria-label="Stats"></section>
+  <section class="coach-only" id="coachView" aria-label="Coaching"></section>
 
   <div class="lower">
     <div class="card edit-only">
@@ -679,6 +699,16 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
     <h3 id="choiceTitle"></h3>
     <p class="hint" id="choiceText"></p>
     <div class="choicelist" id="choiceList"></div>
+  </div>
+</div>
+
+<div id="assignModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="assignTitle">Spielern zuweisen</h3>
+    <p class="hint" id="assignHint"></p>
+    <div class="checklist" id="assignList"></div>
+    <button type="button" class="primary" id="assignSave">Speichern</button>
   </div>
 </div>
 
@@ -1000,7 +1030,7 @@ function thumbHTML(id,name,v){const im=imgsFor(id,v);
    :`<button type="button" class="thumb none" data-show="${esc(id)}" aria-label="Bild und Ausführung: ${esc(name)}">＋</button>`}
 
 /* Modus */
-function setMode(m){if(m!=="stats"&&statsView){statsView=null;statSel=null}state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
+function setMode(m){if(m!=="stats"&&statsView){statsView=null;statSel=null}if(m==="coach")setTimeout(openCoach,0);state.mode=m;save();document.body.dataset.mode=m;document.querySelectorAll("[data-mode]").forEach(b=>{if(b.tagName==="BUTTON")b.setAttribute("aria-pressed",String(b.dataset.mode===m))});renderAll()}
 
 /* Einheiten-Leiste */
 function renderBar(){
@@ -1355,7 +1385,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="toolbar">${statsView?"":`<button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button>`}<button type="button" data-hsess="${statSel}">Als Einheit speichern</button>${statsView?"":`<button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button>`}</div>
     </div>${own}`;
 }
-function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
+function renderAll(){if(state.mode==="coach"&&!isCoach)state.mode="train";document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="coach")renderCoach();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
 
 /* Events */
@@ -1377,6 +1407,12 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  const asg=t.closest("[data-assign]");if(asg){openAssign(asg.dataset.assign);return}
+  const ua=t.closest("[data-unassign]");if(ua){const a=coachAssign.find(x=>x.id===ua.dataset.unassign);sb.from("assignments").delete().eq("id",ua.dataset.unassign).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadAssign();renderCoach();flash(a?`«${a.title}» bei ${pName(a.player_id)} entfernt`:"Entfernt")});return}
+  const ce=t.closest("[data-cedit]");if(ce){state.active=ce.dataset.cedit;setMode("edit");scrollTo({top:0});return}
+  const cv=t.closest("[data-cview]");if(cv){setMode("stats");viewPlayer(cv.dataset.cview);return}
+  if(t.closest("#cNew")){const x={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};state.sessions.push(x);state.active=x.id;setMode("edit");scrollTo({top:0});flash("Neue Einheit – Titel oben eintragen");return}
+  if(t.closest("#cReload")){openCoach().then(()=>flash("Aktualisiert"));return}
   const vp=t.closest("[data-viewp]");if(vp){viewPlayer(vp.dataset.viewp);return}
   if(t.closest("#bwSave")){bwSaveEntry();return}
   const bd=t.closest("[data-bwdel]");if(bd){const d=bd.dataset.bwdel;const old=(state.bw||[]).find(e=>e.d===d);state.bw=(state.bw||[]).filter(e=>e.d!==d);(state.delB=state.delB||[]).push(d);save();renderStats();
@@ -1414,7 +1450,7 @@ document.addEventListener("click",e=>{
   const lg=t.closest("[data-log]");if(lg){openLog(lg.closest("[data-u]").dataset.u,null,lg);return}
   const ed=t.closest("[data-edit]");if(ed){openLog(ed.closest("[data-u]").dataset.u,+ed.dataset.edit,ed);return}
   const sh=t.closest("[data-show]");if(sh){openEx(sh.dataset.show,sh);return}
-  const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
+  const stb=t.closest("[data-sess]");if(stb){state.active=stb.dataset.sess;save();renderAll();return}
   if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
   const gb=t.closest("[data-goal]");if(gb){const g=gb.dataset.goal;
     if(gb.closest("#goalAll")){let n=0;cur().items.forEach(it=>{if(g?goalsFor(it).includes(g):goalable(it)){applyGoal(it,g);n++}});save();renderItems();renderText();flash(n?`${n} Übungen auf ${g?GOALS[g].n:"Standard"} gesetzt`:"Keine passenden Übungen in dieser Einheit");return}
@@ -1433,7 +1469,7 @@ function armed(btn,label,confirmLabel,fn,cls){cls=cls||"warn";btn.addEventListen
   if(!btn._arm){btn._arm=true;btn.textContent=confirmLabel;btn.classList.add(cls);btn._t=setTimeout(()=>{btn._arm=false;btn.textContent=label;btn.classList.remove(cls)},4000);return}
   clearTimeout(btn._t);btn._arm=false;btn.textContent=label;btn.classList.remove(cls);fn()})}
 armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",()=>{
-  const name=cur().t;(state.delS=state.delS||[]).push(state.active);state.sessions=state.sessions.filter(s=>s.id!==state.active);
+  const name=cur().t;(state.delS=state.delS||[]).push(state.active);if(cur().assign)(state.dismissed=state.dismissed||[]).push(cur().assign);state.sessions=state.sessions.filter(s=>s.id!==state.active);
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
 armed(document.getElementById("resetLogBtn"),"Sätze zurücksetzen","Ohne Speichern löschen?",()=>{
@@ -1669,6 +1705,10 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+document.getElementById("acctModal").addEventListener("change",async e=>{if(e.target.id!=="acOptOut")return;const v=e.target.checked;e.target.disabled=true;
+  const {error}=await sb.from("profiles").update({share_opt_out:v}).eq("id",sbUser.id);e.target.disabled=false;
+  if(error){e.target.checked=!v;document.getElementById("acShareMsg").textContent=sbMsg(error);return}flash(v?"Wird nicht mehr mit dem Coach geteilt":"Wird wieder mit dem Coach geteilt");acctCoach()});
+document.getElementById("assignModal").addEventListener("click",e=>{if(e.target.id==="assignModal"||e.target.closest("[data-close]")){document.getElementById("assignModal").hidden=true;return}if(e.target.closest("#assignSave"))saveAssign()});
 /* ===== Konto & Sync mit Supabase (freiwillig) ===== */
 const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl";
 let sb=null,sbUser=null,sbT=null,sbBusy=false,sbDirty=false,sbLast=0,sbErr="";
@@ -1694,7 +1734,7 @@ function acctUI(){const line=document.getElementById("acctLine"),who=document.ge
 function sbQueue(){if(!sb||!sbUser)return;sbDirty=true;clearTimeout(sbT);sbT=setTimeout(sbPush,1500)}
 async function sbPush(){if(!sb||!sbUser||sbBusy)return;sbBusy=true;sbDirty=false;
   try{const now=new Date().toISOString();const {error}=await sb.from("app_state").upsert({user_id:sbUser.id,data:sbPayload(),updated_at:now});if(error)throw error;
-    try{await sb.from("private_state").upsert({user_id:sbUser.id,data:sbPrivate(),updated_at:now})}catch(_){}sbLast=Date.now();sbErr=""}
+    try{await sb.from("private_state").upsert({user_id:sbUser.id,data:sbPrivate(),updated_at:now})}catch(_){}pushAssignUpdates();sbLast=Date.now();sbErr=""}
   catch(e){sbErr=String(e&&e.message||e);sbDirty=true}finally{sbBusy=false;acctUI();if(sbDirty&&!sbErr)sbQueue()}}
 async function sbPull(first){if(!sb||!sbUser)return;try{const {data,error}=await sb.from("app_state").select("data,updated_at").eq("user_id",sbUser.id).maybeSingle();if(error)throw error;
     let priv=null;try{const r=await sb.from("private_state").select("data").eq("user_id",sbUser.id).maybeSingle();if(!r.error&&r.data)priv=r.data.data}catch(_){}
@@ -1704,7 +1744,7 @@ async function sbPull(first){if(!sb||!sbUser)return;try{const {data,error}=await
       if(JSON.stringify(sbPayload())!==before){renderCustom();renderAll()}
       const {bw:_b,delB:_d,...rmain}=remote;if(JSON.stringify(sbPayload())!==JSON.stringify(rmain)||JSON.stringify(sbPrivate())!==JSON.stringify(priv?{bw:priv.bw||[],delB:priv.delB||[]}:{bw:[],delB:[]})||"bw" in data.data)await sbPush()}
     else await sbPush();
-    sbErr="";if(first)flash("Mit deinem Konto synchronisiert")}catch(e){sbErr=String(e&&e.message||e)}acctUI()}
+    await pullAssignments();sbErr="";if(first)flash("Mit deinem Konto synchronisiert")}catch(e){sbErr=String(e&&e.message||e)}acctUI()}
 function acctRender(msg){const b=document.getElementById("acctBody");
   if(!sb){b.innerHTML=`<p>Die Anmeldung braucht Internet. Bitte später nochmals versuchen.</p>`;return}
   if(sbUser){const nm=(sbUser.user_metadata||{}).name||"";b.innerHTML=`<p>Angemeldet als <b>${esc(nm||sbUser.email)}</b>${nm?`<br><span class="small">${esc(sbUser.email)}</span>`:""}</p>
@@ -1717,12 +1757,59 @@ function acctRender(msg){const b=document.getElementById("acctBody");
     <label>Name (nur bei neuem Konto)<input type="text" id="acName" autocomplete="name" placeholder="z. B. Finn"></label>
     <div class="acctrow"><button type="submit" class="primary" id="acIn">Anmelden</button><button type="button" id="acUp">Neues Konto erstellen</button></div>
     <p class="accterr" id="acErr">${esc(msg||"")}</p><p class="small">Passwort vergessen? Dem Coach Bescheid geben.</p></form>`}
+async function checkCoach(){if(!sb||!sbUser){isCoach=false}else{try{const r=await sb.rpc("is_coach");isCoach=!r.error&&r.data===true}catch(e){isCoach=false}}
+  document.getElementById("coachTab").hidden=!isCoach;if(isCoach)await loadAssign();if(!isCoach&&state.mode==="coach")setMode("train")}
 async function acctCoach(){const box=document.getElementById("acCoach");if(!box||!sb||!sbUser)return;
-  try{const [cc,mc]=await Promise.all([sb.rpc("my_coach_code"),sb.rpc("my_coaches")]);if(mc.error)throw mc.error;const code=cc.error?null:cc.data;const coaches=mc.data||[];
-    box.innerHTML=(code?`<div><span class="eyebrow">Dein Coach-Code</span><div class="acctrow" style="align-items:center"><span class="coachcode">${esc(code)}</span><button type="button" id="acCopy" data-code="${esc(code)}">Kopieren</button></div><p class="small">Gib diesen Code deinen Spielern. Wer ihn eingibt, gibt dir seine Trainings frei – du siehst sie im Tab «Stats».</p></div>`:"")+
-      `<div><span class="eyebrow">Mit Coach teilen</span>${coaches.length?`<ul class="small" style="margin:6px 0;padding-left:18px">${coaches.map(c=>`<li>Geteilt mit <b>${esc(c.name||"Coach")}</b> <button type="button" class="linkbtn" data-unshare="${esc(c.coach_id)}">Teilen beenden</button></li>`).join("")}</ul>`:`<p class="small" style="margin:4px 0">Gib den Code deines Coaches ein, damit er deine absolvierten Trainings sehen kann (nur lesen). Dein Körpergewicht sieht er nicht.</p>`}
-      <div class="acctrow"><input type="text" id="acCode" placeholder="z. B. CZ-7K4M" autocapitalize="characters" autocomplete="off" style="flex:1;min-width:120px;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:1rem"><button type="button" class="primary" id="acShare">Teilen</button></div><p class="accterr" id="acShareMsg"></p></div>`}
-  catch(e){box.innerHTML=`<p class="small">Teilen mit Coach ist noch nicht eingerichtet.</p>`}}
+  if(isCoach){box.innerHTML=`<p class="small">Du bist als <b>Coach</b> angemeldet. Deine Spieler und ihre Trainings findest du im Tab «Coaching».</p>`;return}
+  try{const {data,error}=await sb.from("profiles").select("share_opt_out").eq("id",sbUser.id).maybeSingle();if(error)throw error;const out=!!(data&&data.share_opt_out);
+    box.innerHTML=`<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="acOptOut"${out?" checked":""} style="width:20px;height:20px;margin-top:2px"><span><b>Nicht mit dem Coach teilen</b><br><span class="small">${out?"Dein Coach sieht deine Trainings nicht und kann dir keine Einheiten aufschalten.":"Dein Coach sieht deine absolvierten Trainings (nur lesen) und kann dir Einheiten aufschalten. Dein Körpergewicht sieht er nie."}</span></span></label><p class="accterr" id="acShareMsg"></p>`}
+  catch(e){box.innerHTML=`<p class="small">Teilen mit dem Coach ist noch nicht eingerichtet.</p>`}}
+/* ===== Coaching: Einheiten planen und Spielern zuweisen ===== */
+var isCoach=false,coachAssign=[],coachPlayerData={},assignSid=null;
+function sessPayload(x){return {id:x.id,t:x.t||"",a:x.a||"",h:x.h||"",items:(x.items||[]).map(it=>{const {log,xs,skip,temp,added,...r}=it;return r})}}
+async function loadAssign(){if(!isCoach)return;try{const {data,error}=await sb.from("assignments").select("id,player_id,sid,title,session,updated_at").eq("coach_id",sbUser.id);if(!error)coachAssign=data||[]}catch(e){}}
+async function loadPlayerData(){coachPlayerData={};const ids=coachPlayers.map(p=>p.player_id);if(!ids.length)return;
+  try{const {data,error}=await sb.from("app_state").select("user_id,data,updated_at").in("user_id",ids);if(!error)(data||[]).forEach(r=>coachPlayerData[r.user_id]={hist:(r.data&&r.data.hist)||[],at:r.updated_at})}catch(e){}}
+async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign()]);await loadPlayerData();if(state.mode==="coach")renderCoach()}
+function pName(id){const p=coachPlayers.find(x=>x.player_id===id);return p?(p.name||p.email||"Spieler"):"Spieler"}
+function renderCoach(){const el=document.getElementById("coachView");if(!el)return;
+  const S=state.sessions.filter(x=>!x.free);
+  const sessRows=S.map(x=>{const as=coachAssign.filter(a=>a.sid===x.id);const n=x.items.length;
+    return `<div class="crow"><div class="cmain"><b>${esc(x.t||"Ohne Titel")}</b><span class="cmeta">${n} Übung${n===1?"":"en"}${x.a?" · "+esc(x.a):""}</span>
+      ${as.length?`<div class="chips">${as.map(a=>`<span class="chip">${esc(pName(a.player_id))}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(pName(a.player_id))} entfernen" title="Zuweisung entfernen">×</button></span>`).join("")}</div>`:""}</div>
+      <div class="cbtns"><button type="button" class="primary" data-assign="${esc(x.id)}">Spielern zuweisen</button><button type="button" data-cedit="${esc(x.id)}">Bearbeiten</button></div></div>`}).join("")||`<p class="empty">Noch keine Einheiten.</p>`;
+  const plRows=coachPlayers.map(p=>{const d=coachPlayerData[p.player_id]||{hist:[]};const H=d.hist.slice().sort((a,b)=>b.d-a.d);const last=H[0];const as=coachAssign.filter(a=>a.player_id===p.player_id);
+    const wk=H.filter(h=>Date.now()-h.d<7*864e5).length;
+    return `<div class="crow"><div class="cmain"><b>${esc(p.name||p.email||"Spieler")}</b><span class="cmeta">${H.length} Training${H.length===1?"":"s"} · ${wk} in den letzten 7 Tagen${last?` · zuletzt ${fmtDate(last.d)}: ${esc(last.t||"Training")}`:""}</span>
+      <div class="chips">${as.length?as.map(a=>`<span class="chip">${esc(a.title||"Einheit")}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(a.title||"Einheit")} entfernen" title="Zuweisung entfernen">×</button></span>`).join(""):`<span class="cmeta">Noch keine Einheit zugewiesen</span>`}</div></div>
+      <div class="cbtns"><button type="button" data-cview="${esc(p.player_id)}">Trainings ansehen</button></div></div>`}).join("");
+  el.innerHTML=`<div class="card"><div class="dhead"><h2>Einheiten</h2><button type="button" id="cNew">＋ Neue Einheit</button></div>${sessRows}</div>
+    <div class="card"><h2>Spieler</h2>${plRows||`<p class="empty">Noch keine Spieler. Sobald sich ein Spieler in der App ein Konto erstellt, erscheint er hier – ausser er wählt «Nicht mit dem Coach teilen».</p>`}
+    <div class="toolbar"><button type="button" id="cReload">↻ Aktualisieren</button></div></div>`}
+function openAssign(sid){const x=state.sessions.find(z=>z.id===sid);if(!x)return;assignSid=sid;if(!coachPlayers.length){flash("Noch keine Spieler – sie erscheinen, sobald sie ein Konto haben.");return}
+  document.getElementById("assignTitle").textContent=`«${x.t||"Einheit"}» zuweisen`;document.getElementById("assignHint").textContent="Die Einheit erscheint beim Spieler automatisch in der App. Änderungen, die du später machst, kommen auch automatisch an.";
+  const on=new Set(coachAssign.filter(a=>a.sid===sid).map(a=>a.player_id));
+  document.getElementById("assignList").innerHTML=coachPlayers.map(p=>`<label><input type="checkbox" value="${esc(p.player_id)}"${on.has(p.player_id)?" checked":""}> ${esc(p.name||p.email||"Spieler")}</label>`).join("");document.getElementById("assignModal").hidden=false}
+async function saveAssign(){const x=state.sessions.find(z=>z.id===assignSid);if(!x)return;const want=new Set([...document.querySelectorAll("#assignList input:checked")].map(i=>i.value));
+  const cur0=coachAssign.filter(a=>a.sid===x.id);const now=new Date().toISOString();let err=null;
+  const add=[...want].map(pid=>({coach_id:sbUser.id,player_id:pid,sid:x.id,title:x.t||"Einheit",session:sessPayload(x),updated_at:now}));
+  if(add.length){const r=await sb.from("assignments").upsert(add,{onConflict:"coach_id,player_id,sid"});if(r.error)err=r.error}
+  for(const a of cur0.filter(a=>!want.has(a.player_id))){const r=await sb.from("assignments").delete().eq("id",a.id);if(r.error)err=r.error}
+  document.getElementById("assignModal").hidden=true;await loadAssign();renderCoach();flash(err?"Speichern ging nicht: "+sbMsg(err):`Zuweisung gespeichert – ${want.size} Spieler`)}
+/* Änderungen an zugewiesenen Einheiten automatisch nachschicken */
+async function pushAssignUpdates(){if(!isCoach||!coachAssign.length)return;const now=new Date().toISOString();const ups=[];
+  coachAssign.forEach(a=>{const x=state.sessions.find(z=>z.id===a.sid);if(!x)return;const pl=sessPayload(x);if(JSON.stringify(pl)!==JSON.stringify(a.session)||a.title!==(x.t||"Einheit")){ups.push({coach_id:sbUser.id,player_id:a.player_id,sid:a.sid,title:x.t||"Einheit",session:pl,updated_at:now});a.session=pl;a.title=x.t||"Einheit"}});
+  if(ups.length)try{await sb.from("assignments").upsert(ups,{onConflict:"coach_id,player_id,sid"})}catch(e){}}
+/* Spieler: zugewiesene Einheiten übernehmen */
+async function pullAssignments(){if(!sb||!sbUser)return;let rows;try{const {data,error}=await sb.from("assignments").select("id,sid,title,session,updated_at,coach_id").eq("player_id",sbUser.id);if(error)return;rows=data||[]}catch(e){return}
+  const dis=new Set(state.dismissed||[]);let changed=false,news=[],ups=[];const ids=new Set(rows.map(r=>r.id));
+  rows.forEach(r=>{if(dis.has(r.id))return;const loc=state.sessions.find(x=>x.assign===r.id);const src=r.session||{};
+    const mk=()=>({t:r.title||src.t||"Einheit",a:src.a||"",h:src.h||"",items:(src.items||[]).map(it=>Object.assign({},it,{u:uid(),log:[],xs:0}))});
+    if(!loc){state.sessions.push(Object.assign({id:uid(),assign:r.id,coachUpd:r.updated_at},mk()));news.push(r.title);changed=true}
+    else if(loc.coachUpd!==r.updated_at&&!loc.items.some(it=>(it.log||[]).length)){Object.assign(loc,mk(),{coachUpd:r.updated_at});ups.push(r.title);changed=true}});
+  state.sessions.filter(x=>x.assign&&!ids.has(x.assign)).forEach(x=>{if(!x.items.some(it=>(it.log||[]).length)){state.sessions=state.sessions.filter(z=>z!==x);(state.delS=state.delS||[]).push(x.id);changed=true}else delete x.assign});
+  if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});if(!state.sessions.some(x=>x.id===state.active))state.active=state.sessions[0].id;
+  if(changed){save();renderAll();if(news.length)flash(`Neu vom Coach: ${news.join(", ")}`);else if(ups.length)flash(`Vom Coach aktualisiert: ${ups.join(", ")}`)}}
 async function loadPlayers(){coachPlayers=[];if(!sb||!sbUser)return;try{const {data,error}=await sb.rpc("my_players");if(!error)coachPlayers=data||[]}catch(e){}if(state.mode==="stats")renderStats()}
 async function viewPlayer(id){if(!id){statsView=null;statSel=null;renderStats();return}const p=coachPlayers.find(x=>x.player_id===id);
   try{const {data,error}=await sb.from("app_state").select("data,updated_at").eq("user_id",id).maybeSingle();if(error)throw error;
@@ -1732,22 +1819,17 @@ function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/Email not confirmed/i.test(m))return "Die E-Mail ist noch nicht bestätigt.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
 acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});document.getElementById("acctWho").addEventListener("click",()=>{acctRender();acctModal.hidden=false});
 acctModal.addEventListener("click",async e=>{if(e.target===acctModal||e.target.closest("[data-close]")){acctModal.hidden=true;return}
-  if(e.target.closest("#acCopy")){const c=e.target.closest("#acCopy").dataset.code;try{await navigator.clipboard.writeText(c);flash("Code kopiert")}catch(_){flash(c)}return}
-  if(e.target.closest("#acShare")){const code=document.getElementById("acCode").value.trim();const msg=document.getElementById("acShareMsg");if(!code){msg.textContent="Bitte den Code eingeben.";return}
-    const {data,error}=await sb.rpc("share_with_coach",{code});if(error){msg.textContent=/nicht gefunden/i.test(error.message)?"Diesen Code gibt es nicht – bitte nochmals prüfen.":/eigener/i.test(error.message)?"Das ist dein eigener Code.":sbMsg(error);return}
-    flash(`Deine Trainings sind jetzt für ${data||"deinen Coach"} sichtbar`);await sbPush();acctCoach();return}
-  const us=e.target.closest("[data-unshare]");if(us){const {error}=await sb.from("coach_shares").delete().eq("player_id",sbUser.id).eq("coach_id",us.dataset.unshare);flash(error?sbMsg(error):"Teilen beendet");acctCoach();return}
-  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;coachPlayers=[];statsView=null;acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
+  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;coachPlayers=[];statsView=null;isCoach=false;coachAssign=[];document.getElementById("coachTab").hidden=true;if(state.mode==="coach")setMode("train");acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
   if(e.target.closest("#acSync")){e.target.disabled=true;await sbPull(false);acctRender(sbErr?sbMsg(sbErr):"✓ Synchronisiert");return}
   if(e.target.closest("#acUp")){const f=document.getElementById("acForm");if(!f.reportValidity())return;const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value,name=document.getElementById("acName").value.trim();
     const {data,error}=await sb.auth.signUp({email,password,options:{data:{name}}});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}
     if(!data.session){document.getElementById("acErr").textContent="Konto erstellt – bitte E-Mail bestätigen und dann anmelden.";return}
     sbUser=data.user;if(name)try{await sb.from("profiles").update({name}).eq("id",sbUser.id)}catch(_){}await sbPull(true);acctRender();return}});
 acctModal.addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value;
-  const {data,error}=await sb.auth.signInWithPassword({email,password});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}sbUser=data.user;await sbPull(true);acctRender();loadPlayers()});
+  const {data,error}=await sb.auth.signInWithPassword({email,password});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}sbUser=data.user;await sbPull(true);acctRender();loadPlayers();checkCoach()});
 async function sbInit(){if(!window.supabase||!window.supabase.createClient){acctUI();return}
   try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"cz-training-auth"}})}catch(e){sb=null;return}
-  const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;acctUI();if(sbUser){sbPull(false);loadPlayers()}
+  const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;acctUI();if(sbUser){sbPull(false);loadPlayers();checkCoach()}
   sb.auth.onAuthStateChange((ev,session)=>{sbUser=session?session.user:null;acctUI()});
   document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
   addEventListener("online",()=>{if(sbUser)sbPull(false)})}
