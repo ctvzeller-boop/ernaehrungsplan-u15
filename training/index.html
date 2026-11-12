@@ -1065,7 +1065,7 @@ function setFolder(f){folderSel=f;try{f?localStorage.setItem("cz-folder",f):loca
 function renderFolders(){const el=document.getElementById("folderBar");const F=folders();if(folderSel&&folderSel!=="__none"&&!F.includes(folderSel))setFolder(null);
   const none=state.sessions.some(x=>!x.folder);
   el.innerHTML=(F.length||state.mode==="edit")?`<button type="button" class="cat" data-folder="" aria-pressed="${!folderSel}">Alle</button>${F.map(f=>`<button type="button" class="cat" data-folder="${esc(f)}" aria-pressed="${folderSel===f}">${esc(f)} <small>${state.sessions.filter(x=>x.folder===f).length}</small></button>`).join("")}${F.length&&none?`<button type="button" class="cat" data-folder="__none" aria-pressed="${folderSel==="__none"}">Ohne Ordner</button>`:""}
-    <button type="button" class="cat addf edit-only" id="newFolder" data-folderdrop="__new">＋ Ordner</button>${folderSel&&folderSel!=="__none"?`<button type="button" class="linkbtn edit-only" id="renFolder">Umbenennen</button><button type="button" class="linkbtn edit-only" id="delFolder" style="color:var(--warn)">Ordner löschen</button>`:""}`:"";}
+    <button type="button" class="cat addf edit-only" id="newFolder" data-folderdrop="__new">＋ Ordner</button>${F.length?`<span class="dragtip edit-only" style="margin-top:0">Tipp: Einheit nach oben auf einen Ordner ziehen</span>`:""}${folderSel&&folderSel!=="__none"?`<button type="button" class="linkbtn edit-only" id="renFolder">Umbenennen</button><button type="button" class="linkbtn edit-only" id="delFolder" style="color:var(--warn)">Ordner löschen</button>`:""}`:"";}
 function renderBar(){renderFolders();
   const s=state.sessions.filter(x=>!folderSel||(folderSel==="__none"?!x.folder:x.folder===folderSel)||x.id===state.active);
   document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab${x.free?" free":""}" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
@@ -1769,7 +1769,9 @@ const pasteModal=document.getElementById("pasteModal");
     const f=t.dataset.folder;if(f==="")return;put(f==="__none"?null:f)}
   function begin(el,x,y){const sess=state.sessions.find(z=>z.id===el.dataset.sess);if(!sess)return false;d={src:el,sess,x,y,x0:x,y0:y,on:false};return true}
   bar.addEventListener("touchstart",e=>{const el=e.target.closest(".stab");if(!el||e.touches.length>1)return;const t=e.touches[0];if(!begin(el,t.clientX,t.clientY))return;timer=setTimeout(activate,380)},{passive:true});
-  bar.addEventListener("touchmove",e=>{if(!d)return;const t=e.touches[0];if(d.on){e.preventDefault();move(t.clientX,t.clientY)}else if(Math.hypot(t.clientX-d.x0,t.clientY-d.y0)>8){clearTimeout(timer);d=null}},{passive:false});
+  bar.addEventListener("touchmove",e=>{if(!d)return;const t=e.touches[0];const dx=t.clientX-d.x0,dy=t.clientY-d.y0;
+    if(!d.on&&Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)*1.2){clearTimeout(timer);d.x=t.clientX;d.y=t.clientY;activate()}  /* nach oben/unten ziehen = sofort verschieben */
+    if(d&&d.on){e.preventDefault();move(t.clientX,t.clientY)}else if(Math.hypot(dx,dy)>8){clearTimeout(timer);d=null}},{passive:false});
   bar.addEventListener("touchend",e=>{if(d&&d.on)e.preventDefault();finish()});bar.addEventListener("touchcancel",finish);
   bar.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0)return;const el=e.target.closest(".stab");if(!el)return;begin(el,e.clientX,e.clientY)});
   addEventListener("pointermove",e=>{if(!d||e.pointerType!=="mouse")return;if(!d.on&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6)activate();move(e.clientX,e.clientY)});

@@ -1,5 +1,5 @@
 /* Offline-Cache: Seite immer zuerst frisch aus dem Netz, sonst aus dem Cache; Bilder/Icons/Bibliotheken aus dem Cache */
-const C="training-v31";
+const C="training-v32";
 const CORE=["./","./manifest.webmanifest","./icons/icon-192.png","./icons/icon-512.png","./icons/apple-touch-icon.png","./icons/favicon-32.png",
  ...["copenhagen-1","flutter-1","flutter-2","dslr-1","dslr-2","scissor-1","scissor-2","bottomup-1","bottomup-2","bicycle-1","bicycle-2","spiderman-1","spiderman-2"].map(n=>`./img/${n}.jpg`)];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
