@@ -237,6 +237,7 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .item{position:relative}
 .hbtn.rmx{position:absolute;top:6px;right:6px;width:34px;height:34px;background:var(--surface)}
 .item:has(.rmx) .ihead{padding-right:30px}
+@media (max-width:600px){body[data-mode="edit"] .imove [data-act="up"],body[data-mode="edit"] .imove [data-act="down"]{display:none}body[data-mode="edit"] .ihead .thumb.none{display:none}}
 @media (max-width:420px){body[data-mode="train"] .ihead .thumb.none{display:none}.ihead{gap:7px}.ihead .thumb{width:48px;height:48px;flex-basis:48px}.ihead .badge{min-width:30px}}
 .dhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .dhead .hacts{padding-right:0}
@@ -535,6 +536,17 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
           <tr><th scope="row">Ziel</th><td>mehr Kraft ohne viel zusätzliche Muskelmasse. Das Nervensystem lernt, mehr Muskelfasern gleichzeitig einzusetzen.</td><td>Muskelaufbau und eine Basis für späteres Maximal&shy;kraft&shy;training</td></tr>
         </tbody>
       </table>
+      <table class="cmp">
+        <thead><tr><th scope="col"></th><th scope="col">Schnellkraft</th><th scope="col">Kraftausdauer</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Gewicht</th><td>leicht bis mittel, ca. 40–60 % vom Maximum</td><td>leicht, ca. 50–60 % vom Maximum</td></tr>
+          <tr><th scope="row">Wieder&shy;holungen</th><td>3–5, jede so schnell wie möglich</td><td>15–20</td></tr>
+          <tr><th scope="row">Pause</th><td>lang, ca. 2 Min.</td><td>kurz, ca. 60 s</td></tr>
+          <tr><th scope="row">Ziel</th><td>schneller Kraft entwickeln (Antritt, Schuss, Zweikampf). Aufhören, sobald es langsamer wird.</td><td>Kraft über längere Zeit halten, z. B. für die Saison oder als leichte Woche</td></tr>
+        </tbody>
+      </table>
+      <p><b>Rumpfkraft / Rumpfausdauer</b>: Rumpfkraft = schwerere Variante, wenige Wdh oder kurz halten (15–20 s) und maximal anspannen. Rumpfausdauer = mehr Wdh oder länger halten (45–60 s).</p>
+      <p><b>Sprünge, Sprints, Würfe</b>: hier gibt es kein Ziel zum Auswählen. Es zählt immer Qualität: wenige Wiederholungen, volle Erholung, jede Wiederholung maximal schnell.</p>
       <p><b>Gewicht wählen</b>: So schwer, dass die vorgegebenen Wiederholungen mit dem angegebenen RIR sauber gehen. Gehen mehr Wiederholungen als vorgegeben (🔥), beim nächsten Training etwas mehr Gewicht nehmen.</p>
       <p class="train-only"><button type="button" class="linkbtn" id="pasteLinkBtn" style="padding:0">Link vom Coach einfügen</button></p>
     </div>
@@ -651,60 +663,60 @@ const EX=[
 
  ["skater","Skater Bounds (seitliche Sprünge)","plyo","3","10–16 Sprünge","90 s","","Explosiv seitlich abspringen, Landung stabil halten, Knie kontrolliert.",[Y("fouT0L8Z6Vc")]],
  ["latbounds","Lateral Bounds (seitliche Sprünge mit stabiler Landung)","plyo","3","4 / Seite","90 s","","Landung kurz halten, Knie zeigt gerade nach vorne.",[YS("q1X5UpT2o70")]],
- ["boxjump","Box Jumps (Kastensprünge, heruntersteigen)","plyo","3","4","90 s","","Explosiv hoch, stabil landen, von der Box heruntersteigen statt springen.",[YS("7EfeTsHZ5vk")]],
+ ["boxjump","Box Jumps (Kastensprünge, heruntersteigen)","plyo","3–4","4","90 s","","Explosiv hoch, stabil landen, von der Box heruntersteigen statt springen.",[YS("7EfeTsHZ5vk")]],
  ["boxvar","Box Jump Variations (Kastensprünge – Varianten)","plyo","3","6–8 (pro Bein falls einbeinig)","90 s","","1. Seitlich mit dem Bein nahe der Box hoch, gleiches Bein landen, seitlich aufs andere Bein, abstossen, wieder hoch.\n2. Von niedriger Box auf den Boden und direkt plyometrisch auf die höhere Box.\n3. Einbeinig auf die Box hoch und runter.\n4. Von der Box runter, dann 3× plyometrisch bouncen.\n5. Auf Knien vor der Box: erster Sprung auf die Füsse, dann direkt explosiv auf die Box.\nKnie stabil, kein Abknicken nach innen/aussen. Genügend Pause.",[YS("3T7zAynPp7o")]],
- ["depth","Depth Jumps (Niedersprünge von der Box)","plyo","2","4","90 s","","Von der Box fallen lassen, Bodenkontakt kurz, sofort hoch. Ausführung mit Luca anschauen, falls unklar.",[YS("gpXV2dzZ-oA")]],
- ["explsplit","Explosive Bulgarian Split Squats (explosive bulgarische Kniebeuge)","plyo","3","8 / Bein","90 s","","Klein anfangen (auch ohne Erhöhung hinten möglich). Weiche Landung, Knie stabil.",[YS("7mi4YZdFYmg")]],
- ["bsqjump","Bulgarian Split Squat Jumps (bulgarische Kniebeuge mit Sprung)","plyo","2","5 / Seite","90 s","","",[YS("evt0TErIHwE")]],
+ ["depth","Depth Jumps (Niedersprünge von der Box)","plyo","3","3–4","2 Min.","","Von der Box fallen lassen, Bodenkontakt kurz, sofort hoch. Ausführung mit Luca anschauen, falls unklar.",[YS("gpXV2dzZ-oA")]],
+ ["explsplit","Explosive Bulgarian Split Squats (explosive bulgarische Kniebeuge)","plyo","3","5–6 / Bein","2 Min.","","Klein anfangen (auch ohne Erhöhung hinten möglich). Weiche Landung, Knie stabil.",[YS("7mi4YZdFYmg")]],
+ ["bsqjump","Bulgarian Split Squat Jumps (bulgarische Kniebeuge mit Sprung)","plyo","3","4–5 / Seite","2 Min.","","",[YS("evt0TErIHwE")]],
  ["hillsprint","Hill Sprints 10–20 m (Bergsprints)","plyo","4–6","1 Sprint","2 Min.","","Volle Qualität, vollständige Pause.",[]],
- ["sprints","Short Sprints (kurze Sprints zur Aktivierung)","plyo","2–3","1 Sprint","60 s","","",[]],
- ["mbchest","Medicine Ball Chest Pass (Medizinball-Brustpass an die Wand)","plyo","3","5","60 s","","",[YS("LS75csmzdAE")]],
+ ["sprints","Short Sprints (kurze Sprints zur Aktivierung)","plyo","2–3","1 Sprint","60–90 s","","",[]],
+ ["mbchest","Medicine Ball Chest Pass (Medizinball-Brustpass an die Wand)","plyo","3","5","90 s","","",[YS("LS75csmzdAE")]],
 
- ["squat","Back Squat or Front Squat (Kniebeuge)","beine","3","8–12","90–120 s","0–1","Wenn möglich Front Squat (2. Video), sonst Back Squat. So tief runter wie möglich.",[Y("QmZAiBqPvZw"),"https://www.youtube.com/watch?v=uYumuL_G_V0"]],
+ ["squat","Back Squat or Front Squat (Kniebeuge)","beine","3","6–10","2 Min.","1–2","Wenn möglich Front Squat (2. Video), sonst Back Squat. So tief runter wie möglich.",[Y("QmZAiBqPvZw"),"https://www.youtube.com/watch?v=uYumuL_G_V0"]],
  ["deadlift","Deadlift (Kreuzheben)","beine","3","5–8","2–3 Min.","1–2","Stange über der Fussmitte, nah am Schienbein. Hüfte nach hinten, Rücken gerade und angespannt, Brust raus. Mit den Beinen vom Boden wegdrücken, Stange am Körper entlang nach oben, oben Hüfte strecken ohne Hohlkreuz. Kontrolliert ablassen.\nUnterschied zum Romanian Deadlift: Start jedes Mal vom Boden, Knie deutlich gebeugt – Beine und Hüfte arbeiten zusammen, ganze hintere Kette und Oberschenkel vorne. Mehr Gewicht möglich.\nIm Wachstum: wenig Gewicht und mit Betreuung, zuerst die Technik lernen.",[]],
  ["trapbar","Trap Bar Deadlift (Kreuzheben mit Trap Bar)","beine","3","5–8","2–3 Min.","1–2","In der Mitte der Trap Bar stehen, Griffe seitlich neben den Beinen. Hüfte nach hinten und Knie beugen, Rücken gerade, Brust raus. Mit den Beinen vom Boden wegdrücken und aufrichten, oben Hüfte strecken ohne Hohlkreuz. Kontrolliert ablassen.\nUnterschied zum normalen Deadlift: Gewicht ist neben statt vor dem Körper, Oberkörper bleibt aufrechter, Knie beugen mehr – mehr Beine, weniger Belastung für den unteren Rücken, einfacher zu lernen.\nUnterschied zum Squat: kein Gewicht auf dem Rücken, die Bewegung startet unten vom Boden; weniger tief als ein Squat.\nIdeal für junge Athleten zum Einstieg ins Heben. Im Wachstum: wenig Gewicht und mit Betreuung.",[]],
- ["rdl","Romanian Deadlift (rumänisches Kreuzheben)","beine","3","8–12","90–120 s","0–1","Nur so tief runter, wie der Rücken gerade bleibt. Stange entlang der Beine nach unten.\nUnterschied zum normalen Deadlift: Start oben im Stand, Knie nur leicht gebeugt und fast fix, die Bewegung kommt aus der Hüfte (nach hinten schieben). Die Stange setzt nicht am Boden ab – Fokus auf Oberschenkel-Rückseite und Gesäss, weniger Gewicht.\nIm Wachstum: wenig Gewicht und mit Betreuung, zuerst die Technik lernen.",[Y("bT5OOBgY4bc")]],
- ["splitsq","Weighted Split Squats (Ausfallschritt-Kniebeuge mit Gewicht)","beine","3","8 / Bein","90 s","","Im Wachstum: wenig Gewicht und mit Betreuung, Bewegungsmuster korrekt lernen.",[]],
- ["hipthrust","Single-Leg Landmine Hip Thrust (einbeiniges Hüftheben mit Landmine)","beine","3","8–12 / Seite","90–120 s","0–1","",[Y("C2SCkVk4Atc")]],
- ["latlunge","Landmine Lateral Lunge (seitlicher Ausfallschritt mit Landmine)","beine","3","6–8 / Seite","90–120 s","0–1","Auch mit Kettlebell, Kurz- oder Langhantel möglich. So tief runtergehen wie möglich.",[Y("VTtLrBvHoJ8")]],
+ ["rdl","Romanian Deadlift (rumänisches Kreuzheben)","beine","3","8–10","90–120 s","1–2","Nur so tief runter, wie der Rücken gerade bleibt. Stange entlang der Beine nach unten.\nUnterschied zum normalen Deadlift: Start oben im Stand, Knie nur leicht gebeugt und fast fix, die Bewegung kommt aus der Hüfte (nach hinten schieben). Die Stange setzt nicht am Boden ab – Fokus auf Oberschenkel-Rückseite und Gesäss, weniger Gewicht.\nIm Wachstum: wenig Gewicht und mit Betreuung, zuerst die Technik lernen.",[Y("bT5OOBgY4bc")]],
+ ["splitsq","Weighted Split Squats (Ausfallschritt-Kniebeuge mit Gewicht)","beine","3","8–10 / Bein","90 s","1–2","Im Wachstum: wenig Gewicht und mit Betreuung, Bewegungsmuster korrekt lernen.",[]],
+ ["hipthrust","Single-Leg Landmine Hip Thrust (einbeiniges Hüftheben mit Landmine)","beine","3","8–12 / Seite","90 s","1–2","",[Y("C2SCkVk4Atc")]],
+ ["latlunge","Landmine Lateral Lunge (seitlicher Ausfallschritt mit Landmine)","beine","3","6–8 / Seite","90 s","1–2","Auch mit Kettlebell, Kurz- oder Langhantel möglich. So tief runtergehen wie möglich.",[Y("VTtLrBvHoJ8")]],
  ["calf","Single-Leg Isometric Calf Raise (einbeiniges Wadenheben, gehalten)","beine","2–3","45 s / Seite","90–120 s","","Einbeinig isometrisch halten; ein Satz mit gestrecktem Knie, ein Satz gebeugt.",["https://www.youtube.com/shorts/F8rj5UIzOSg"]],
  ["hamiso","Single-Leg Hamstring Iso Hold (Beinrückseite einbeinig halten)","beine","2–3","20–40 s / Seite","60–90 s","","Steigerung: am Boden ohne Bank.",[Y("KSfupEggf1U")]],
- ["nordic","Nordic Curls (nordische Beinbeuger)","beine","2–3","3–8","90 s","","Füsse an der Sprossenwand einklemmen oder halten lassen. Langsam ablassen, so weit es geht, dann mit den Händen auffangen und abstossen.\nVariation: nur so weit ablassen, dass man wieder hochkommt.\nNicht in den Tagen vor einem Spiel (Muskelkater).",[YS("GzxNzNRy9T0")]],
+ ["nordic","Nordic Curls (nordische Beinbeuger)","beine","3","4–6","2 Min.","","Füsse an der Sprossenwand einklemmen oder halten lassen. Langsam ablassen, so weit es geht, dann mit den Händen auffangen und abstossen.\nVariation: nur so weit ablassen, dass man wieder hochkommt.\nNicht in den Tagen vor einem Spiel (Muskelkater).",[YS("GzxNzNRy9T0")]],
 
- ["bench","Bench Press (Bankdrücken, Lang- oder Kurzhantel)","ober","3","10–12","90–120 s","0–1","Für Maximalkraft: 4 × 4–6, 2–3 Min. Pause, RIR 2.",[Y("EsTu2NVM1EI")]],
+ ["bench","Bench Press (Bankdrücken, Lang- oder Kurzhantel)","ober","3","8–10","2 Min.","1–2","Schulterblätter zusammen und nach unten, Füsse fest am Boden. Stange kontrolliert zur unteren Brust, kurz berühren, kräftig hochdrücken.",[Y("EsTu2NVM1EI")]],
  ["incline","Incline Dumbbell Press (Schrägbankdrücken mit Kurzhanteln)","ober","3","8–12","90 s","1–2","",[YS("138iI2KPWDc")]],
- ["pullup","Pull-ups (Klimmzüge)","ober","3","max.","90–120 s","0–1","Falls weniger als 6 möglich sind, ein Band zur Unterstützung nehmen.",[Y("gfRjCi4JSM8")]],
- ["pullupw","Weighted Pull-ups (Klimmzüge mit Zusatzgewicht)","ober","4","4–6","2–3 Min.","2","Nie bis zum Versagen.",[Y("gfRjCi4JSM8")]],
- ["pushup","Push-ups (Liegestütze)","ober","3","20 oder max.","60–90 s","","",[]],
+ ["pullup","Pull-ups (Klimmzüge)","ober","3","max.","2 Min.","1","Falls weniger als 6 möglich sind, ein Band zur Unterstützung nehmen.",[Y("gfRjCi4JSM8")]],
+ ["pullupw","Weighted Pull-ups (Klimmzüge mit Zusatzgewicht)","ober","3","5–8","2–3 Min.","2","Erst mit Zusatzgewicht, wenn 3 × 8–10 saubere Klimmzüge gehen. Gewicht mit Dip-Gürtel oder Kurzhantel zwischen den Füssen. Volle Streckung unten, Kinn über die Stange, nie bis zum Versagen.",[Y("gfRjCi4JSM8")]],
+ ["pushup","Push-ups (Liegestütze)","ober","3","12–20","60–90 s","1–2","",[]],
  ["shpress","Seated Dumbbell Shoulder Press (Schulterdrücken mit Kurzhanteln, sitzend)","ober","3","8–12","90 s","1–2","Auf der Bank mit aufrechter Rückenlehne sitzen, Rücken an der Lehne, Füsse fest am Boden. Kurzhanteln auf Schulterhöhe, Handflächen nach vorne, Ellbogen leicht vor dem Körper. Nach oben drücken, bis die Arme fast gestreckt sind, oben nicht zusammenschlagen. Kontrolliert bis Ohrhöhe ablassen. Kein Hohlkreuz, Bauch angespannt.",[]],
- ["lmpress","Half-Kneeling Landmine Press (Landmine-Drücken im Halbkniestand)","ober","3","10–12 / Seite","90–120 s","0–1","Mit Lang- oder Kurzhantel.",[Y("ORoOn93dnh4")]],
- ["lmpressst","Standing Landmine Press (Landmine-Drücken stehend)","ober","3","6","2 Min.","2","",[Y("6cSTRPhpubs")]],
- ["row1","Single-Arm Dumbbell Row (einarmiges Kurzhantel-Rudern)","ober","3","10–12 / Seite","90–120 s","0–1","Mit Kraft und nicht mit Schwung arbeiten.",[Y("via7TOICUk8")]],
+ ["lmpress","Half-Kneeling Landmine Press (Landmine-Drücken im Halbkniestand)","ober","3","8–12 / Seite","90 s","1–2","Mit Lang- oder Kurzhantel.",[Y("ORoOn93dnh4")]],
+ ["lmpressst","Standing Landmine Press (Landmine-Drücken stehend)","ober","3","6–8","2 Min.","2","",[Y("6cSTRPhpubs")]],
+ ["row1","Single-Arm Dumbbell Row (einarmiges Kurzhantel-Rudern)","ober","3","8–12 / Seite","90 s","1–2","Mit Kraft und nicht mit Schwung arbeiten.",[Y("via7TOICUk8")]],
  ["cablerow","Seated Cable Row (Rudern am Kabelzug, sitzend)","ober","3","10–12","90 s","1–2","Aufrecht sitzen, Füsse an der Fussplatte, Knie leicht gebeugt. Griff zum Bauch ziehen, Ellbogen nah am Körper nach hinten, Schulterblätter zusammen. Oberkörper bleibt ruhig, kein Zurücklehnen mit Schwung. Kontrolliert nach vorne, bis die Arme gestreckt sind und die Schulterblätter nach vorne gleiten.",[]],
- ["rowchest","Chest-Supported Row or Pendlay Row (brustgestütztes Rudern oder Pendlay Row)","ober","3","6","2 Min.","2","Brustgestützt, falls Maschine vorhanden.",[YS("0PSfteHhUtg")]],
- ["dips","Dips (Barrenstütz)","ober","3","6","2 Min.","2","",[YS("_HxxBada6Jw")]],
- ["dipsw","Weighted Dips (Dips mit Zusatzgewicht)","ober","4","4–6","2–3 Min.","2","Gewicht mit Dip-Gürtel oder Kurzhantel zwischen den Füssen. Kontrolliert ablassen, bis die Oberarme etwa parallel zum Boden sind, Schultern unten und hinten. Erst mit Zusatzgewicht, wenn 3 × 10 saubere Dips ohne Gewicht gehen. Nie bis zum Versagen.",[YS("_HxxBada6Jw")]],
- ["flies","Dumbbell Chest Flies (Fliegende mit Kurzhanteln)","ober","2–3","10–12","90–120 s","0–1","",["https://www.youtube.com/watch?v=4meHGUe0SUk"]],
+ ["rowchest","Chest-Supported Row or Pendlay Row (brustgestütztes Rudern oder Pendlay Row)","ober","3","6–8","2 Min.","2","Brustgestützt, falls Maschine vorhanden.",[YS("0PSfteHhUtg")]],
+ ["dips","Dips (Barrenstütz)","ober","3","6–10","2 Min.","1–2","",[YS("_HxxBada6Jw")]],
+ ["dipsw","Weighted Dips (Dips mit Zusatzgewicht)","ober","3","5–8","2–3 Min.","2","Gewicht mit Dip-Gürtel oder Kurzhantel zwischen den Füssen. Kontrolliert ablassen, bis die Oberarme etwa parallel zum Boden sind, Schultern unten und hinten. Erst mit Zusatzgewicht, wenn 3 × 10 saubere Dips ohne Gewicht gehen. Nie bis zum Versagen.",[YS("_HxxBada6Jw")]],
+ ["flies","Dumbbell Chest Flies (Fliegende mit Kurzhanteln)","ober","3","10–15","60–90 s","1–2","",["https://www.youtube.com/watch?v=4meHGUe0SUk"]],
  ["curls","Alternating Dumbbell Biceps Curls (Bizeps-Curls mit Kurzhanteln, abwechselnd)","ober","3","8–12 / Seite","60–90 s","1–2","Abwechselnd links und rechts: eine Wiederholung links, dann rechts usw. Ellbogen eng am Körper und fix, nur der Unterarm bewegt sich. Hoch bis die Kurzhantel auf Schulterhöhe ist, oben kurz anspannen, langsam ablassen bis die Arme fast gestreckt sind. Kein Schwung aus dem Oberkörper.",[]],
  ["pushdown","Cable Triceps Pushdowns (Trizepsdrücken am Kabelzug)","ober","3","10–15","60 s","1–2","Mit Seil oder Stange am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind, unten kurz anspannen (beim Seil die Enden leicht auseinanderziehen), kontrolliert zurück bis etwa 90° im Ellbogen.",[]],
  ["latraise","Lateral Raises (Seitheben)","ober","2–3","10–15","60 s","1–2","",[Y("pOmbQuGeHf8")]],
- ["facepull","Face Pulls or Band Pull-Aparts (Face Pulls oder Band auseinanderziehen)","ober","3","15","60 s","","",[YS("1s-0WtJMsu8")]],
+ ["facepull","Face Pulls or Band Pull-Aparts (Face Pulls oder Band auseinanderziehen)","ober","3","12–15","60 s","2","",[YS("1s-0WtJMsu8")]],
 
  ["pallof","Pallof Press (Anti-Rotations-Drücken)","rumpf","2–3","10 / Seite","60 s","","Anti-Rotation: Becken und Oberkörper bleiben ruhig.",[Y("ecfx4bkhQTE")]],
- ["chop","Half-Kneeling Cable Chop (Holzhacker im Halbkniestand)","rumpf","2","8 / Seite","60 s","","",[YS("EzoMXce9M-k")]],
+ ["chop","Half-Kneeling Cable Chop (Holzhacker im Halbkniestand)","rumpf","3","8–10 / Seite","60 s","","",[YS("EzoMXce9M-k")]],
  ["birddog","Bird Dog, Knees Hovering (Vierfüsslerstand diagonal, Knie in der Luft)","rumpf","2","6–8 / Seite","60 s","","Oberkörper und Becken möglichst stabil halten.",[Y("Q6-U-Rd5A80")]],
  ["lmrot","Landmine Rotation (Rotation mit Landmine)","rumpf","3","6–8 / Seite","60–90 s","","Technik Landmine Rotation:\n• Aus Hüfte und Füssen drehen – hinteren Fuss mitdrehen wie beim Schuss.\n• Rippen über dem Becken, unterer Rücken verdreht sich nicht.\n• Arme lang, am Umkehrpunkt abbremsen – das Bremsen ist das Zweikampftraining.\n• Leicht beginnen: zuerst Kontrolle, dann Gewicht.",[Y("e5DP6961WEk")]],
- ["sprow","Side Plank Row (Seitstütz mit Rudern)","rumpf","3","10 / Seite","60 s","","Rumpf stabil halten.",[YS("eJQy9nifij0")]],
- ["mbrot","Medicine Ball Rotational Throw (Medizinball-Rotationswurf an die Wand)","rumpf","3","5 / Seite","60 s","","Explosiv rotieren, aus dem Rumpf arbeiten. Auch im Ausfallschritt oder kniend möglich.",[YS("02c2YLgF8iE")]],
- ["rollout","Stability Ball Plank Roll-out (Rollout auf dem Gymnastikball)","rumpf","2","10–12","60–90 s","","",[Y("VOPq6iXol4k")]],
+ ["sprow","Side Plank Row (Seitstütz mit Rudern)","rumpf","3","8–10 / Seite","60 s","","Rumpf stabil halten.",[YS("eJQy9nifij0")]],
+ ["mbrot","Medicine Ball Rotational Throw (Medizinball-Rotationswurf an die Wand)","rumpf","3","5 / Seite","90 s","","Explosiv rotieren, aus dem Rumpf arbeiten. Auch im Ausfallschritt oder kniend möglich.",[YS("02c2YLgF8iE")]],
+ ["rollout","Stability Ball Plank Roll-out (Rollout auf dem Gymnastikball)","rumpf","3","8–12","60–90 s","","",[Y("VOPq6iXol4k")]],
  ["plank","Plank (Unterarmstütz)","rumpf","3","30–60 s","30–60 s","","Unterarme unter den Schultern, Körper bildet eine gerade Linie von Kopf bis Ferse. Bauch und Gesäss anspannen, kein Hohlkreuz, Becken nicht hängen lassen. Ruhig weiteratmen.",[]],
- ["copenhagen","Copenhagen Plank (Seitstütz für die Adduktoren)","rumpf","2","30 s / Seite","","","Auf einer Erhöhung die Position halten, Becken nach oben und vorne drücken, Rumpf anspannen.",[Y("VUJcsfw529k")]],
- ["flutter","Flutter Kicks (Beinflattern)","rumpf","2–3","30 s","","","Unterer Rücken auf dem Boden, gestreckte Beine abwechselnd auf- und abbewegen.",[]],
- ["dslr","Double Straight Leg Raises (gestreckte Beine heben)","rumpf","2–3","30 s","","","Optional mit den Armen über dem Kopf festhalten. Unterer Rücken bleibt am Boden, Beine gestreckt hoch, bis sich das Gesäss gerade vom Boden löst, dann kontrolliert senken.",[]],
- ["scissor","Scissor Kicks (Scherenbeine)","rumpf","2–3","30 s","","","Unterer Rücken auf dem Boden, kein Hohlkreuz. Beine so tief wie möglich langsam öffnen und schliessen.",[]],
- ["bottomup","Bottom-ups (Becken in die Kerze heben)","rumpf","2–3","30 s","","","In die Kerze hochdrücken, dann kontrolliert mit dem Po zurück zum Boden und wieder hoch. Optional über dem Kopf festhalten.",[]],
- ["bicycle","Bicycle Crunches (Fahrrad-Crunches)","rumpf","2–3","30 s","","","Abwechselnd Ellbogen zum gegenüberliegenden Knie, das andere Bein gestreckt halten.",[]],
- ["spiderman","Spiderman Planks (Spiderman-Stütz)","rumpf","2–3","30 s","","","Aus der Plank abwechselnd das Knie zum gleichseitigen Ellbogen ziehen, Rumpf stabil.",[]],
+ ["copenhagen","Copenhagen Plank (Seitstütz für die Adduktoren)","rumpf","3","20–30 s / Seite","60 s","","Auf einer Erhöhung die Position halten, Becken nach oben und vorne drücken, Rumpf anspannen.",[Y("VUJcsfw529k")]],
+ ["flutter","Flutter Kicks (Beinflattern)","rumpf","2–3","30 s","30 s","","Unterer Rücken auf dem Boden, gestreckte Beine abwechselnd auf- und abbewegen.",[]],
+ ["dslr","Double Straight Leg Raises (gestreckte Beine heben)","rumpf","2–3","30 s","30 s","","Optional mit den Armen über dem Kopf festhalten. Unterer Rücken bleibt am Boden, Beine gestreckt hoch, bis sich das Gesäss gerade vom Boden löst, dann kontrolliert senken.",[]],
+ ["scissor","Scissor Kicks (Scherenbeine)","rumpf","2–3","30 s","30 s","","Unterer Rücken auf dem Boden, kein Hohlkreuz. Beine so tief wie möglich langsam öffnen und schliessen.",[]],
+ ["bottomup","Bottom-ups (Becken in die Kerze heben)","rumpf","2–3","30 s","30 s","","In die Kerze hochdrücken, dann kontrolliert mit dem Po zurück zum Boden und wieder hoch. Optional über dem Kopf festhalten.",[]],
+ ["bicycle","Bicycle Crunches (Fahrrad-Crunches)","rumpf","2–3","30 s","30 s","","Abwechselnd Ellbogen zum gegenüberliegenden Knie, das andere Bein gestreckt halten.",[]],
+ ["spiderman","Spiderman Planks (Spiderman-Stütz)","rumpf","2–3","30 s","30 s","","Aus der Plank abwechselnd das Knie zum gleichseitigen Ellbogen ziehen, Rumpf stabil.",[]],
  ["lowerabs","Lower Abs Routine (untere Bauchmuskulatur, Video-Programm)","rumpf","1","wie im Video","","","Unterer Rücken muss immer den Boden berühren.",[Y("RZRzD9h5RL4")]]
 ].map(([id,n,k,s,w,p,r,b,v])=>({id,n,k,s,w,p,r,b,v}));
 /* Belastung: kw = Körpergewicht, band = Resistance Band, gew = Gewicht; dazu benötigtes Material */
@@ -737,7 +749,7 @@ function moreHTML(it){const e=exById(it.id);const desc=e&&e.b?e.b:"";const info=
 function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return false;
   if(to===it.orig){delete it.orig;if(it.ob!==undefined){it.b=it.ob;delete it.ob}}else{if(!it.orig){it.orig=it.id;it.ob=it.b||""}it.b=""}
   const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
-  if(g&&goalable(it)&&!(g==="max"&&NOMAX.includes(it.id)))applyGoal(it,g);return true}
+  if(g&&goalsFor(it).includes(g))applyGoal(it,g);return true}
 /* Material: einheitliche Namen; "A|B" = A oder B, "?A" = optional */
 const MAT={
  abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],shoulderwarm:["band",["Resistance Band"]],
@@ -809,17 +821,35 @@ function focOf(e){return e.f||CAT2FOC[e.k]||[]}
 function nameHTML(n){const m=/^(.*?)\s\((.*)\)$/.exec(n||"");return m?`${esc(m[1])}<span class="de">${esc(m[2])}</span>`:esc(n)}
 function howtoHTML(id){const e=exById(id);return e&&e.b?`<details class="howto"><summary>Ausführung</summary><p class="note">${esc(e.b)}</p></details>`:""}
 /* Trainingsziel pro Kraftübung: Maximalkraft oder Volumen setzt Sätze, Wdh, Pause und RIR */
-const GOALS={max:{n:"Maximalkraft",s:"4",w:"4–6",p:"2–3 Min.",r:"2"},vol:{n:"Volumen",s:"3",w:"8–12",p:"90 s",r:"1–2"}};
-const NOGOAL=["nordic","calf","hamiso"];
+const GOALS={max:{n:"Maximalkraft",s:"4",w:"4–6",p:"2–3 Min.",r:"2"},vol:{n:"Volumen",s:"3",w:"8–12",p:"90 s",r:"1–2"},
+  pow:{n:"Schnellkraft",s:"4",w:"3–5",p:"2 Min.",r:"3+"},ausd:{n:"Kraftausdauer",s:"3",w:"15–20",p:"60 s",r:"2"},
+  rk:{n:"Rumpfkraft",s:"3",w:"6–8",p:"90 s",r:"2",tw:"15–20 s",tp:"60 s"},ra:{n:"Rumpfausdauer",s:"2–3",w:"12–15",p:"45–60 s",r:"",tw:"45–60 s",tp:"30–45 s"}};
+const GORDER=["max","vol","pow","ausd","rk","ra"];
+/* welche Ziele bei welcher Übung Sinn machen (Sprünge, Sprints, Würfe, Aufwärmen: keine – dort zählt immer Qualität bei voller Erholung) */
+const GSET={squat:"max vol pow ausd",deadlift:"max vol",trapbar:"max vol pow",rdl:"max vol",splitsq:"max vol pow ausd",hipthrust:"max vol pow ausd",latlunge:"max vol pow ausd",nordic:"max vol",
+  bench:"max vol pow ausd",incline:"max vol ausd",pullup:"vol pow ausd",pullupw:"max vol",pushup:"vol pow ausd",shpress:"max vol ausd",lmpress:"max vol pow ausd",lmpressst:"max vol pow",
+  row1:"max vol ausd",cablerow:"max vol ausd",rowchest:"max vol pow",dips:"vol ausd",dipsw:"max vol",flies:"vol ausd",curls:"vol ausd",pushdown:"vol ausd",latraise:"vol ausd",facepull:"vol ausd",
+  pallof:"rk ra",chop:"rk ra",birddog:"rk ra",lmrot:"rk ra",sprow:"rk ra",rollout:"rk ra",plank:"rk ra",copenhagen:"rk ra",calf:"rk ra",hamiso:"rk ra",
+  flutter:"rk ra",dslr:"rk ra",scissor:"rk ra",bottomup:"rk ra",bicycle:"rk ra",spiderman:"rk ra"};
+/* abweichende Werte für einzelne Übungen */
+const GOV={pullup:{vol:{w:"6–10",p:"2 Min.",r:"1–2"},pow:{w:"3–5",r:"3+"},ausd:{w:"max.",p:"60–90 s",r:"1"}},
+  pushup:{vol:{w:"10–15",p:"60–90 s"},pow:{w:"5",p:"90 s"},ausd:{w:"max.",p:"60 s",r:"1"}},dips:{vol:{w:"8–12",p:"90 s"},ausd:{w:"max.",p:"60–90 s",r:"1"}},
+  pullupw:{vol:{w:"6–10",p:"2 Min."}},dipsw:{vol:{w:"6–10",p:"2 Min."}},deadlift:{vol:{w:"6–10",p:"2 Min."}},trapbar:{vol:{w:"6–10",p:"2 Min."},pow:{p:"2–3 Min."}},
+  rdl:{max:{w:"5–6"}},nordic:{max:{s:"3",w:"3–5",p:"2–3 Min.",r:""},vol:{s:"3",w:"6–8",p:"2 Min.",r:""}},rowchest:{pow:{w:"4–6"}},
+  plank:{rk:{w:"20 s"}},calf:{rk:{w:"20–30 s"},ra:{w:"45–60 s"}},hamiso:{rk:{w:"15–20 s"},ra:{w:"30–45 s"}}};
+const NOGOAL=[];
 /* Isolationsübungen: Maximalkraft macht hier keinen Sinn, nur Volumen */
 const NOMAX=["flies","latraise","facepull","curls","pushdown"];
-function goalable(it){const e=exById(it.id);if(!e||NOGOAL.includes(it.id))return false;const f=focOf(e);return (f.includes("kraftb")||f.includes("kraftob"))&&!isTime(e)}
+function goalsFor(it){const e=exById(it.id);if(!e)return [];if(GSET[it.id])return GSET[it.id].split(" ");
+  if(/^c_/.test(it.id)){if(e.k==="rumpf")return ["rk","ra"];if(e.k==="beine"||e.k==="ober")return isTime(e)?[]:["max","vol","ausd"]}return []}
+function goalable(it){return goalsFor(it).length>0}
 function perSide(w){const m=/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein))\b.*$/i.exec(w||"");return m?" "+m[0].trim():""}
 function applyGoal(it,g){const e=exById(it.id);if(!e)return;
   if(!g){Object.assign(it,{s:e.s,w:e.w,p:e.p,r:e.r});it.goal="";return}
-  const G=GOALS[g];Object.assign(it,{s:G.s,w:G.w+perSide(e.w),p:G.p,r:G.r,goal:g})}
+  const G=GOALS[g],O=(GOV[it.id]||{})[g]||{};const t=isTime(e)&&G.tw;
+  Object.assign(it,{s:O.s||G.s,w:(O.w||(t?G.tw:G.w))+perSide(e.w),p:O.p||(t?G.tp:G.p),r:O.r!=null?O.r:(t?"":G.r),goal:g})}
 function goalHTML(it){if(!goalable(it))return "";const g=it.goal||"";
-  return `<div class="goalpick" role="group" aria-label="Trainingsziel ${esc(it.n)}"><span class="eyebrow">Ziel</span>${[["","Standard"],["max","Maximalkraft"],["vol","Volumen"]].filter(([k])=>!(k==="max"&&NOMAX.includes(it.id))).map(([k,n])=>`<button type="button" data-goal="${k}" aria-pressed="${g===k}">${n}</button>`).join("")}</div>`}
+  return `<div class="goalpick" role="group" aria-label="Trainingsziel ${esc(it.n)}"><span class="eyebrow">Ziel</span>${[["","Standard"]].concat(goalsFor(it).map(k=>[k,GOALS[k].n])).map(([k,n])=>`<button type="button" data-goal="${k}" aria-pressed="${g===k}">${n}</button>`).join("")}</div>`}
 function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
 function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
@@ -921,7 +951,7 @@ function renderHead(){const c=cur();const el=document.getElementById("sessHead")
       <div class="field"><label class="small" for="sAth">Athlet/in</label><input type="text" id="sAth" data-sf="a" value="${esc(c.a)}" placeholder="Name"></div>
       <div class="field full"><label class="small" for="sNotes">Hinweise (Aufwärmen, Ablauf, Ziel)</label><textarea id="sNotes" data-sf="h" rows="2" placeholder="z. B. 10 Min. aufwärmen, Supersets abwechselnd ausführen">${esc(c.h)}</textarea></div>
     </div><div class="summary" id="summary" style="margin-top:10px"></div>
-    <div class="goalpick" id="goalAll" role="group" aria-label="Alle Kraftübungen" style="margin-top:10px"><span class="eyebrow" title="Maximalkraft = schweres Gewicht, wenige Wdh, lange Pausen. Volumen = mittleres Gewicht, mehr Wdh, kürzere Pausen.">Alle Kraftübungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="">Standard</button></div>`;
+    <div class="goalpick" id="goalAll" role="group" aria-label="Ziel für alle passenden Übungen" style="margin-top:10px"><span class="eyebrow" title="Setzt das Ziel bei allen Übungen, für die es passt.">Alle passenden Übungen</span><button type="button" data-goal="max">Maximalkraft</button><button type="button" data-goal="vol">Volumen</button><button type="button" data-goal="pow">Schnellkraft</button><button type="button" data-goal="ausd">Kraftausdauer</button><button type="button" data-goal="rk">Rumpfkraft</button><button type="button" data-goal="ra">Rumpfausdauer</button><button type="button" data-goal="">Standard</button></div>`;
     renderSummary();
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
@@ -1273,7 +1303,7 @@ document.addEventListener("click",e=>{
   const sb=t.closest("[data-sess]");if(sb){state.active=sb.dataset.sess;save();renderAll();return}
   if(t.id==="newSess"){const s={id:uid(),t:"Neue Einheit",a:cur().a||"",h:"",items:[]};state.sessions.push(s);state.active=s.id;save();renderAll();const ti=document.getElementById("sTitle");if(ti)ti.select();return}
   const gb=t.closest("[data-goal]");if(gb){const g=gb.dataset.goal;
-    if(gb.closest("#goalAll")){let n=0;cur().items.forEach(it=>{if(goalable(it)&&!(g==="max"&&NOMAX.includes(it.id))){applyGoal(it,g);n++}});save();renderItems();renderText();flash(n?`${n} Kraftübungen auf ${g?GOALS[g].n:"Standard"} gesetzt`:"Keine Kraftübungen in dieser Einheit");return}
+    if(gb.closest("#goalAll")){let n=0;cur().items.forEach(it=>{if(g?goalsFor(it).includes(g):goalable(it)){applyGoal(it,g);n++}});save();renderItems();renderText();flash(n?`${n} Übungen auf ${g?GOALS[g].n:"Standard"} gesetzt`:"Keine passenden Übungen in dieser Einheit");return}
     const u=gb.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);applyGoal(it,g);save();renderItems(`[data-u="${u}"] [data-goal="${g}"]`);renderText();return}
   const lb=t.closest("[data-load]");if(lb){const k=lb.dataset.load;filter.load=filter.load.includes(k)?filter.load.filter(x=>x!==k):filter.load.concat(k);renderLoads();renderLib();return}
   const fb=t.closest("[data-foc]");if(fb){const k=fb.dataset.foc;filter.foc=filter.foc.includes(k)?filter.foc.filter(x=>x!==k):filter.foc.concat(k);renderCats();renderLib();return}
