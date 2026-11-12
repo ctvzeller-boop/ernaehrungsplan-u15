@@ -1925,21 +1925,34 @@ function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/Email not confirmed/i.test(m))return "Die E-Mail ist noch nicht bestätigt.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
 acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});document.getElementById("acctWho").addEventListener("click",()=>{acctRender();acctModal.hidden=false});
 acctModal.addEventListener("click",async e=>{if(e.target===acctModal||e.target.closest("[data-close]")){acctModal.hidden=true;return}
-  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;coachPlayers=[];statsView=null;isCoach=false;coachAssign=[];myGroups=[];groupFeeds={};coachGroups=[];document.getElementById("coachTab").hidden=true;if(state.mode==="coach")setMode("train");acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
+  if(e.target.closest("#acOut")){sbManualOut=true;await sb.auth.signOut();cacheUser(null);sbManualOut=false;sbUser=null;coachPlayers=[];statsView=null;isCoach=false;coachAssign=[];myGroups=[];groupFeeds={};coachGroups=[];document.getElementById("coachTab").hidden=true;if(state.mode==="coach")setMode("train");acctUI();acctRender();if(state.mode==="stats")renderStats();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
   if(e.target.closest("#acSync")){e.target.disabled=true;await sbPull(false);acctRender(sbErr?sbMsg(sbErr):"✓ Synchronisiert");return}
   if(e.target.closest("#acUp")){const f=document.getElementById("acForm");if(!f.reportValidity())return;const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value,name=document.getElementById("acName").value.trim();
     const {data,error}=await sb.auth.signUp({email,password,options:{data:{name}}});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}
     if(!data.session){document.getElementById("acErr").textContent="Konto erstellt – bitte E-Mail bestätigen und dann anmelden.";return}
-    sbUser=data.user;if(name)try{await sb.from("profiles").update({name}).eq("id",sbUser.id)}catch(_){}await sbPull(true);acctRender();return}});
+    sbUser=data.user;cacheUser(sbUser);if(name)try{await sb.from("profiles").update({name}).eq("id",sbUser.id)}catch(_){}await sbPull(true);acctRender();return}});
 acctModal.addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value;
-  const {data,error}=await sb.auth.signInWithPassword({email,password});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}sbUser=data.user;await sbPull(true);acctRender();loadPlayers();checkCoach()});
-async function sbInit(){if(!window.supabase||!window.supabase.createClient){acctUI();return}
+  const {data,error}=await sb.auth.signInWithPassword({email,password});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}sbUser=data.user;cacheUser(sbUser);await sbPull(true);acctRender();loadPlayers();checkCoach()});
+/* Angemeldet bleiben: letzter Benutzer wird gemerkt, damit die App sofort (auch offline) angemeldet startet */
+const UKEY="cz-training-user";
+function cacheUser(u){try{u?localStorage.setItem(UKEY,JSON.stringify({id:u.id,email:u.email,user_metadata:u.user_metadata||{}})):localStorage.removeItem(UKEY)}catch(e){}}
+function cachedUser(){try{return JSON.parse(localStorage.getItem(UKEY)||"null")}catch(e){return null}}
+function hasStoredSession(){try{return !!localStorage.getItem("cz-training-auth")}catch(e){return false}}
+let sbManualOut=false;
+async function sbInit(){
   try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"cz-training-auth"}})}catch(e){sb=null;return}
-  const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;acctUI();if(sbUser){sbPull(false);loadPlayers();checkCoach()}
-  sb.auth.onAuthStateChange((ev,session)=>{sbUser=session?session.user:null;acctUI()});
+  let session=null;try{const {data}=await sb.auth.getSession();session=data&&data.session}catch(e){}
+  if(session){sbUser=session.user;cacheUser(sbUser);sbErr=""}
+  else if(sbUser&&hasStoredSession()){sbErr="offline"}  /* Sitzung noch gespeichert, nur gerade keine Verbindung */
+  else{sbUser=null;cacheUser(null)}
+  acctUI();if(session){sbPull(false);loadPlayers();checkCoach()}
+  sb.auth.onAuthStateChange((ev,ses)=>{if(ses){const first=!sbUser||sbErr==="offline";sbUser=ses.user;cacheUser(sbUser);if(first&&sbErr==="offline"){sbErr="";sbPull(false);loadPlayers();checkCoach()}}
+    else if(ev==="SIGNED_OUT"){sbUser=null;cacheUser(null);if(!sbManualOut)flash("Bitte nochmals anmelden.")}acctUI()});
   document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
   addEventListener("online",()=>{if(sbUser)sbPull(false)})}
-if(document.readyState==="complete")sbInit();else addEventListener("load",sbInit);
+/* sofort angemeldet anzeigen, Supabase starten sobald geladen (nicht erst nach allen Bildern) */
+{const cu=cachedUser();if(cu&&hasStoredSession()){sbUser=cu;acctUI()}
+ let tries=0;const go=()=>{if(window.supabase&&window.supabase.createClient){sbInit();return}if(++tries<150)setTimeout(go,100);else{if(sbUser)sbErr="offline";acctUI()}};go()}
 /* Übungen per Drag & Drop verschieben (Griff ⠿, Maus und Finger) */
 (function(){const box=document.getElementById("items");let d=null,raf=null;
   function frame(){if(!d)return;const m=60,y=d.y;let v=0;if(y<m)v=-Math.ceil((m-y)/6);else if(y>innerHeight-m)v=Math.ceil((y-(innerHeight-m))/6);if(v){scrollBy(0,v);move()}raf=requestAnimationFrame(frame)}
