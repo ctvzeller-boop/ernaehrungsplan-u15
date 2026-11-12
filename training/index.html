@@ -234,6 +234,10 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hsel{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:none;background:none;padding:10px 6px;font-weight:500;overflow-wrap:anywhere}
 .hsel .hdate{font-size:.8rem;min-width:0}.hsel .htitle{font-size:1rem}.hsel .hcount{font-size:.8rem}
 .hacts{display:flex;gap:4px;flex:none;padding-right:4px}
+.item{position:relative}
+.hbtn.rmx{position:absolute;top:6px;right:6px;width:34px;height:34px;background:var(--surface)}
+.item:has(.rmx) .ihead{padding-right:30px}
+@media (max-width:420px){body[data-mode="train"] .ihead .thumb.none{display:none}.ihead{gap:7px}.ihead .thumb{width:48px;height:48px;flex-basis:48px}.ihead .badge{min-width:30px}}
 .dhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .dhead .hacts{padding-right:0}
 .hbtn{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:999px;color:var(--accent)}
@@ -1000,13 +1004,12 @@ function renderItems(focusSel){
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div></div>
+        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div>${!(it.log||[]).length?`<button type="button" class="hbtn del rmx" data-rmfree="1" aria-label="${esc(shortN(it.n))} auslassen" title="Übung auslassen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:""}</div>
       ${it.b&&it.b!==(exById(it.id)||{}).b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${moreHTML(it)}
       ${lastHTML(it)}
       ${setsHTML(it)}
       ${(it.added||c.free)&&i>0?`<button type="button" class="ssbtn${it.ss?" on":""}" data-sslink="1" aria-pressed="${!!it.ss}">${it.ss?`✓ Superset mit ${esc(shortN(c.items[i-1].n))}`:`＋ Superset mit ${esc(shortN(c.items[i-1].n))}`}</button>`:""}
-      ${!(it.log||[]).length?`<button type="button" class="linkbtn" data-rmfree="1" style="align-self:flex-start;padding:0">✕ Übung ${it.added?"wieder entfernen":"auslassen (entfernen)"}</button>`:""}
       ${chartDetails(it.id,false)}
     </div>`;
     return `<div class="${cls}" data-u="${it.u}">
