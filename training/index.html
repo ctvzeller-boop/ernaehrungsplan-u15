@@ -212,6 +212,8 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .chart .hz{fill:transparent;cursor:crosshair}
 .ctip{background:var(--accent-soft);border-radius:8px;padding:5px 9px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0}
 .ctip span{color:var(--muted)}.ctip span b{color:var(--ink)}
+@media (max-width:400px){.minispark svg{width:64px;height:28px}.minispark{padding:3px 4px}}
+.ihead .iname{min-width:0;overflow-wrap:break-word;hyphens:auto}
 .minispark{flex:none;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 6px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
 .minispark span{font-size:.72rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .minispark[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
@@ -232,6 +234,8 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .hsel{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:none;background:none;padding:10px 6px;font-weight:500;overflow-wrap:anywhere}
 .hsel .hdate{font-size:.8rem;min-width:0}.hsel .htitle{font-size:1rem}.hsel .hcount{font-size:.8rem}
 .hacts{display:flex;gap:4px;flex:none;padding-right:4px}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dhead .hacts{padding-right:0}
 .hbtn{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:999px;color:var(--accent)}
 .hbtn.del{color:var(--warn)}
 .hbtn.del.warn{background:var(--warn);color:#fff;border-color:var(--warn)}
@@ -1183,6 +1187,7 @@ document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.
     if(ds){const rows=X.utils.sheet_to_json(ds,{header:1,defval:""});applyBackup(JSON.parse(rows.slice(1).map(r=>r[0]).join("")));return}
     applyBackup(fromSheets(X,wb))}
   catch(err){flash("Diese Datei ist kein CZ-Training-Backup.")}});
+function hIcons(i,dl){return `<button type="button" class="hbtn" data-hsend="${i}" aria-label="Training vom ${dl} an Coach senden" title="An Coach senden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button type="button" class="hbtn" data-hsess="${i}" aria-label="Training vom ${dl} als Einheit speichern" title="Als Einheit speichern"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg></button><button type="button" class="hbtn del" data-hdel="${i}" aria-label="Training vom ${dl} löschen" title="Löschen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`}
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
   if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${backupCard()}`;return}
@@ -1206,9 +1211,9 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
     ${bestRows.length?`<div class="card"><h2>Bestwerte</h2><table class="htab best"><tbody>${bestRows.map(([id,b])=>{const e=EXBY[id];return `<tr><th scope="row">${esc(e?e.n.split(" (")[0]:id)}</th><td>${esc(kgTxt(String(b.k)))}</td><td class="bd">${fmtDate(b.d)}</td></tr>`}).join("")}</tbody></table></div>`:""}
     <div class="card"><h2>Absolvierte Trainings</h2>
       <div class="hlist" role="list">${H.map(({x,i})=>{let c=0;x.items.forEach(y=>c+=y.log.length);const dl=new Date(x.d).toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"2-digit"});
-      return `<div role="listitem" class="hrow${i===statSel?" sel":""}"><button type="button" class="hsel" data-hsel="${i}" aria-pressed="${i===statSel}"><span class="hdate">${dl}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${c} ${c===1?"Satz":"Sätze"}</span></button><span class="hacts"><button type="button" class="hbtn" data-hsend="${i}" aria-label="Training vom ${dl} an Coach senden" title="An Coach senden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button type="button" class="hbtn" data-hsess="${i}" aria-label="Training vom ${dl} als Einheit speichern" title="Als Einheit speichern"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg></button><button type="button" class="hbtn del" data-hdel="${i}" aria-label="Training vom ${dl} löschen" title="Löschen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></span></div>`}).join("")}</div></div>
+      return `<div role="listitem" class="hrow${i===statSel?" sel":""}"><button type="button" class="hsel" data-hsel="${i}" aria-pressed="${i===statSel}"><span class="hdate">${dl}</span><span class="htitle">${esc(x.t||"Training")}</span><span class="hcount">${c} ${c===1?"Satz":"Sätze"}</span></button><span class="hacts">${hIcons(i,dl)}</span></div>`}).join("")}</div></div>
     <div class="card" id="statDetail">
-      <div class="eyebrow">${new Date(x.d).toLocaleDateString("de-CH",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})} · ${new Date(x.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}</div>
+      <div class="dhead"><div class="eyebrow">${new Date(x.d).toLocaleDateString("de-CH",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})} · ${new Date(x.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}</div><span class="hacts">${hIcons(statSel,fmtDateY(x.d))}</span></div>
       <h2 class="stitle">${esc(x.t||"Training")}</h2>
       <div class="summary"><span><b>${x.items.length}</b> Übungen</span><span><b>${n}</b> Sätze</span></div>
       <div class="items">${x.items.map(y=>{const e=EXBY[y.id]||{n:y.n,k:"eigen"};const fake={w:y.w};
