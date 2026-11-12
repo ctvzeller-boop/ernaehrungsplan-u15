@@ -266,6 +266,16 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .bwdot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
 .prtag{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.04em;line-height:1;padding:2px 4px;border-radius:4px;background:var(--ink);color:var(--surface);margin-right:4px;vertical-align:middle}
 .stab.free{border-style:dashed}
+.choicelist{display:flex;flex-direction:column;gap:8px}
+.choicelist button{min-height:52px;text-align:left;padding:10px 14px;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+.choicelist button small{font-weight:400;color:var(--muted);font-size:.82rem}
+.choicelist button.primary small{color:inherit;opacity:.85}
+.choicelist button.danger{border-color:var(--warn);color:var(--warn)}
+.item.skipped{padding:10px 12px;background:var(--bg);border-left-color:var(--line)}
+.skiprow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.skiprow span{color:var(--muted)}
+.skiprow b{color:var(--ink);font-weight:600}
+.temptag{background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 6px;font-size:.75rem;font-weight:700;margin-right:4px}
 .dhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .dhead .hacts{padding-right:0}
 .hbtn{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:999px;color:var(--accent)}
@@ -658,6 +668,15 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 </div>
 
+<div id="choiceModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Abbrechen">×</button>
+    <h3 id="choiceTitle"></h3>
+    <p class="hint" id="choiceText"></p>
+    <div class="choicelist" id="choiceList"></div>
+  </div>
+</div>
+
 <div id="vidModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-label="Video">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
@@ -920,6 +939,12 @@ async function cloudInit(){
     for(const d of inbox.docs){const c=codeFrom("#e="+String((d.data()||{}).code||""));if(c&&!state.imported[c])await importCode(c)}
   }catch(e){cloudReady=true}}
 function cur(){return state.sessions.find(s=>s.id===state.active)||state.sessions[0]}
+function rmItem(c,u){const i=c.items.findIndex(x=>x.u===u);if(i<0)return;const [it]=c.items.splice(i,1);const ss0=c.items[0]&&c.items[0].ss;if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();
+  undoToast(`${shortN(it.n)} entfernt`,()=>{if(c.items[0]&&i===0)c.items[0].ss=!!ss0;c.items.splice(i,0,it);save();renderItems();renderBar();renderProgress()})}
+function askChoice(title,text,choices){return new Promise(res=>{const m=document.getElementById("choiceModal");document.getElementById("choiceTitle").textContent=title;document.getElementById("choiceText").textContent=text||"";
+  document.getElementById("choiceList").innerHTML=choices.map((c,i)=>`<button type="button" class="${c.cls||""}" data-ch="${i}"><b>${esc(c.label)}</b>${c.sub?`<small>${esc(c.sub)}</small>`:""}</button>`).join("");
+  const done=k=>{m.hidden=true;m.onclick=null;res(k)};m.onclick=e=>{if(e.target===m||e.target.closest("[data-close]")){done(null);return}const b=e.target.closest("[data-ch]");if(b)done(choices[+b.dataset.ch].key)};
+  m.hidden=false;const f=m.querySelector("[data-ch]");if(f)f.focus()})}
 function undoToast(msg,fn){let t=document.getElementById("undoToast");if(!t){t=document.createElement("div");t.id="undoToast";t.className="undotoast";t.setAttribute("role","status");document.body.appendChild(t)}
   t.innerHTML=`<span>${esc(msg)}</span><button type="button">↩ Rückgängig</button>`;t.hidden=false;clearTimeout(undoToast.t);
   t.querySelector("button").onclick=()=>{t.hidden=true;clearTimeout(undoToast.t);fn();flash("Wiederhergestellt")};undoToast.t=setTimeout(()=>{t.hidden=true},6000)}
@@ -955,7 +980,7 @@ function isTime(it){return /\d\s*(s|Sek|Min)\b/i.test(it.w||"")}
 function unitOf(it){const m=/\d\s*(s|Sek\.?|Min\.?)(?=\s|$|\/)/i.exec(it.w||"");return m?m[1]:""}
 function planShort(it){return String(it.w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").replace(/\s*Sprünge?$/,"").trim()||"✓"}
 function setVal(it,e){const v=(e.v||"").trim();if(!v)return planShort(it);const u=unitOf(it);return u&&/^\d+([.,]\d+)?$/.test(v)?`${v} ${u}`:v}
-function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;if(it.opt&&!d)return;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
+function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;if(it.skip&&!d)return;if(it.opt&&!d)return;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
 
 /* Bilder: eigenes Bild > Bilder aus dem PDF > Vorschaubild des Videos */
 function ytId(u){const m=/(?:youtu\.be\/|shorts\/|[?&]v=)([A-Za-z0-9_-]{11})/.exec(u||"");return m?m[1]:null}
@@ -1042,7 +1067,7 @@ function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&
 function bestKg(log){let m=null;log.forEach(e=>{const k=parseFloat(String(e.kg||"").replace(",","."));if(!isNaN(k)&&(m===null||k>m))m=k});return m}
 function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||[]).length).map(it=>({id:it.id,n:it.n,s:it.s,w:it.w,p:it.p,r:it.r,ss:!!it.ss,log:it.log.map(e=>Object.assign({},e))}));
   if(!items.length){flash("Noch keine Sätze erfasst.");return}
-  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free){c.items=[];c.t="Freies Training"}else c.items.forEach(it=>{delete it.added});save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
+  hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free){c.items=[];c.t="Freies Training"}else{c.items=c.items.filter(it=>!it.temp);c.items.forEach(it=>{delete it.added;delete it.skip});if(c.items[0])c.items[0].ss=false}save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
 /* Aufwärmen & Mobilität: nur «erledigt», keine Werte und keine Stats */
 function isSimpleId(id){const e=exById(id);return !!e&&e.k==="warm"}
@@ -1070,9 +1095,10 @@ function renderItems(focusSel){
   if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?(c.free?"Freies Training: Tippe unten auf <b>＋ Übung hinzufügen</b> und wähle deine erste Übung. Danach einfach Sätze eintragen und die nächste Übung hinzufügen.":"Diese Einheit ist noch leer."):"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
   else el.innerHTML=(train&&c.free?`<div class="freehead"><label>Name des Trainings<input type="text" id="freeName" value="${esc(c.t==="Freies Training"?"":c.t)}" placeholder="z. B. Oberkörper Push" autocomplete="off"></label><button type="button" class="primary" data-savesess="1">Als Einheit speichern</button></div>`:"")+c.items.map((it,i)=>{const next=c.items[i+1];const p=plannedSets(it);const done=p&&(it.log||[]).length>=p;
     const cls=`item c-${esc(it.k)}${it.ss&&i>0?" linked":""}${next&&next.ss?" haslink":""}${train&&done?" done":""}${it.opt?" opt":""}${it.opt&&!(it.log||[]).length?" optidle":""}`;
+    if(train&&it.skip&&!(it.log||[]).length)return `<div class="item skipped c-${esc(it.k)}" data-u="${it.u}"><div class="skiprow"><span><b>${esc(shortN(it.n))}</b> – heute ausgelassen</span><button type="button" class="linkbtn" data-unskip="1">Wieder aufnehmen</button></div></div>`;
     if(train)return `<div class="${cls}" data-u="${it.u}">
       <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${train&&done?"✓":lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div>${!(it.log||[]).length?`<button type="button" class="hbtn del rmx" data-rmfree="1" aria-label="${esc(shortN(it.n))} auslassen" title="Übung auslassen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:""}</div>
+        <div class="iname">${nameHTML(it.n)}<span class="idose">${it.temp?`<b class="temptag">Nur heute</b> `:""}${it.opt?`<b class="opttag">Optional</b> `:""}${it.goal&&GOALS[it.goal]?`<b class="goaltag">${GOALS[it.goal].n}</b> `:""}${esc(doseT(it))}</span></div>${!(it.log||[]).length?`<button type="button" class="hbtn del rmx" data-rmfree="1" aria-label="${esc(shortN(it.n))} auslassen" title="Übung auslassen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`:""}</div>
       ${it.b&&it.b!==(exById(it.id)||{}).b?`<p class="inote">${esc(it.b)}</p>`:""}
       ${moreHTML(it)}
       ${lastHTML(it)}
@@ -1139,13 +1165,13 @@ function resultText(c){c=c||cur();
   const lab=labels(c.items);const t=totals(c);const L=[];
   const d=new Date();L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${d.toLocaleDateString("de-CH")})`);L.push(`${t.done} von ${t.plan} Sätzen erledigt`);L.push("");
   c.items.forEach((it,i)=>{const log=it.log||[];const sym={ok:"✓",less:"↓",more:"🔥"};
-    L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
+    L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);L.push("   "+(log.length?log.map(e=>`${sym[e.st]} ${setVal(it,e)}${e.kg?" @ "+kgTxt(e.kg):""}`).join("  |  "):(it.skip?"– heute ausgelassen":it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
   return L.join("\n")}
 function histResultText(c,h){const lab=labels(c.items);const sym={ok:"✓",less:"↓",more:"🔥"};const L=[];
   let n=0;h.items.forEach(x=>n+=x.log.length);
   L.push(`${c.t||"Training"}${c.a?" – "+c.a:""} (${new Date(h.d).toLocaleDateString("de-CH")})`);L.push(`${n} Sätze erledigt`);L.push("");
   c.items.forEach((it,i)=>{const x=h.items.find(y=>y.id===it.id);L.push(`${lab[i]} ${it.n} (Ziel ${it.s} × ${it.w}${it.kg?" · "+kgTxt(it.kg):""})`);
-    L.push("   "+(x?x.log.map(e=>`${sym[e.st]} ${setTxt(e,x.w)}`).join("  |  "):(it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
+    L.push("   "+(x?x.log.map(e=>`${sym[e.st]} ${setTxt(e,x.w)}`).join("  |  "):(it.skip?"– heute ausgelassen":it.opt?"– optional, nicht gemacht":"– nicht gemacht")))});
   return L.join("\n")}
 function renderText(){const ta=document.getElementById("planText");if(ta)ta.value=planText()}
 /* Übersicht aller abgeschlossenen Trainings */
@@ -1355,8 +1381,12 @@ document.addEventListener("click",e=>{
   if(t.closest("[data-savesess]")){saveFreeAsSess();return}
   if(t.closest("[data-sslink]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<1)return;const it=c.items[i];it.ss=!it.ss;save();renderItems(`[data-u="${u}"] [data-sslink]`);
     flash(it.ss?`Superset: ${labels(c.items)[i-1]} und ${labels(c.items)[i]} abwechselnd`:"Superset aufgehoben");return}
-  if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<0)return;const [it]=c.items.splice(i,1);const ss0=c.items[0]&&c.items[0].ss;if(c.items[0])c.items[0].ss=false;save();renderItems();renderBar();renderProgress();
-    undoToast(`${shortN(it.n)} entfernt`,()=>{if(c.items[0]&&i===0)c.items[0].ss=!!ss0;c.items.splice(i,0,it);save();renderItems();renderBar();renderProgress()});return}
+  if(t.closest("[data-unskip]")){const u=t.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);if(it){delete it.skip;save();renderItems();renderBar();renderProgress();flash(`${shortN(it.n)} wieder dabei`)}return}
+  if(t.closest("[data-rmfree]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i0=c.items.findIndex(x=>x.u===u);if(i0<0)return;const it0=c.items[i0];
+    if(!c.free&&!it0.temp){askChoice(`${shortN(it0.n)} entfernen?`,"",[{key:"today",label:"Nur heute auslassen",sub:"Beim nächsten Mal ist die Übung wieder in der Einheit.",cls:"primary"},{key:"perm",label:"Dauerhaft aus der Einheit löschen",sub:"Die Übung ist auch bei allen nächsten Trainings weg.",cls:"danger"}]).then(k=>{
+      if(k==="today"){it0.skip=1;save();renderItems();renderBar();renderProgress();flash(`${shortN(it0.n)} heute ausgelassen`)}
+      else if(k==="perm")rmItem(c,u)});return}
+    rmItem(c,u);return}
   if(t.closest("#bkSave")){saveBackup();return}
   if(t.closest("#bkLoad")){document.getElementById("bkFile").click();return}
   const mb=t.closest("button[data-mode]");if(mb){setMode(mb.dataset.mode);return}
@@ -1478,7 +1508,7 @@ function nextTxt(it){const c=cur();const g=grpOf(it);
   if(g.length>1){const open=g.filter(x=>(x.log||[]).length<plannedSets(x));if(open.length){const m=open.reduce((a,b)=>(b.log||[]).length<(a.log||[]).length?b:a);return `Als Nächstes: ${shortN(m.n)}, Satz ${(m.log||[]).length+1}`}it=g[g.length-1]}
   const left=plannedSets(it)-(it.log||[]).length;
   if(left>0)return `Als Nächstes: ${shortN(it.n)}, Satz ${(it.log||[]).length+1}`;
-  const i=c.items.indexOf(it);const nx=c.items.slice(i+1).find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt)||c.items.find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt);
+  const i=c.items.indexOf(it);const nx=c.items.slice(i+1).find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt&&!x.skip)||c.items.find(x=>(x.log||[]).length<plannedSets(x)&&!x.opt&&!x.skip);
   return nx?`Als Nächstes: ${shortN(nx.n)}`:"Alle Sätze geschafft"}
 function startRest(it){const c=cur();const i=c.items.indexOf(it);const nx=c.items[i+1];
   const sec=pauseSec(it.p);if(!sec)return;rest.end=Date.now()+sec*1000;
@@ -1717,9 +1747,7 @@ newExModal.addEventListener("click",e=>{if(e.target===newExModal||e.target.close
   if(!e.target.closest("#nxSave"))return;const g=id=>document.getElementById(id).value.trim();
   const n=g("nxName");if(!n){flash("Bitte einen Namen eingeben.");document.getElementById("nxName").focus();return}const v=g("nxVid");
   const ex={id:"c_"+uid(),n,k:g("nxCat")||"eigen",s:g("nxSets"),w:g("nxReps"),p:g("nxPause"),r:"",b:g("nxNote"),v:/^https?:\/\//.test(v)?[v]:[],l:[g("nxLoad")],mu:g("nxMus"),m:g("nxMat").split(",").map(x=>x.trim()).filter(Boolean),own:1};
-  (state.custom=state.custom||[]).push(ex);const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();newExModal.hidden=true;
-  renderCustom();renderItems();renderBar();renderProgress();flash(`„${n}“ erstellt und hinzugefügt`);
-  const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
+  (state.custom=state.custom||[]).push(ex);save();newExModal.hidden=true;renderCustom();addPicked(ex,true)});
 function exSendText(id){const e=exById(id);if(!e)return "";const cat=(CATS.find(c=>c[0]===e.k)||[,""])[1];
   return ["Neue Übung für CZ Training (bitte in die Übungsliste aufnehmen):","Name: "+e.n,"Kategorie: "+cat,"Belastung: "+(e.l||[]).map(l=>LOADN[l]).join(", "),
     "Sätze × Wdh/Zeit: "+[e.s,e.w].filter(Boolean).join(" × "),e.p?"Pause: "+e.p:"",(e.m||[]).length?"Material: "+e.m.join(", "):"",e.mu?"Muskeln: "+e.mu:"",(e.v||[]).length?"Video: "+e.v.join(" "):"",e.b?"Ausführung: "+e.b:""].filter(Boolean).join("\n")}
@@ -1782,8 +1810,11 @@ pickModal.addEventListener("click",e=>{if(e.target===pickModal||e.target.closest
     const sl=[...document.querySelectorAll("#pickFilters .cats")].map(x=>x.scrollLeft);renderPickFilters();document.querySelectorAll("#pickFilters .cats").forEach((x,i)=>x.scrollLeft=sl[i]);renderPick();return}
   if(e.target.closest("[data-newex]")){openNewEx(document.getElementById("pickSearch").value.trim());return}
   const b=e.target.closest("[data-pick]");if(!b)return;const ex=exById(b.dataset.pick);if(!ex)return;
-  const it=itemFrom(ex,false,{added:1});cur().items.push(it);save();pickModal.hidden=true;renderItems();renderBar();renderProgress();
-  flash(`${shortN(ex.n)} hinzugefügt`);const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})});
+  pickModal.hidden=true;addPicked(ex)});
+async function addPicked(ex,custom){const c=cur();let temp=false;
+  if(!c.free){const k=await askChoice(`${shortN(ex.n)} hinzufügen`,"",[{key:"today",label:"Nur heute",sub:"Die Übung ist nur in diesem Training dabei.",cls:"primary"},{key:"perm",label:"Dauerhaft zur Einheit hinzufügen",sub:"Die Übung bleibt auch bei allen nächsten Trainings in der Einheit."}]);if(!k)return;temp=k==="today"}
+  const it=itemFrom(ex,false,temp?{added:1,temp:1}:{added:1});c.items.push(it);save();if(custom)renderCustom();renderItems();renderBar();renderProgress();
+  flash(`${shortN(ex.n)} ${temp?"für heute ":""}hinzugefügt`);const el=document.querySelector(`[data-u="${it.u}"]`);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})}
 document.getElementById("addCoachBtn").addEventListener("click",async()=>{
   try{if(navigator.clipboard&&navigator.clipboard.readText){const txt=await navigator.clipboard.readText();const c=codeFrom(txt);if(c){await importCode(c,true);return}}}catch(e){}
   pasteModal.hidden=false;document.getElementById("pasteInput").value="";document.getElementById("pasteInput").focus()});
