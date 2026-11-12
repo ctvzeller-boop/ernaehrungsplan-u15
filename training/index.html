@@ -24,7 +24,7 @@
   --accent:#1D63C9; --accent-soft:#E3ECFA; --warn:#C2412D;
   --ok:#2E8B57; --less:#C2412D; --more:#E07010;
   --c-warm:#2E8B57; --c-warm-bg:#E2F2E8;
-  --c-plyo:#C2412D; --c-plyo-bg:#FBE4DF;
+  --c-plyo:#C2412D; --c-plyo-bg:#FBE4DF; --c-cardio:#0E7C86; --c-cardio-bg:#DDF3F4;
   --c-beine:#B7791F; --c-beine-bg:#FAEFD9;
   --c-ober:#1D63C9; --c-ober-bg:#E3ECFA;
   --c-rumpf:#7A4FC2; --c-rumpf-bg:#EEE7FA;
@@ -36,14 +36,14 @@
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
   --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
   --ok:#2F9E63; --less:#D9534A; --more:#E8801F;
-  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
+  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C; --c-cardio:#5FD1C9; --c-cardio-bg:#163533;
   --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
   --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77;
   --ok:#2F9E63; --less:#D9534A; --more:#E8801F;
-  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C;
+  --c-warm:#6BCB95; --c-warm-bg:#18322A; --c-plyo:#F08A77; --c-plyo-bg:#3D211C; --c-cardio:#5FD1C9; --c-cardio-bg:#163533;
   --c-beine:#E3AE5B; --c-beine-bg:#3A2D17; --c-ober:#6EA4F2; --c-ober-bg:#1B2D46;
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}
 
@@ -436,6 +436,11 @@ body.resting .wrap{padding-bottom:96px}
 .sslink input{accent-color:var(--accent);width:18px;height:18px;margin:0}
 .c-warm{--c:var(--c-warm);--cbg:var(--c-warm-bg)}
 .c-plyo{--c:var(--c-plyo);--cbg:var(--c-plyo-bg)}
+.c-cardio{--c:var(--c-cardio);--cbg:var(--c-cardio-bg)}
+.cardiofields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cardiofields[hidden]{display:none}
+.cardiofields .field input{font-size:1.15rem;min-height:48px;text-align:center}
+.cardiofields .field.wide{grid-column:1/-1}
 .c-beine{--c:var(--c-beine);--cbg:var(--c-beine-bg)}
 .c-ober{--c:var(--c-ober);--cbg:var(--c-ober-bg)}
 .c-rumpf{--c:var(--c-rumpf);--cbg:var(--c-rumpf-bg)}
@@ -678,6 +683,13 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
         <span class="hint" id="kgConv"></span>
       </div>
     </div>
+    <div class="cardiofields" id="cardioFields" hidden>
+      <div class="field"><label class="small" for="cf_min">Dauer (Min)</label><input type="text" id="cf_min" inputmode="decimal" autocomplete="off"></div>
+      <div class="field"><label class="small" for="cf_km">Distanz (km)</label><input type="text" id="cf_km" inputmode="decimal" autocomplete="off"></div>
+      <div class="field"><label class="small" for="cf_w">Watt (Ø)</label><input type="text" id="cf_w" inputmode="numeric" autocomplete="off"></div>
+      <div class="field"><label class="small" for="cf_hm">Höhenmeter</label><input type="text" id="cf_hm" inputmode="numeric" autocomplete="off"></div>
+      <div class="field wide"><label class="small" for="cf_kcal">Kalorien (kcal)</label><input type="text" id="cf_kcal" inputmode="numeric" autocomplete="off"></div>
+    </div>
     <p class="hint" id="logHint"></p>
     <p class="judge" id="logJudge" aria-live="polite"></p>
     <button type="button" class="savebtn ok" id="logSave">✓ Satz speichern</button>
@@ -773,7 +785,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script>
-const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
+const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["cardio","Cardio"],["eigen","Eigene Übungen"]];
 const Y=id=>"https://youtu.be/"+id, YS=id=>"https://youtube.com/shorts/"+id;
 /* id, Name, Kategorie, Sätze, Wdh/Zeit, Pause, RIR, Ausführung, Videos */
 const EX=[
@@ -820,6 +832,14 @@ const EX=[
  ["dips","Dips (Barrenstütz)","ober","3","6–10","2 Min.","1–2","",[YS("_HxxBada6Jw")]],
  ["dipsw","Weighted Dips (Dips mit Zusatzgewicht)","ober","3","5–8","2–3 Min.","2","Gewicht mit Dip-Gürtel oder Kurzhantel zwischen den Füssen. Kontrolliert ablassen, bis die Oberarme etwa parallel zum Boden sind, Schultern unten und hinten. Erst mit Zusatzgewicht, wenn 3 × 10 saubere Dips ohne Gewicht gehen. Nie bis zum Versagen.",[YS("_HxxBada6Jw")]],
  ["flies","Dumbbell Chest Flies (Fliegende mit Kurzhanteln)","ober","3","10–15","60–90 s","1–2","",["https://www.youtube.com/watch?v=4meHGUe0SUk"]],
+ ["bike","Indoor Bike (Indoor-Velo / Ergometer)","cardio","1","30 Min.","","","Sattelhöhe so, dass das Knie unten leicht gebeugt ist. Locker = du kannst noch sprechen, intensiv = nur noch einzelne Wörter.",[]],
+ ["treadmill","Treadmill (Laufband)","cardio","1","30 Min.","","","1 % Steigung entspricht etwa dem Laufen draussen. Aufrecht laufen, nicht am Geländer festhalten.",[]],
+ ["airbike","Air Bike (Assault Bike)","cardio","1","10 Min.","","","Arme und Beine arbeiten zusammen. Ideal für Intervalle, z. B. 10 × 20 s Vollgas / 40 s locker – mit «+ Satz» jedes Intervall einzeln eintragen.",[]],
+ ["rowerg","Rowing Machine (Rudergerät)","cardio","1","20 Min.","","","Reihenfolge beim Zug: Beine – Oberkörper – Arme, zurück umgekehrt. Rücken gerade, ca. 20–26 Züge pro Minute.",[]],
+ ["skierg","Ski Erg (Ski-Ergometer)","cardio","1","15 Min.","","","Mit dem ganzen Körper nach unten ziehen, Hüfte beugen, Arme bis neben die Oberschenkel.",[]],
+ ["stair","Stair Master (Treppensteiger)","cardio","1","20 Min.","","","Ganzer Fuss auf die Stufe, aufrecht bleiben und nicht auf das Geländer stützen.",[]],
+ ["run","Outdoor Run (Laufen draussen)","cardio","1","30 Min.","","","Locker = du kannst dich noch unterhalten. Distanz und Höhenmeter z. B. von der Uhr übernehmen.",[]],
+ ["ride","Outdoor Ride (Velo draussen)","cardio","1","60 Min.","","","Helm tragen. Distanz, Höhenmeter und Watt z. B. vom Velocomputer oder der Uhr übernehmen.",[]],
  ["curls","Alternating Dumbbell Biceps Curls (Bizeps-Curls mit Kurzhanteln, abwechselnd)","ober","3","8–12 / Seite","60–90 s","1–2","Abwechselnd links und rechts: eine Wiederholung links, dann rechts usw. Ellbogen eng am Körper und fix, nur der Unterarm bewegt sich. Hoch bis die Kurzhantel auf Schulterhöhe ist, oben kurz anspannen, langsam ablassen bis die Arme fast gestreckt sind. Kein Schwung aus dem Oberkörper.",[]],
  ["pushdown","Cable Triceps Pushdowns (Trizepsdrücken am Kabelzug)","ober","3","10–15","60 s","1–2","Mit Seil oder Stange am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind, unten kurz anspannen (beim Seil die Enden leicht auseinanderziehen), kontrolliert zurück bis etwa 90° im Ellbogen.",[]],
  ["latraise","Lateral Raises (Seitheben)","ober","2–3","10–15","60 s","1–2","",[Y("pOmbQuGeHf8")]],
@@ -845,14 +865,14 @@ const EX=[
 /* Belastung: kw = Körpergewicht, band = Resistance Band, gew = Gewicht; dazu benötigtes Material */
 const LOADS=[["kw","Körpergewicht"],["gew","Gewicht"],["band","Resistance Band"]];
 /* Fokus (Mehrfach-Zuordnung möglich) */
-const FOCI=[["schnell","Schnelligkeit Beine"],["kraftb","Kraft Beine"],["kraftob","Kraft Oberkörper"],["explob","Explosivität Oberkörper"],["stab","Rumpfstabilität"],["rot","Rumpf Rotation"],["bauch","Bauch / Rumpfkraft"],["mob","Mobilität & Aufwärmen"]];
-const CAT2FOC={warm:["mob"],plyo:["schnell"],beine:["kraftb"],ober:["kraftob"],rumpf:["stab"],eigen:[]};
+const FOCI=[["cardio","Cardio / Ausdauer"],["schnell","Schnelligkeit Beine"],["kraftb","Kraft Beine"],["kraftob","Kraft Oberkörper"],["explob","Explosivität Oberkörper"],["stab","Rumpfstabilität"],["rot","Rumpf Rotation"],["bauch","Bauch / Rumpfkraft"],["mob","Mobilität & Aufwärmen"]];
+const CAT2FOC={warm:["mob"],plyo:["schnell"],beine:["kraftb"],ober:["kraftob"],rumpf:["stab"],cardio:["cardio"],eigen:[]};
 const FOC={abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandshoulder:"mob",mbchest:"explob",
  pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",plank:"stab",copenhagen:"stab",
  flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
 /* Alternativen, falls eine Übung nicht geht oder Material fehlt */
-const ALT={skater:"latbounds",latbounds:"skater",boxjump:"boxvar sprints",boxvar:"boxjump",depth:"boxjump",explsplit:"bsqjump splitsq",bsqjump:"explsplit",hillsprint:"sprints",sprints:"hillsprint",mbchest:"pushup",
+const ALT={bike:"airbike rowerg ride",treadmill:"run stair bike",airbike:"bike rowerg skierg",rowerg:"skierg airbike bike",skierg:"rowerg airbike",stair:"treadmill bike",run:"treadmill bike",ride:"bike",skater:"latbounds",latbounds:"skater",boxjump:"boxvar sprints",boxvar:"boxjump",depth:"boxjump",explsplit:"bsqjump splitsq",bsqjump:"explsplit",hillsprint:"sprints",sprints:"hillsprint",mbchest:"pushup",
  squat:"trapbar splitsq",deadlift:"trapbar rdl",trapbar:"deadlift squat",rdl:"deadlift hamiso nordic",splitsq:"explsplit squat",hipthrust:"hamiso rdl",latlunge:"splitsq",hamiso:"nordic rdl",nordic:"hamiso rdl",
  bench:"incline pushup dips",incline:"bench pushup",pullup:"pullupw row1 cablerow",pullupw:"pullup",pushup:"bench dips",shpress:"lmpress lmpressst",lmpress:"lmpressst shpress",lmpressst:"lmpress shpress",
  row1:"cablerow rowchest",cablerow:"row1 rowchest",rowchest:"row1 cablerow",dips:"dipsw pushup",dipsw:"dips",flies:"incline pushup",pushdown:"dips",latraise:"shpress",facepull:"bandshoulder",
@@ -874,7 +894,7 @@ function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return fals
   const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
   if(g&&goalsFor(it).includes(g))applyGoal(it,g);return true}
 /* Material: einheitliche Namen; "A|B" = A oder B, "?A" = optional */
-const MAT={
+const MAT={bike:["kw",["Indoor-Bike"]],treadmill:["kw",["Laufband"]],airbike:["kw",["Air Bike"]],rowerg:["kw",["Rudergerät"]],skierg:["kw",["Ski-Ergometer"]],stair:["kw",["Stair Master"]],run:["kw",[]],ride:["kw",["Velo"]],
  abc:["kw",[]],warmup:["kw",[]],mobroutine:["kw",["Matte"]],stretch:["kw",["Matte"]],bandshoulder:["band",["Resistance Band"]],shoulderwarm:["band",["Resistance Band"]],
  skater:["kw",[]],latbounds:["kw",[]],boxjump:["kw",["Box"]],boxvar:["kw",["Box"]],depth:["kw",["Box"]],
  explsplit:["kw",["?Bank"]],bsqjump:["kw",["Bank"]],hillsprint:["kw",["Hang"]],sprints:["kw",[]],
@@ -895,7 +915,7 @@ const MAT={
 Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
 EX.forEach(e=>{e.f=FOC[e.id]?FOC[e.id].split(" "):CAT2FOC[e.k].slice()});
 /* Primär trainierte Muskelgruppen */
-const MUS={
+const MUS={bike:"Herz-Kreislauf, Beine",treadmill:"Herz-Kreislauf, Beine",airbike:"Herz-Kreislauf, ganzer Körper",rowerg:"Herz-Kreislauf, Rücken, Beine",skierg:"Herz-Kreislauf, Rücken, Arme, Rumpf",stair:"Herz-Kreislauf, Beine, Gesäss",run:"Herz-Kreislauf, Beine",ride:"Herz-Kreislauf, Beine",
  abc:"Ganzkörper",warmup:"Ganzkörper",mobroutine:"Ganzkörper (Mobilität)",stretch:"Ganzkörper (Mobilität)",
  shoulderwarm:"Schulter, Rotatorenmanschette, oberer Rücken",bandshoulder:"Rotatorenmanschette, hintere Schulter, oberer Rücken",
  skater:"Gesäss, Quadrizeps, Adduktoren, Waden",latbounds:"Gesäss, Quadrizeps, Adduktoren, Waden",
@@ -1038,7 +1058,7 @@ function numOf(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*$/.exec(String(v||""));return
 function lbsToKgTxt(v){const m=/^\s*(\d+(?:[.,]\d+)?)\s*(lbs?|pfund)\s*$/i.exec(String(v||""));return m?String(r1(parseFloat(m[1].replace(",","."))*LB)):v}
 function kgTxt(k){k=String(k||"").trim();return !k?"":/^\d+([.,]\d+)?$/.test(k)?k+" kg":k}
 function rirTxt(r){r=String(r||"").trim();return !r?"":/^0$/.test(r)?"bis zum Muskelversagen":`noch ${r} Wdh im Tank`}
-function doseT(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),rirTxt(e.r)].filter(Boolean).join(" · ")}
+function doseT(e){if(e.k==="cardio")return [e.w,e.p&&("Pause "+e.p)].filter(Boolean).join(" · ");return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),rirTxt(e.r)].filter(Boolean).join(" · ")}
 function dose(e){return [e.s&&e.w?`${e.s} × ${e.w}`:(e.w||e.s),kgTxt(e.kg),e.p&&("Pause "+e.p),e.r&&("RIR "+e.r)].filter(Boolean).join(" · ")}
 
 /* Sätze */
@@ -1047,7 +1067,7 @@ function plannedSets(it){return baseSets(it)+(it.xs||0)}
 function isTime(it){return /\d\s*(s|Sek|Min)\b/i.test(it.w||"")}
 function unitOf(it){const m=/\d\s*(s|Sek\.?|Min\.?)(?=\s|$|\/)/i.exec(it.w||"");return m?m[1]:""}
 function planShort(it){return String(it.w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").replace(/\s*Sprünge?$/,"").trim()||"✓"}
-function setVal(it,e){const v=(e.v||"").trim();if(!v)return planShort(it);const u=unitOf(it);return u&&/^\d+([.,]\d+)?$/.test(v)?`${v} ${u}`:v}
+function setVal(it,e){if(e.c)return cardioTxt(e.c,true)||"✓";const v=(e.v||"").trim();if(!v)return planShort(it);const u=unitOf(it);return u&&/^\d+([.,]\d+)?$/.test(v)?`${v} ${u}`:v}
 function totals(c){let done=0,plan=0;c.items.forEach(it=>{const p=plannedSets(it),d=(it.log||[]).length;if(it.skip&&!d)return;if(it.opt&&!d)return;plan+=p;done+=Math.min(d,p||d)});return {done,plan}}
 
 /* Bilder: eigenes Bild > Bilder aus dem PDF > Vorschaubild des Videos */
@@ -1126,18 +1146,18 @@ function histFor(id){const out=[];hist().forEach(h=>h.items.forEach(x=>{if(x.id=
 function lastFor(id){return histFor(id)[0]||null}
 function fmtDate(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit"})}
 function fmtDateY(ms){return new Date(ms).toLocaleDateString("de-CH",{day:"2-digit",month:"2-digit",year:"2-digit"})}
-function setTxt(e,w){const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg)+(e.lbs?` (${e.lbs} lbs)`:""):"")}
+function setTxt(e,w){if(e.c)return cardioTxt(e.c)||"erledigt";const v=(e.v||"").trim()||String(w||"").replace(/\(.*?\)/g,"").replace(/\s*(\/\s*(Seite|Bein)|pro (Seite|Bein)).*$/i,"").trim();return v+(e.kg?" @ "+kgTxt(e.kg)+(e.lbs?` (${e.lbs} lbs)`:""):"")}
 function lastHTML(it){if(isSimple(it))return "";const l=lastFor(it.id);if(!l)return "";
   return `<div class="lasttime"><span class="eyebrow">Letztes Mal · ${fmtDate(l.d)}</span><span>${l.log.map(e=>`<b class="lt-${e.st}">${esc(setTxt(e,l.w))}</b>`).join(" ")}</span></div>`}
 /* kleine Verlaufskurve rechts neben der Übung; Tipp darauf zeigt den grossen Verlauf */
-function miniSpark(id){if(isSimpleId(id))return "";const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kgs.some(v=>v!==null))?"kgs":"reps";
+function miniSpark(id){if(isSimpleId(id)||isCardioId(id))return "";const S=seriesFor(id);if(S.length<1)return "";const k=S.some(x=>x.kgs.some(v=>v!==null))?"kgs":"reps";
   const v=S.flatMap(x=>x[k]).filter(x=>x!==null);if(!v.length)return "";
   const W=96,H=40,P=5;let mn=Math.min(...v),mx=Math.max(...v);if(mn===mx){mn-=1;mx+=1}
   const X=i=>v.length===1?W/2:P+i*(W-2*P)/(v.length-1),Y=x=>H-P-(x-mn)/(mx-mn)*(H-2*P);let segs="";
   for(let q=1;q<v.length;q++)segs+=`<line class="seg ${trendCls(v[q-1],v[q])}" x1="${X(q-1)}" y1="${Y(v[q-1])}" x2="${X(q)}" y2="${Y(v[q])}" style="stroke-width:2.5"/>`;
   const lv=v[v.length-1];
   return `<button type="button" class="minispark" data-spark="${esc(id)}" aria-expanded="false" aria-label="Verlauf vergrössern"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${segs}<circle cx="${X(v.length-1)}" cy="${Y(lv)}" r="3.5" fill="var(--ink)"/></svg><span>${Math.round(lv*10)/10}${k==="kgs"?" kg":""}</span></button>`}
-function chartDetails(id,open){return !isSimpleId(id)&&histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
+function chartDetails(id,open){return !isSimpleId(id)&&!isCardioId(id)&&histFor(id).length?`<details class="chartdet"${open?" open":""}><summary>Verlauf anzeigen</summary>${chartHTML(id)}</details>`:""}
 /* Gewicht vom letzten Mal: gleicher Satz, sonst letzter Satz mit Gewicht; zuerst abgeschlossene Trainings, dann offene Sätze in anderen Einheiten */
 function prevKg(it,idx){for(const h of histFor(it.id)){const l=h.log;if(l[idx]&&l[idx].kg)return l[idx].kg;const w=[...l].reverse().find(x=>x.kg);if(w)return w.kg}
   for(const se of state.sessions)for(const x of se.items){if(x===it||x.id!==it.id)continue;const w=[...(x.log||[])].reverse().find(y=>y.kg);if(w)return w.kg}
@@ -1148,6 +1168,11 @@ function finishTraining(){const c=cur();const items=c.items.filter(it=>(it.log||
   hist().push({d:Date.now(),sid:c.id,t:c.t,items});c.items.forEach(it=>{it.log=[];it.xs=0});if(c.free){c.items=[];c.t="Freies Training"}else{c.items=c.items.filter(it=>!it.temp);c.items.forEach(it=>{delete it.added;delete it.skip});if(c.items[0])c.items[0].ss=false}save();renderAll();flash(`Gespeichert ✓ – ${items.length} Übungen im Verlauf`);
   const dc=document.getElementById("doneCard");if(dc)dc.scrollIntoView({block:"center",behavior:"smooth"})}
 /* Aufwärmen & Mobilität: nur «erledigt», keine Werte und keine Stats */
+/* Cardio: Dauer, Distanz, Watt, Höhenmeter, kcal statt Wdh/Gewicht */
+const CF=[["min","Dauer","Min"],["km","Distanz","km"],["w","Watt (Ø)","W"],["hm","Höhenmeter","Hm"],["kcal","Kalorien","kcal"]];
+function isCardioId(id){const e=exById(id);return !!e&&e.k==="cardio"}
+function isCardio(it){return it.k==="cardio"||isCardioId(it.id)}
+function cardioTxt(c,short){if(!c)return "";const p=CF.filter(([k])=>c[k]!=null&&c[k]!=="").map(([k,,u])=>`${c[k]} ${u}`);return (short?p.slice(0,2):p).join(" · ")}
 function isSimpleId(id){const e=exById(id);return !!e&&e.k==="warm"}
 function isSimple(it){return isSimpleId(it.id)||it.k==="warm"}
 function simpleSetsHTML(it){const log=it.log||[],p=Math.max(1,plannedSets(it));const done=log.length>=p;
@@ -1156,7 +1181,8 @@ function simpleSetsHTML(it){const log=it.log||[],p=Math.max(1,plannedSets(it));c
   return `<div class="sets">${p>1?boxes+todo:""}${done?`<span class="donetag">✓ Erledigt</span>${p<=1?`<button type="button" class="linkbtn" data-edit="0">Rückgängig</button>`:""}`:`<button type="button" class="setbtn" data-log="1">✓ ${p>1?`Runde ${log.length+1} von ${p} erledigt`:"Erledigt"}</button>`}</div>`}
 /* Total aller Sätze (leer eingetragen = unterer Planwert) */
 function totalOf(it,log){let t=0,n=0;const r=planRange(it.w);(log||[]).forEach(e=>{let v=numV(e.v);if(v===null&&r&&isFinite(r.mn))v=r.mn;if(v!==null){t+=v;n++}});return n?Math.round(t*10)/10:null}
-function totalHTML(it,log){const t=totalOf(it,log);if(t===null)return "";const time=isTime(it);const u=time?(unitOf(it)||"s").replace(/\.$/,""):"Wdh";const side=perSide(it.w);
+function totalHTML(it,log){if(isCardio(it)){const t={};let wn=0,ws=0;(log||[]).forEach(e=>{const c=e.c||{};CF.forEach(([k])=>{const v=numOf(c[k]);if(v===null)return;if(k==="w"){ws+=v;wn++}else t[k]=(t[k]||0)+v})});if(wn)t.w=Math.round(ws/wn);
+    const txt=cardioTxt(Object.fromEntries(Object.entries(t).map(([k,v])=>[k,r1(v)])));return (log||[]).length>1&&txt?`<p class="totreps">Total: <b>${esc(txt)}</b></p>`:""}const t=totalOf(it,log);if(t===null)return "";const time=isTime(it);const u=time?(unitOf(it)||"s").replace(/\.$/,""):"Wdh";const side=perSide(it.w);
   return `<p class="totreps">Total: <b>${t} ${esc(u)}</b>${side?` <span>${esc(side)}</span>`:""}</p>`}
 function setsHTML(it){
   if(isSimple(it))return simpleSetsHTML(it);
@@ -1337,10 +1363,10 @@ function loadXLSX(){if(window.XLSX)return Promise.resolve(window.XLSX);if(loadXL
 const STN={ok:"im Plan",less:"weniger",more:"mehr"};
 function buildWorkbook(X){const wb=X.utils.book_new();const dt=ms=>new Date(ms);
   /* 1. Trainings: eine Zeile pro Satz */
-  const tr=[["Datum","Uhrzeit","Training","Übung","Satz","Wdh / Zeit","Gewicht (kg)","Ergebnis","Bestwert","Ziel","Übungs-ID","Zeitstempel"]];
+  const tr=[["Datum","Uhrzeit","Training","Übung","Satz","Wdh / Zeit","Gewicht (kg)","Ergebnis","Bestwert","Ziel","Übungs-ID","Zeitstempel","Dauer (Min)","Distanz (km)","Watt (Ø)","Höhenmeter","kcal"]];
   hist().slice().sort((a,b)=>a.d-b.d).forEach(h=>h.items.forEach(y=>{const e=exById(y.id);const nm=(e&&e.n)||y.n||y.id;
-    (y.log||[]).forEach((z,k)=>{const kg=numOf(z.kg);tr.push([dt(h.d),new Date(h.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"}),h.t||"",nm,k+1,isSimpleId(y.id)?"erledigt":(z.v||planShort({w:y.w})),kg!==null?kg:(z.kg||""),isSimpleId(y.id)?"":STN[z.st]||"",z.pr?"ja":"",y.w||"",y.id,h.d])})}));
-  const ws1=X.utils.aoa_to_sheet(tr,{cellDates:true});ws1["!cols"]=[12,8,22,40,6,11,12,10,9,14,12,15].map(w=>({wch:w}));
+    (y.log||[]).forEach((z,k)=>{const kg=numOf(z.kg);tr.push([dt(h.d),new Date(h.d).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"}),h.t||"",nm,k+1,isSimpleId(y.id)?"erledigt":z.c?cardioTxt(z.c):(z.v||planShort({w:y.w})),kg!==null?kg:(z.kg||""),isSimpleId(y.id)?"":STN[z.st]||"",z.pr?"ja":"",y.w||"",y.id,h.d].concat(CF.map(([k])=>z.c&&z.c[k]!=null?z.c[k]:"")))})}));
+  const ws1=X.utils.aoa_to_sheet(tr,{cellDates:true});ws1["!cols"]=[12,8,22,40,6,11,12,10,9,14,12,15,11,11,9,11,8].map(w=>({wch:w}));
   for(let r=1;r<tr.length;r++){const c=ws1[X.utils.encode_cell({r,c:0})];if(c)c.z="dd.mm.yyyy"}
   X.utils.book_append_sheet(wb,ws1,"Trainings");
   /* 2. Einheiten: eine Zeile pro Übung */
@@ -1408,7 +1434,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
       <div class="kpi"><b>${week}</b><span>diese Woche</span></div>
       <div class="kpi"><b>${streak()}</b><span>🔥 Wochen in Folge</span></div>
       <div class="kpi"><b>${fire}</b><span>🔥 mehr geschafft</span></div></div>
-    ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{if(!isSimpleId(y.id))cnt[y.id]=(cnt[y.id]||0)+1}));
+    ${(()=>{const cnt={};H.forEach(({x})=>x.items.forEach(y=>{if(!isSimpleId(y.id)&&!isCardioId(y.id))cnt[y.id]=(cnt[y.id]||0)+1}));
       /* am häufigsten gemachte Übung zuerst (bei Gleichstand die zuletzt gemachte) */
       const ids=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);if(!ids.length)return "";
       if(!chartEx||!ids.includes(chartEx))chartEx=ids[0];
@@ -1568,14 +1594,19 @@ function openLog(u,idx,from){const it=cur().items.find(x=>x.u===u);if(!it)return
   if(curUnit()==="lbs"&&numOf(pre)!==null){const src=e&&e.kg?e:null;pre=src&&src.lbs?src.lbs:String(Math.round(numOf(pre)/LB*2)/2)}
   kgIn.value=pre;setUnitUI();const isBand=loadOf(it.id).includes("band");kgIn.inputMode=isBand?"text":"decimal";kgIn.placeholder=isBand?"kg oder Band":"kg";
   document.getElementById("logHint").textContent=(pSet?`Letztes Mal (${fmtDate(prev.d)}), Satz ${Math.min(pIdx,prev.log.length-1)+1}: ${setTxt(pSet,prev.w)}. `:"")+`Leer lassen = ${planShort(it)} wie im Plan.`;
-  updJudge();
+  const cardio=isCardio(it);document.querySelector("#logModal .logfields").hidden=cardio;document.getElementById("cardioFields").hidden=!cardio;document.getElementById("logJudge").hidden=cardio;
+  if(cardio){document.getElementById("logEyebrow").textContent=p>1||n>1?`Einheit ${n}${p>1?" von "+p:""}`:"Cardio";document.getElementById("logGoal").innerHTML=`Plan: <b>${esc(it.w||"–")}</b>`;
+    const pc=pSet&&pSet.c?pSet.c:{};CF.forEach(([k])=>{const f=document.getElementById("cf_"+k);f.value=e&&e.c&&e.c[k]!=null?e.c[k]:"";f.placeholder=pc[k]!=null?String(pc[k]):""});
+    document.getElementById("logHint").textContent=(pSet&&pSet.c?`Letztes Mal (${fmtDate(prev.d)}): ${cardioTxt(pSet.c)}. `:"")+"Alles freiwillig – trag ein, was du weisst.";
+    const b=document.getElementById("logSave");b.className="savebtn ok";b.textContent="✓ Speichern"}
+  else{document.getElementById("logSave").textContent="✓ Satz speichern";updJudge()}
   document.getElementById("logDel").hidden=!e;
-  logModal.hidden=false;document.getElementById("logVal").focus({preventScroll:true});
+  logModal.hidden=false;document.getElementById(cardio?"cf_min":"logVal").focus({preventScroll:true});
 }
 /* Status automatisch aus den eingegebenen Wdh/Sekunden im Vergleich zum Plan: weniger / geschafft / mehr */
 function planRange(w){const t=String(w||"");const n=(t.match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(",",".")));if(!n.length)return null;
   const mn=n[0];let mx=/[–-]\s*\d/.test(t)&&n.length>1?n[1]:n[0];if(/max/i.test(t))mx=Infinity;if(/min\.?\b/i.test(t)&&!/\d\s*s\b/.test(t)){} return {mn,mx}}
-function judge(it,v){const val=numOf(String(v||"").replace(/\s*(s|sek|min\.?)$/i,""));if(val===null)return "ok";const r=planRange(it.w);if(!r)return "ok";
+function judge(it,v){if(isCardio(it))return "ok";const val=numOf(String(v||"").replace(/\s*(s|sek|min\.?)$/i,""));if(val===null)return "ok";const r=planRange(it.w);if(!r)return "ok";
   return val<r.mn?"less":val>r.mx?"more":"ok"}
 function updJudge(){const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;const v=document.getElementById("logVal").value;const st=judge(it,v);
   const el=document.getElementById("logJudge"),btn=document.getElementById("logSave");
@@ -1590,6 +1621,9 @@ logModal.addEventListener("click",e=>{
   if(e.target===logModal||e.target.closest("[data-close]")){closeLog();return}
   const it=logCtx&&cur().items.find(x=>x.u===logCtx.u);if(!it)return;it.log=it.log||[];
   const sb=e.target.closest("#logSave");
+  if(sb&&isCardio(it)){const c={};CF.forEach(([k])=>{const v=numOf(document.getElementById("cf_"+k).value.trim().replace(/\s*(min|km|w|hm|kcal)$/i,""));if(v!==null)c[k]=r1(v)});
+    if(!Object.keys(c).length){flash("Bitte mindestens einen Wert eintragen, z. B. die Dauer.");document.getElementById("cf_min").focus();return}
+    const entry={st:"ok",c};const isNew=logCtx.idx==null;if(isNew)it.log.push(entry);else it.log[logCtx.idx]=entry;save();renderItems();renderBar();closeLog();flash(`Gespeichert: ${cardioTxt(c)}`);return}
   if(sb){let entry_lbs="";const entry={st:judge(it,document.getElementById("logVal").value),v:document.getElementById("logVal").value.trim(),kg:(()=>{let v=lbsToKgTxt(document.getElementById("logKg").value.trim().replace(/\s*kg$/i,""));if(curUnit()==="lbs"&&numOf(v)!==null){entry_lbs=String(numOf(v));v=String(r1(numOf(v)*LB))}return v})()};if(!entry.kg)delete entry.kg;else if(entry_lbs)entry.lbs=entry_lbs;
     const isNew=logCtx.idx==null;const pr=isNew?prCheck(it,entry):null;if(pr)entry.pr=1;
     if(isNew)it.log.push(entry);else it.log[logCtx.idx]=entry;
@@ -1600,7 +1634,7 @@ logModal.addEventListener("click",e=>{
 });
 /* Bestwert: schwerer als je zuvor (bei Gewichtsübungen) oder mehr Wdh/Sekunden als je zuvor (ohne Gewicht) */
 function numV(x){return numOf(String(x||"").replace(/\s*(s|sek|min\.?)$/i,""))}
-function prCheck(it,entry){if(isSimple(it)||!histFor(it.id).length)return null;const prev=[];histFor(it.id).forEach(h=>h.log.forEach(e=>prev.push(e)));(it.log||[]).forEach(e=>prev.push(e));
+function prCheck(it,entry){if(isSimple(it)||isCardio(it)||!histFor(it.id).length)return null;const prev=[];histFor(it.id).forEach(h=>h.log.forEach(e=>prev.push(e)));(it.log||[]).forEach(e=>prev.push(e));
   if(!prev.length)return null;const kg=numOf(entry.kg);
   if(kg!==null){const ks=prev.map(e=>numOf(e.kg)).filter(x=>x!==null);if(ks.length&&kg>Math.max(...ks))return `${kgTxt(String(kg))} – so schwer wie noch nie!`;return null}
   if(prev.some(e=>numOf(e.kg)!==null))return null;
@@ -1769,6 +1803,7 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+document.getElementById("cardioFields").addEventListener("keydown",e=>{if(e.key!=="Enter")return;e.preventDefault();const ids=CF.map(([k])=>"cf_"+k);const i=ids.indexOf(e.target.id);if(i>=0&&i<ids.length-1)document.getElementById(ids[i+1]).focus();else document.getElementById("logSave").click()});
 /* Design: Automatisch (wie Handy) · Dunkel · Hell */
 (function(){const b=document.getElementById("themeBtn");if(!b)return;const L={"":"Automatisch",dark:"Dunkel",light:"Hell"};
   const get=()=>{try{return localStorage.getItem("cz-theme")||""}catch(e){return ""}};
