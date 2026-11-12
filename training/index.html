@@ -256,6 +256,14 @@ body[data-mode="edit"] .item.opt{background:var(--bg);border-style:dashed}
 .htitlerow{display:flex;align-items:center;gap:6px}
 .htitlerow .stitle{min-width:0;overflow-wrap:break-word}
 .htitlerow input{flex:1;min-width:0;font-size:1.3rem;font-weight:700;padding:8px 10px;border:1.5px solid var(--accent);border-radius:8px}
+.bwform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.bwform label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted);flex:1 1 130px}
+.bwform input{font-size:1rem;min-height:44px}
+.bwchart{width:100%;height:auto;margin-top:8px}
+.bwchart .grid{stroke:var(--line);stroke-width:1}
+.bwchart text{font-size:12px;fill:var(--muted);font-family:var(--body)}
+.bwline{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.bwdot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
 .dhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .dhead .hacts{padding-right:0}
 .hbtn{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:999px;color:var(--accent)}
@@ -1191,6 +1199,30 @@ function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setHours(0,
 function wkOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d.getTime()}
 function streak(){const W=new Set(hist().map(h=>wkOf(h.d)));let w=wkOf(Date.now());if(!W.has(w)){const d=new Date(w);d.setDate(d.getDate()-7);w=d.getTime()}
   let n=0;while(W.has(w)){n++;const d=new Date(w);d.setDate(d.getDate()-7);w=wkOf(d.getTime())}return n}
+/* ===== Körpergewicht (freiwillig) ===== */
+function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function bwList(){return (state.bw||[]).slice().sort((a,b)=>a.d<b.d?-1:1)}
+function isoMs(d){const [y,m,t]=d.split("-").map(Number);return new Date(y,m-1,t).getTime()}
+function fmtISO(d,y){return new Date(isoMs(d)).toLocaleDateString("de-CH",y?{day:"2-digit",month:"2-digit",year:"2-digit"}:{day:"2-digit",month:"2-digit"})}
+function bwChart(L){if(L.length<2)return L.length?`<p class="hint">Ab dem zweiten Eintrag erscheint hier die Kurve.</p>`:"";
+  const W=640,H=200,PL=44,PR=14,PT=14,PB=28;const xs=L.map(e=>isoMs(e.d)),ys=L.map(e=>+e.kg);
+  let x0=Math.min(...xs),x1=Math.max(...xs);if(x0===x1)x1=x0+864e5;let y0=Math.min(...ys),y1=Math.max(...ys);const pad=Math.max(.5,(y1-y0)*.15);y0=Math.floor((y0-pad)*2)/2;y1=Math.ceil((y1+pad)*2)/2;
+  const X=v=>PL+(v-x0)/(x1-x0)*(W-PL-PR),Y=v=>PT+(y1-v)/(y1-y0)*(H-PT-PB);
+  const ticks=[y0,(y0+y1)/2,y1].map(v=>`<line class="grid" x1="${PL}" x2="${W-PR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${PL-6}" y="${Y(v)+4}" text-anchor="end">${r1(v)}</text>`).join("");
+  const pts=L.map((e,i)=>[X(xs[i]),Y(ys[i])]);const line=`<polyline class="bwline" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
+  const dots=L.map((e,i)=>`<circle class="bwdot" cx="${pts[i][0]}" cy="${pts[i][1]}" r="${L.length>40?2.5:4}"><title>${fmtISO(e.d,true)}: ${e.kg} kg</title></circle>`).join("");
+  const xl=[0,L.length-1].map(i=>`<text x="${pts[i][0]}" y="${H-8}" text-anchor="${i?"end":"start"}">${fmtISO(L[i].d)}</text>`).join("");
+  return `<svg class="bwchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Körpergewicht von ${fmtISO(L[0].d,true)} bis ${fmtISO(L[L.length-1].d,true)}: ${L[0].kg} bis ${L[L.length-1].kg} kg">${ticks}${line}${dots}${xl}</svg>`}
+function bwCard(){const L=bwList();const last=L[L.length-1];const t=todayISO();const todayE=L.find(e=>e.d===t);
+  return `<div class="card" id="bwCard"><h2>Körpergewicht</h2><p class="hint">Freiwillig: Gewicht eintragen, wann du möchtest. Pro Tag zählt der letzte Eintrag.</p>
+    <div class="bwform"><label>Datum<input type="date" id="bwDate" value="${t}" max="${t}"></label><label>Gewicht (kg)<input type="text" id="bwKg" inputmode="decimal" placeholder="z. B. 62.5" value="${todayE?esc(todayE.kg):""}" autocomplete="off"></label><button type="button" class="primary" id="bwSave">Speichern</button></div>
+    ${last?`<div class="summary"><span>Zuletzt <b>${esc(last.kg)} kg</b> am ${fmtISO(last.d,true)}</span>${L.length>1?`<span>Erster Eintrag <b>${esc(L[0].kg)} kg</b> am ${fmtISO(L[0].d,true)}</span>`:""}</div>`:""}
+    ${bwChart(L)}
+    ${L.length?`<details class="ctable"><summary>Alle Einträge (${L.length})</summary><table class="htab"><tbody>${L.slice().reverse().map(e=>`<tr><th scope="row">${fmtISO(e.d,true)}</th><td>${esc(e.kg)} kg</td><td style="text-align:right"><button type="button" class="hbtn del" data-bwdel="${e.d}" aria-label="Eintrag vom ${fmtISO(e.d,true)} löschen" title="Löschen" style="width:34px;height:34px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></td></tr>`).join("")}</tbody></table></details>`:""}</div>`}
+function bwSaveEntry(){const d=document.getElementById("bwDate").value||todayISO();let raw=document.getElementById("bwKg").value.trim().replace(/\s*kg$/i,"");raw=lbsToKgTxt(raw);
+  const v=numOf(raw);if(v===null||v<20||v>250){flash("Bitte ein Gewicht in kg eingeben, z. B. 62.5");document.getElementById("bwKg").focus();return}
+  state.bw=(state.bw||[]).filter(e=>e.d!==d);state.bw.push({d,kg:String(r1(v))});state.delB=(state.delB||[]).filter(x=>x!==d);save();renderStats();flash(`${r1(v)} kg am ${fmtISO(d,true)} gespeichert ✓`);
+  const c=document.getElementById("bwCard");if(c)c.scrollIntoView({block:"nearest"})}
 function backupCard(){return `<div class="card"><h2>Backup</h2><p class="hint">Speichert alle Einheiten, eigenen Übungen und deinen ganzen Verlauf als Excel-Datei – z. B. in «Dateien» oder per WhatsApp an dich selbst. Bei neuem Handy oder gelöschtem Browser: «Backup importieren».</p>
   <div class="bkrow"><button type="button" class="primary" id="bkSave">📊 Backup erstellen (Excel)</button><button type="button" id="bkLoad">📂 Backup importieren</button></div></div>`}
 /* Excel-Bibliothek erst bei Bedarf laden */
@@ -1214,10 +1246,12 @@ function buildWorkbook(X){const wb=X.utils.book_new();const dt=ms=>new Date(ms);
   const cu=[["Name","Kategorie","Belastung","Sätze","Wdh / Zeit","Pause","Material","Muskeln","Video","Ausführung","Übungs-ID"]];
   (state.custom||[]).forEach(e=>cu.push([e.n,(CATS.find(c=>c[0]===e.k)||[,""])[1],(e.l||[]).map(l=>LOADN[l]).join(", "),e.s||"",e.w||"",e.p||"",(e.m||[]).join(", "),e.mu||"",(e.v||[]).join(" "),e.b||"",e.id]));
   const ws3=X.utils.aoa_to_sheet(cu);ws3["!cols"]=[30,18,14,6,12,10,16,22,30,30,12].map(w=>({wch:w}));X.utils.book_append_sheet(wb,ws3,"Eigene Übungen");
+  if((state.bw||[]).length){const bw=[["Datum","Körpergewicht (kg)"]].concat(bwList().map(e=>[new Date(isoMs(e.d)),+e.kg]));const ws4=X.utils.aoa_to_sheet(bw,{cellDates:true});ws4["!cols"]=[{wch:12},{wch:18}];
+    for(let r=1;r<bw.length;r++){const c=ws4[X.utils.encode_cell({r,c:0})];if(c)c.z="dd.mm.yyyy"}X.utils.book_append_sheet(wb,ws4,"Körpergewicht")}
   /* 4. Vollständige Daten für den Import (bitte nicht ändern) */
   const js=JSON.stringify(Object.assign({app:"cz-training",v:1,saved:Date.now()},state));const rows=[["CZ Training – Daten für «Backup importieren». Bitte nicht verändern."]];
   for(let k=0;k<js.length;k+=30000)rows.push([js.slice(k,k+30000)]);
-  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rows),"_daten");wb.Workbook={Sheets:[{},{},{},{Hidden:1}]};
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rows),"_daten");wb.Workbook={Sheets:wb.SheetNames.map(n=>n==="_daten"?{Hidden:1}:{})};
   return wb}
 async function saveBackup(){let X;try{X=await loadXLSX()}catch(e){flash("Excel braucht einmal Internet – bitte später nochmals.");return}
   const d=new Date();const filename=`CZ-Training-Backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.xlsx`;
@@ -1251,7 +1285,7 @@ document.getElementById("bkFile").addEventListener("change",async e=>{const f=e.
 function hIcons(i,dl){return `<button type="button" class="hbtn" data-hsend="${i}" aria-label="Training vom ${dl} an Coach senden" title="An Coach senden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button type="button" class="hbtn" data-hsess="${i}" aria-label="Training vom ${dl} als Einheit speichern" title="Als Einheit speichern"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg></button><button type="button" class="hbtn del" data-hdel="${i}" aria-label="Training vom ${dl} löschen" title="Löschen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`}
 function renderStats(){const el=document.getElementById("statsView");if(!el)return;
   const H=hist().map((x,i)=>({x,i})).sort((a,b)=>b.x.d-a.x.d);
-  if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${backupCard()}`;return}
+  if(!H.length){el.innerHTML=`<div class="card"><h2>Noch keine Trainings</h2><p class="empty">Nach dem Training im Tab «Training» ganz unten auf «✓ Training abschliessen &amp; speichern» tippen. Dann erscheint es hier.</p></div>${bwCard()}${backupCard()}`;return}
   if(statSel===null||!hist()[statSel])statSel=H[0].i;
   let sets=0,fire=0;H.forEach(({x})=>x.items.forEach(y=>y.log.forEach(z=>{sets++;if(z.st==="more")fire++})));
   const ws=weekStart(),week=H.filter(({x})=>x.d>=ws).length;
@@ -1281,7 +1315,7 @@ function renderStats(){const el=document.getElementById("statsView");if(!el)retu
         return `<div class="item c-${esc(e.k||"eigen")}"><div class="ihead">${thumbHTML(y.id,e.n,e.v)}<div class="iname">${nameHTML(e.n||y.n)}${y.w?`<span class="idose">Ziel: ${esc(y.w)}</span>`:""}</div>${miniSpark(y.id)}</div>
           <div class="sets">${isSimpleId(y.id)?`<span class="donetag">✓ Erledigt</span>`:y.log.map((z,j)=>`<span class="setbox ${z.st}" aria-label="Satz ${j+1}: ${esc(setTxt(z,y.w))}"><span class="sv">${z.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(fake,z))}</span>${z.kg?`<small>${esc(kgTxt(z.kg))}</small>`:""}</span>`).join("")}</div><div class="bigchart" data-big="${esc(y.id)}" hidden></div></div>`}).join("")}</div>
       <div class="toolbar"><button type="button" class="primary" data-hsend="${statSel}">An Coach senden</button><button type="button" data-hsess="${statSel}">📌 Als Einheit speichern</button><button type="button" data-hdel="${statSel}" data-label="Training löschen">Training löschen</button></div>
-    </div>${backupCard()}`;
+    </div>${bwCard()}${backupCard()}`;
 }
 function renderAll(){document.body.dataset.mode=state.mode;document.querySelectorAll("button[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===state.mode)));renderBar();renderHead();renderItems();renderStats();if(state.mode==="edit"){renderCats();renderLoads();renderLib();renderText()}}
 function changed(){save();renderBar();renderSummary();renderText()}
@@ -1305,6 +1339,9 @@ document.addEventListener("click",e=>{
   const yt=t.closest("[data-yt]");if(yt){e.preventDefault();openVid(yt.dataset.yt,yt.dataset.short==="1",yt.dataset.url);return}
   const sw=t.closest("[data-swap]");if(sw){const u=sw.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);const from=shortN(it.n);
     if(swapItem(it,sw.dataset.swap)){save();renderItems();renderText();flash(`${from} → ${shortN(it.n)} getauscht`)}else flash("Erst Sätze löschen, dann tauschen.");return}
+  if(t.closest("#bwSave")){bwSaveEntry();return}
+  const bd=t.closest("[data-bwdel]");if(bd){const d=bd.dataset.bwdel;const old=(state.bw||[]).find(e=>e.d===d);state.bw=(state.bw||[]).filter(e=>e.d!==d);(state.delB=state.delB||[]).push(d);save();renderStats();
+    undoToast(`Eintrag vom ${fmtISO(d,true)} gelöscht`,()=>{state.delB=(state.delB||[]).filter(x=>x!==d);if(old)state.bw.push(old);save();renderStats()});return}
   const hr=t.closest("[data-hren]");if(hr){const i=+hr.dataset.hren;const h=hist()[i];if(!h)return;const row=hr.closest(".htitlerow");
     row.innerHTML=`<input type="text" id="hRename" value="${esc(h.t||"")}" aria-label="Name des Trainings" autocomplete="off"><button type="button" class="primary" id="hRenameOk">OK</button>`;
     const inp=document.getElementById("hRename");inp.focus();inp.select();let done=false;
@@ -1600,7 +1637,8 @@ function mergeStates(a,b){/* b = neuerer Stand gewinnt bei Konflikten */
   const hk=h=>h.d+"|"+h.sid;const H=new Map();(a.hist||[]).concat(b.hist||[]).forEach(h=>{if(!delH.includes(hk(h)))H.set(hk(h),h)});
   const S=new Map();(a.sessions||[]).concat(b.sessions||[]).forEach(x=>{if(!delS.includes(x.id))S.set(x.id,x)});
   const C=new Map();(a.custom||[]).concat(b.custom||[]).forEach(x=>C.set(x.id,x));
-  const out=Object.assign({},a,b,{hist:[...H.values()].sort((x,y)=>x.d-y.d),sessions:[...S.values()],custom:[...C.values()],delH,delS,
+  const delB=[...new Set([...(a.delB||[]),...(b.delB||[])])];const B=new Map();(a.bw||[]).concat(b.bw||[]).forEach(x=>{if(!delB.includes(x.d))B.set(x.d,x)});
+  const out=Object.assign({},a,b,{hist:[...H.values()].sort((x,y)=>x.d-y.d),sessions:[...S.values()],custom:[...C.values()],delH,delS,bw:[...B.values()],delB,
     units:Object.assign({},a.units||{},b.units||{}),imgs:Object.assign({},a.imgs||{},b.imgs||{}),imported:Object.assign({},a.imported||{},b.imported||{})});
   if(!out.sessions.length)out.sessions=[{id:uid(),t:"Neue Einheit",a:"",h:"",items:[]}];
   if(!out.sessions.some(x=>x.id===out.active))out.active=out.sessions[0].id;return out}
@@ -1694,6 +1732,7 @@ function saveFreeAsSess(){const c=cur();if(!c.items.length){flash("Zuerst Übung
   if(ex){const keep=ex.id;const n=sessFromItems(c.items,nm);state.sessions=state.sessions.filter(x=>x!==n);ex.items=n.items;save();renderBar();flash(`«${nm}» aktualisiert ✓`);return}
   const s=sessFromItems(c.items,nm);s.from=c.id;save();renderBar();flash(`Gespeichert als Einheit «${nm}» – oben in der Leiste, jederzeit wiederholbar.`)}
 document.getElementById("saveSessBtn").addEventListener("click",saveFreeAsSess);
+document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="bwKg"&&e.key==="Enter"){e.preventDefault();bwSaveEntry()}});
 document.getElementById("items").addEventListener("input",e=>{if(e.target.id!=="freeName")return;const c=cur();c.t=e.target.value.trim()||"Freies Training";save();renderBar();const h=document.querySelector(".stitle");if(h)h.textContent=c.t});
 /* Freies Training: im Gym spontan Übung für Übung zusammenstellen */
 document.getElementById("freeBtn").addEventListener("click",()=>{
