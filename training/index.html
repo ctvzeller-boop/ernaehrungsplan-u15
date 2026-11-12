@@ -84,6 +84,14 @@ button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 .empty{color:var(--muted);font-size:.88rem}
 
 /* Modus-Umschalter */
+.acctbtn{min-height:40px;padding:6px 12px;border-radius:999px;font-size:.88rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
+.acctbtn.on{border-color:var(--ok);color:var(--ok)}
+.acctbtn.err{border-color:var(--warn);color:var(--warn)}
+.acctform{display:flex;flex-direction:column;gap:10px}
+.acctform label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted)}
+.acctform input{font-size:1rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-height:44px}
+.acctrow{display:flex;flex-wrap:wrap;gap:8px}
+.accterr{color:var(--warn);font-weight:600;margin:0;min-height:1.2em}
 .modes{display:inline-grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .modes button{border:none;padding:7px 16px;border-radius:7px;background:none}
 .modes button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
@@ -449,6 +457,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <button type="button" data-mode="edit" aria-pressed="true">Bearbeiten</button>
       <button type="button" data-mode="stats" aria-pressed="false">Stats</button>
     </div>
+    <button type="button" class="acctbtn" id="acctBtn" aria-haspopup="dialog">☁️ Anmelden</button>
   </header>
 
   <div class="banner" id="shareBanner" role="status" hidden>
@@ -621,6 +630,14 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   </div>
 </div>
 
+<div id="acctModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="acctTitle">Konto</h3>
+    <div id="acctBody"></div>
+  </div>
+</div>
+
 <div id="vidModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-label="Video">
     <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
@@ -648,6 +665,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script>
 const CATS=[["warm","Aufwärmen & Mobilität"],["plyo","Explosivität & Sprünge"],["beine","Beine Kraft"],["ober","Oberkörper Kraft"],["rumpf","Rumpf"],["eigen","Eigene Übungen"]];
@@ -859,7 +877,7 @@ function load(){
   const first={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};return {sessions:[first],active:first.id,custom:[]};
 }
 function syncNames(st){(st.sessions||[]).forEach(se=>(se.items||[]).forEach(it=>{if(EXBY[it.id])it.n=EXBY[it.id].n}))}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
+function save(){state.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave();sbQueue()}
 /* Nur in Claude: Einheiten, Verlauf und Bilder zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
    Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles wie bisher im Browser. */
 let cloud=null,cloudReady=false,cloudT=null;const cloudLast={};
@@ -1291,7 +1309,7 @@ document.addEventListener("click",e=>{
   const hsl=t.closest("[data-hsel]");if(hsl){statSel=+hsl.dataset.hsel;renderStats();const d=document.getElementById("statDetail");if(d&&innerWidth<900)d.scrollIntoView({block:"start",behavior:"smooth"});return}
   const hs=t.closest("[data-hsend]");if(hs){copyOrShare(histEntryText(hist()[+hs.dataset.hsend]),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const hd=t.closest("[data-hdel]");if(hd){if(!hd._arm){hd._arm=true;const icon=hd.classList.contains("hbtn");if(!icon)hd.textContent="Wirklich löschen?";else{hd.title="Nochmals tippen zum Löschen";flash("Nochmals auf den Mülleimer tippen zum Löschen")}hd.classList.add("warn");setTimeout(()=>{hd._arm=false;if(!icon)hd.textContent=hd.dataset.label||"Löschen";hd.classList.remove("warn")},4000);return}
-    hist().splice(+hd.dataset.hdel,1);statSel=null;save();renderAll();flash("Training gelöscht");return}
+    {const [h]=hist().splice(+hd.dataset.hdel,1);if(h)(state.delH=state.delH||[]).push(h.d+"|"+h.sid)}statSel=null;save();renderAll();flash("Training gelöscht");return}
   if(t.closest("[data-sendlast]")){copyOrShare(resultText(),"Ergebnis kopiert – jetzt dem Coach schicken.","Trainingsergebnis");return}
   const as=t.closest("[data-addset]");if(as){const u=as.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=(it.xs||0)+1;save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();flash(`Satz hinzugefügt – jetzt ${plannedSets(it)} Sätze`);return}
   const rs=t.closest("[data-rmset]");if(rs){const u=rs.closest("[data-u]").dataset.u;const it=cur().items.find(x=>x.u===u);it.xs=Math.max(0,(it.xs||0)-1);save();renderItems(`[data-u="${u}"] [data-addset]`);renderBar();return}
@@ -1319,7 +1337,7 @@ function armed(btn,label,confirmLabel,fn,cls){cls=cls||"warn";btn.addEventListen
   if(!btn._arm){btn._arm=true;btn.textContent=confirmLabel;btn.classList.add(cls);btn._t=setTimeout(()=>{btn._arm=false;btn.textContent=label;btn.classList.remove(cls)},4000);return}
   clearTimeout(btn._t);btn._arm=false;btn.textContent=label;btn.classList.remove(cls);fn()})}
 armed(document.getElementById("delBtn"),"Einheit löschen","Wirklich löschen?",()=>{
-  const name=cur().t;state.sessions=state.sessions.filter(s=>s.id!==state.active);
+  const name=cur().t;(state.delS=state.delS||[]).push(state.active);state.sessions=state.sessions.filter(s=>s.id!==state.active);
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});
   state.active=state.sessions[state.sessions.length-1].id;save();renderAll();flash(`„${name||"Einheit"}“ gelöscht`)});
 armed(document.getElementById("resetLogBtn"),"Sätze zurücksetzen","Ohne Speichern löschen?",()=>{
@@ -1555,6 +1573,65 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+/* ===== Konto & Sync mit Supabase (freiwillig) ===== */
+const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl";
+let sb=null,sbUser=null,sbT=null,sbBusy=false,sbDirty=false,sbLast=0,sbErr="";
+const acctModal=document.getElementById("acctModal"),acctBtn=document.getElementById("acctBtn");
+function sbPayload(){const {mode,...rest}=state;return rest}
+/* Zwei Stände zusammenführen: Trainings und Einheiten gehen nie verloren, Gelöschtes bleibt gelöscht */
+function mergeStates(a,b){/* b = neuerer Stand gewinnt bei Konflikten */
+  const delH=[...new Set([...(a.delH||[]),...(b.delH||[])])],delS=[...new Set([...(a.delS||[]),...(b.delS||[])])];
+  const hk=h=>h.d+"|"+h.sid;const H=new Map();(a.hist||[]).concat(b.hist||[]).forEach(h=>{if(!delH.includes(hk(h)))H.set(hk(h),h)});
+  const S=new Map();(a.sessions||[]).concat(b.sessions||[]).forEach(x=>{if(!delS.includes(x.id))S.set(x.id,x)});
+  const C=new Map();(a.custom||[]).concat(b.custom||[]).forEach(x=>C.set(x.id,x));
+  const out=Object.assign({},a,b,{hist:[...H.values()].sort((x,y)=>x.d-y.d),sessions:[...S.values()],custom:[...C.values()],delH,delS,
+    units:Object.assign({},a.units||{},b.units||{}),imgs:Object.assign({},a.imgs||{},b.imgs||{}),imported:Object.assign({},a.imported||{},b.imported||{})});
+  if(!out.sessions.length)out.sessions=[{id:uid(),t:"Neue Einheit",a:"",h:"",items:[]}];
+  if(!out.sessions.some(x=>x.id===out.active))out.active=out.sessions[0].id;return out}
+function acctUI(){if(!sbUser){acctBtn.textContent="☁️ Anmelden";acctBtn.className="acctbtn";acctBtn.title="Anmelden, damit alles gesichert wird";return}
+  acctBtn.className="acctbtn "+(sbErr?"err":"on");acctBtn.textContent=sbErr?"☁️ Offline":"☁️ Gesichert";acctBtn.title=sbErr?"Noch nicht gesichert – wird nachgeholt":"Alles in deinem Konto gesichert"}
+function sbQueue(){if(!sb||!sbUser)return;sbDirty=true;clearTimeout(sbT);sbT=setTimeout(sbPush,1500)}
+async function sbPush(){if(!sb||!sbUser||sbBusy)return;sbBusy=true;sbDirty=false;
+  try{const {error}=await sb.from("app_state").upsert({user_id:sbUser.id,data:sbPayload(),updated_at:new Date().toISOString()});if(error)throw error;sbLast=Date.now();sbErr=""}
+  catch(e){sbErr=String(e&&e.message||e);sbDirty=true}finally{sbBusy=false;acctUI();if(sbDirty&&!sbErr)sbQueue()}}
+async function sbPull(first){if(!sb||!sbUser)return;try{const {data,error}=await sb.from("app_state").select("data,updated_at").eq("user_id",sbUser.id).maybeSingle();if(error)throw error;
+    if(data&&data.data&&Array.isArray(data.data.sessions)){const remote=data.data;const remoteNewer=(remote.upd||0)>(state.upd||0);
+      const mode=state.mode;const merged=remoteNewer?mergeStates(state,remote):mergeStates(remote,state);merged.mode=mode;
+      const before=JSON.stringify(sbPayload());state=merged;syncNames(state);try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+      if(JSON.stringify(sbPayload())!==before){renderCustom();renderAll()}
+      if(JSON.stringify(sbPayload())!==JSON.stringify(remote))await sbPush()}
+    else await sbPush();
+    sbErr="";if(first)flash("☁️ Mit deinem Konto synchronisiert")}catch(e){sbErr=String(e&&e.message||e)}acctUI()}
+function acctRender(msg){const b=document.getElementById("acctBody");
+  if(!sb){b.innerHTML=`<p>Die Anmeldung braucht Internet. Bitte später nochmals versuchen.</p>`;return}
+  if(sbUser){const nm=(sbUser.user_metadata||{}).name||"";b.innerHTML=`<p>Angemeldet als <b>${esc(nm||sbUser.email)}</b>${nm?`<br><span class="small">${esc(sbUser.email)}</span>`:""}</p>
+      <p class="hint">${sbErr?"⚠️ Gerade keine Verbindung – deine Daten sind auf dem Handy gespeichert und werden automatisch nachgeladen.":`✓ Einheiten, Trainings und eigene Übungen sind in deinem Konto gesichert${sbLast?` (zuletzt ${new Date(sbLast).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})})`:""}. Auf einem anderen Gerät einfach mit der gleichen E-Mail anmelden.`}</p>
+      <div class="acctrow"><button type="button" class="primary" id="acSync">↻ Jetzt synchronisieren</button><button type="button" id="acOut">Abmelden</button></div><p class="accterr" id="acErr">${esc(msg||"")}</p>`;return}
+  b.innerHTML=`<p class="hint">Freiwillig: Mit einem Konto sind deine Einheiten und Trainings gesichert und auf jedem Gerät gleich – auch nach Handywechsel oder gelöschtem Browser.</p>
+    <form class="acctform" id="acForm" autocomplete="on"><label>E-Mail<input type="email" id="acMail" autocomplete="email" required inputmode="email" autocapitalize="off"></label>
+    <label>Passwort (mind. 6 Zeichen)<input type="password" id="acPw" autocomplete="current-password" required minlength="6"></label>
+    <label>Name (nur bei neuem Konto)<input type="text" id="acName" autocomplete="name" placeholder="z. B. Finn"></label>
+    <div class="acctrow"><button type="submit" class="primary" id="acIn">Anmelden</button><button type="button" id="acUp">Neues Konto erstellen</button></div>
+    <p class="accterr" id="acErr">${esc(msg||"")}</p><p class="small">Passwort vergessen? Dem Coach Bescheid geben.</p></form>`}
+function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m))return "E-Mail oder Passwort stimmt nicht.";if(/already registered|already exists/i.test(m))return "Für diese E-Mail gibt es schon ein Konto – bitte «Anmelden».";
+  if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/Email not confirmed/i.test(m))return "Die E-Mail ist noch nicht bestätigt.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
+acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});
+acctModal.addEventListener("click",async e=>{if(e.target===acctModal||e.target.closest("[data-close]")){acctModal.hidden=true;return}
+  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;acctUI();acctRender();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
+  if(e.target.closest("#acSync")){e.target.disabled=true;await sbPull(false);acctRender(sbErr?sbMsg(sbErr):"✓ Synchronisiert");return}
+  if(e.target.closest("#acUp")){const f=document.getElementById("acForm");if(!f.reportValidity())return;const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value,name=document.getElementById("acName").value.trim();
+    const {data,error}=await sb.auth.signUp({email,password,options:{data:{name}}});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}
+    if(!data.session){document.getElementById("acErr").textContent="Konto erstellt – bitte E-Mail bestätigen und dann anmelden.";return}
+    sbUser=data.user;if(name)try{await sb.from("profiles").update({name}).eq("id",sbUser.id)}catch(_){}await sbPull(true);acctRender();return}});
+acctModal.addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();const email=document.getElementById("acMail").value.trim(),password=document.getElementById("acPw").value;
+  const {data,error}=await sb.auth.signInWithPassword({email,password});if(error){document.getElementById("acErr").textContent=sbMsg(error);return}sbUser=data.user;await sbPull(true);acctRender()});
+async function sbInit(){if(!window.supabase||!window.supabase.createClient){acctUI();return}
+  try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"cz-training-auth"}})}catch(e){sb=null;return}
+  const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null;acctUI();if(sbUser)sbPull(false);
+  sb.auth.onAuthStateChange((ev,session)=>{sbUser=session?session.user:null;acctUI()});
+  document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
+  addEventListener("online",()=>{if(sbUser)sbPull(false)})}
+if(document.readyState==="complete")sbInit();else addEventListener("load",sbInit);
 /* Übungen per Drag & Drop verschieben (Griff ⠿, Maus und Finger) */
 (function(){const box=document.getElementById("items");let d=null,raf=null;
   function frame(){if(!d)return;const m=60,y=d.y;let v=0;if(y<m)v=-Math.ceil((m-y)/6);else if(y>innerHeight-m)v=Math.ceil((y-(innerHeight-m))/6);if(v){scrollBy(0,v);move()}raf=requestAnimationFrame(frame)}
