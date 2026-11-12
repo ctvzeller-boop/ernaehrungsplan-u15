@@ -139,8 +139,13 @@ button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 .folderbar .cat small{opacity:.6;font-weight:400;margin-left:2px}
 .folderbar .cat[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .folderbar .addf{border-style:dashed}
+.folderbar.dropping .cat:not([data-folder=""]){outline:2px dashed var(--accent);outline-offset:2px}
+.folderbar .cat.drophover{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.06)}
+.stabghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-120%);background:var(--ink);color:var(--surface);border-radius:10px;padding:8px 12px;font-weight:700;box-shadow:0 10px 24px rgba(0,0,0,.3);white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis}
+.stab.dragsrc{opacity:.4}
+.dragtip{font-size:.8rem;color:var(--muted);flex-basis:100%;margin-top:2px}
 .folderbar .linkbtn{font-size:.85rem;padding:4px 6px}
-.stab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
+.stab{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:var(--display);font-size:1.05rem;max-width:100%;flex:none}
 .stab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
 .stab small{font-family:var(--body);font-weight:500;font-size:.75rem;color:var(--muted)}
 .stab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
@@ -1060,7 +1065,7 @@ function setFolder(f){folderSel=f;try{f?localStorage.setItem("cz-folder",f):loca
 function renderFolders(){const el=document.getElementById("folderBar");const F=folders();if(folderSel&&folderSel!=="__none"&&!F.includes(folderSel))setFolder(null);
   const none=state.sessions.some(x=>!x.folder);
   el.innerHTML=(F.length||state.mode==="edit")?`<button type="button" class="cat" data-folder="" aria-pressed="${!folderSel}">Alle</button>${F.map(f=>`<button type="button" class="cat" data-folder="${esc(f)}" aria-pressed="${folderSel===f}">${esc(f)} <small>${state.sessions.filter(x=>x.folder===f).length}</small></button>`).join("")}${F.length&&none?`<button type="button" class="cat" data-folder="__none" aria-pressed="${folderSel==="__none"}">Ohne Ordner</button>`:""}
-    <button type="button" class="cat addf edit-only" id="newFolder">＋ Ordner</button>${folderSel&&folderSel!=="__none"?`<button type="button" class="linkbtn edit-only" id="renFolder">Umbenennen</button><button type="button" class="linkbtn edit-only" id="delFolder" style="color:var(--warn)">Ordner löschen</button>`:""}`:"";}
+    <button type="button" class="cat addf edit-only" id="newFolder" data-folderdrop="__new">＋ Ordner</button>${folderSel&&folderSel!=="__none"?`<button type="button" class="linkbtn edit-only" id="renFolder">Umbenennen</button><button type="button" class="linkbtn edit-only" id="delFolder" style="color:var(--warn)">Ordner löschen</button>`:""}`:"";}
 function renderBar(){renderFolders();
   const s=state.sessions.filter(x=>!folderSel||(folderSel==="__none"?!x.folder:x.folder===folderSel)||x.id===state.active);
   document.getElementById("sessionBar").innerHTML=s.map(x=>{const t=totals(x);return `<button type="button" class="stab${x.free?" free":""}" data-sess="${x.id}" aria-pressed="${x.id===state.active}"><span>${esc(x.t||"Ohne Titel")}</span><small>${state.mode==="train"&&t.plan?`${t.done}/${t.plan}`:x.items.length}</small></button>`}).join("")+
@@ -1750,6 +1755,27 @@ document.getElementById("copyHereBtn").addEventListener("click",()=>{const u=loc
 document.getElementById("browserClose").addEventListener("click",()=>{document.getElementById("browserBanner").hidden=true});
 document.getElementById("closeBanner").addEventListener("click",()=>{document.getElementById("shareBanner").hidden=true});
 const pasteModal=document.getElementById("pasteModal");
+/* Einheiten per Ziehen in Ordner legen (Finger: kurz gedrückt halten, dann ziehen) */
+(function(){const bar=document.getElementById("sessionBar"),fbar=document.getElementById("folderBar");let d=null,timer=null,suppress=0;
+  function target(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest("#folderBar [data-folder],#folderBar [data-folderdrop]")}
+  function activate(){if(!d)return;d.on=true;d.src.classList.add("dragsrc");const g=document.createElement("div");g.className="stabghost";g.textContent="⠿ "+(d.sess.t||"Einheit");document.body.appendChild(g);d.g=g;
+    if(!fbar.innerHTML.trim()){renderFolders()}fbar.classList.add("dropping");if(!document.getElementById("dragTip")){const tip=document.createElement("div");tip.id="dragTip";tip.className="dragtip";tip.textContent="Auf einen Ordner ziehen und loslassen";fbar.appendChild(tip)}
+    if(navigator.vibrate)try{navigator.vibrate(20)}catch(_){}move(d.x,d.y)}
+  function move(x,y){if(!d)return;d.x=x;d.y=y;if(!d.on)return;d.g.style.left=x+"px";d.g.style.top=y+"px";const t=target(x,y);fbar.querySelectorAll(".drophover").forEach(e=>{if(e!==t)e.classList.remove("drophover")});if(t&&t.dataset.folder!=="")t.classList.add("drophover")}
+  function finish(){clearTimeout(timer);if(!d)return;const on=d.on,sess=d.sess,t=on?target(d.x,d.y):null;if(d.g)d.g.remove();d.src.classList.remove("dragsrc");fbar.classList.remove("dropping");const tip=document.getElementById("dragTip");if(tip)tip.remove();fbar.querySelectorAll(".drophover").forEach(e=>e.classList.remove("drophover"));d=null;
+    if(!on)return;suppress=Date.now();if(!t)return;
+    const put=f=>{if(f)sess.folder=f;else delete sess.folder;save();renderBar();if(state.mode==="edit")renderHead();flash(f?`«${sess.t||"Einheit"}» liegt jetzt in «${f}»`:`«${sess.t||"Einheit"}» ist jetzt ohne Ordner`)};
+    if(t.dataset.folderdrop==="__new"){folderInput("Neuer Ordner","",n=>{state.folders=state.folders||[];if(!state.folders.includes(n))state.folders.push(n);put(n)});return}
+    const f=t.dataset.folder;if(f==="")return;put(f==="__none"?null:f)}
+  function begin(el,x,y){const sess=state.sessions.find(z=>z.id===el.dataset.sess);if(!sess)return false;d={src:el,sess,x,y,x0:x,y0:y,on:false};return true}
+  bar.addEventListener("touchstart",e=>{const el=e.target.closest(".stab");if(!el||e.touches.length>1)return;const t=e.touches[0];if(!begin(el,t.clientX,t.clientY))return;timer=setTimeout(activate,380)},{passive:true});
+  bar.addEventListener("touchmove",e=>{if(!d)return;const t=e.touches[0];if(d.on){e.preventDefault();move(t.clientX,t.clientY)}else if(Math.hypot(t.clientX-d.x0,t.clientY-d.y0)>8){clearTimeout(timer);d=null}},{passive:false});
+  bar.addEventListener("touchend",e=>{if(d&&d.on)e.preventDefault();finish()});bar.addEventListener("touchcancel",finish);
+  bar.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0)return;const el=e.target.closest(".stab");if(!el)return;begin(el,e.clientX,e.clientY)});
+  addEventListener("pointermove",e=>{if(!d||e.pointerType!=="mouse")return;if(!d.on&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6)activate();move(e.clientX,e.clientY)});
+  addEventListener("pointerup",e=>{if(e.pointerType==="mouse")finish()});
+  bar.addEventListener("contextmenu",e=>{if(e.target.closest(".stab"))e.preventDefault()});
+  document.addEventListener("click",e=>{if(Date.now()-suppress<400&&e.target.closest&&e.target.closest(".stab,#folderBar")){e.stopPropagation();e.preventDefault()}},true)})();
 function folderInput(title,val,cb){askChoice(title,"",[]).then(()=>{});const list=document.getElementById("choiceList");
   list.innerHTML=`<input type="text" id="fName" value="${esc(val||"")}" placeholder="z. B. U15, Finn, Ich" autocomplete="off" style="min-height:48px;padding:10px 12px;border:1.5px solid var(--accent);border-radius:8px;font-size:1rem"><button type="button" class="primary" id="fOk"><b>Speichern</b></button>`;
   const inp=document.getElementById("fName");inp.focus();inp.select();const go=()=>{const v=inp.value.trim();if(!v){inp.focus();return}document.getElementById("choiceModal").hidden=true;cb(v)};
