@@ -712,7 +712,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <div class="field full"><label class="small" for="nxNote">Ausführung</label><input type="text" id="nxNote" placeholder="Worauf achten?"></div>
     </div>
     <button type="button" class="primary" id="nxSave">＋ Erstellen &amp; zum Training hinzufügen</button>
-    <p class="hint">Danach kannst du die Übung unter «Infos» mit «An Coach schicken» weiterleiten.</p>
+    <p class="hint">Danach kannst du sie unter «Infos» mit «Übung vorschlagen» an den Coach schicken – gibt er sie frei, ist sie für alle in der Liste.</p>
   </div>
 </div>
 
@@ -868,7 +868,7 @@ function moreHTML(it){const e=exById(it.id);const desc=e&&e.b?e.b:"";const info=
   const lab=[vids?"Video":"",desc?"Ausführung":"",(info||own)?"Infos":"",(alts.length||back)?"Alternative":"",own?"An Coach schicken":""].filter(Boolean);
   return `<details class="more"><summary>${lab.join(" · ")}</summary><div class="morebody">${vids?`<div>${vids}</div>`:""}${desc?`<p class="desc">${esc(desc)}</p>`:""}${info}
     ${alts.length||back?`<div class="alts"><span class="small">Geht nicht oder Material fehlt? Tauschen:</span>${alts.map(a=>`<button type="button" data-swap="${esc(a)}">⇄ ${esc(shortN(EXBY[a].n))}</button>`).join("")}${back}</div>`:""}
-    ${own?`<div class="alts"><span class="small">Eigene Übung – soll sie für alle in die Liste?</span><button type="button" class="primary" data-sendex="${esc(it.id)}">An Coach schicken</button></div>`:""}</div></details>`}
+    ${own?suggestHTML(it.id):""}</div></details>`}
 function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return false;
   if(to===it.orig){delete it.orig;if(it.ob!==undefined){it.b=it.ob;delete it.ob}}else{if(!it.orig){it.orig=it.id;it.ob=it.b||""}it.b=""}
   const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
@@ -973,8 +973,10 @@ function applyGoal(it,g){const e=exById(it.id);if(!e)return;
   Object.assign(it,{s:O.s||G.s,w:(O.w||(t?G.tw:G.w))+perSide(e.w),p:O.p||(t?G.tp:G.p),r:O.r!=null?O.r:(t?"":G.r),goal:g})}
 function goalHTML(it){if(!goalable(it))return "";const g=it.goal||"";
   return `<div class="goalpick" role="group" aria-label="Trainingsziel ${esc(it.n)}"><span class="eyebrow">Ziel</span>${[["","Standard"]].concat(goalsFor(it).map(k=>[k,GOALS[k].n])).map(([k,n])=>`<button type="button" data-goal="${k}" aria-pressed="${g===k}">${n}</button>`).join("")}</div>`}
-function exAll(){return EX.concat((state.custom||[]).map(c=>Object.assign({k:"eigen"},c)))}
-function exById(id){return EXBY[id]||(state.custom||[]).find(c=>c.id===id)}
+/* Vom Coach freigegebene Übungen (für alle) */
+var SHARED=[];try{SHARED=JSON.parse(localStorage.getItem("cz-shared")||"[]")}catch(e){SHARED=[]}
+function exAll(){const done=new Set(SHARED.map(x=>x.from).filter(Boolean));return EX.concat(SHARED,(state.custom||[]).filter(c=>!done.has(c.id)).map(c=>Object.assign({k:"eigen"},c)))}
+function exById(id){return EXBY[id]||SHARED.find(c=>c.id===id)||(state.custom||[]).find(c=>c.id===id)}
 function itemFrom(e,ss,o){return Object.assign({u:uid(),id:e.id,n:e.n,k:e.k||"eigen",s:e.s||"",w:e.w||"",p:e.p||"",r:e.r||"",b:"",v:(e.v||[]).slice(),ss:!!ss,log:[]},o||{})}
 function fromTpl(t){return {id:uid(),t:t.t,a:"",h:t.h||"",items:t.i.map(([id,ss,o])=>itemFrom(EXBY[id],ss,Object.assign({},t.o||{},o||{})))}}
 function load(){
@@ -1463,6 +1465,11 @@ document.addEventListener("click",e=>{
   const xgro=t.closest("[data-grenok]");if(xgro){const n=document.getElementById("gRenName").value.trim();if(!n)return;sb.from("groups").update({name:n}).eq("id",xgro.dataset.grenok).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadGroups();renderCoach();flash("Umbenannt")});return}
   const xgd=t.closest("[data-gdel]");if(xgd){const g=coachGroups.find(x=>x.id===xgd.dataset.gdel);askChoice(`Gruppe «${g.name}» löschen?`,"Die Spieler bleiben erhalten. Einheiten, die sie nur über diese Gruppe hatten, werden bei ihnen entfernt.",[{key:"del",label:"Gruppe löschen",cls:"danger"}]).then(async k=>{if(k!=="del")return;
       try{await revokeSids(g.members,g.sids,g.id);const r=await sb.from("groups").delete().eq("id",g.id);if(r.error)throw r.error;if(coachFilter===g.id)coachFilter="";if(openBoard===g.id)openBoard=null;flash(`Gruppe «${g.name}» gelöscht`)}catch(e){flash(sbMsg(e))}await Promise.all([loadGroups(),loadAssign()]);renderCoach()});return}
+  const sap=t.closest("[data-sapp]");if(sap){const x=coachSugg.find(z=>z.id===sap.dataset.sapp);if(x)approveSugg(x);return}
+  const sed=t.closest("[data-sedit]");if(sed){const x=coachSugg.find(z=>z.id===sed.dataset.sedit);if(x)openEditEx(x.data||{},"Vorschlag anpassen","Freigeben für alle",ed=>approveSugg(x,ed));return}
+  const srj=t.closest("[data-srej]");if(srj){sb.from("exercise_suggestions").update({status:"rejected",decided_at:new Date().toISOString()}).eq("id",srj.dataset.srej).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadSugg();renderCoach();flash("Vorschlag abgelehnt")});return}
+  const she=t.closest("[data-shedit]");if(she){const e=SHARED.find(z=>z.id===she.dataset.shedit);if(e)openEditEx(e,"Freigegebene Übung bearbeiten","Speichern",async ed=>{const data=Object.assign({},e,ed);delete data.id;delete data.own;const r=await sb.from("shared_exercises").update({data,updated_at:new Date().toISOString()}).eq("id",e.id);if(r.error){flash(sbMsg(r.error));return}await loadShared();renderCoach();flash("Gespeichert")});return}
+  const shd=t.closest("[data-shdel]");if(shd){const e=SHARED.find(z=>z.id===shd.dataset.shdel);askChoice(`«${e.n}» aus der Liste entfernen?`,"Die Übung verschwindet für alle aus der Übungsliste. Bereits gemachte Trainings bleiben erhalten.",[{key:"del",label:"Entfernen",cls:"danger"}]).then(async k=>{if(k!=="del")return;const r=await sb.from("shared_exercises").delete().eq("id",e.id);if(r.error){flash(sbMsg(r.error));return}await loadShared();renderCoach();flash("Entfernt")});return}
   const asg=t.closest("[data-assign]");if(asg){openAssign(asg.dataset.assign);return}
   const ua=t.closest("[data-unassign]");if(ua){const a=coachAssign.find(x=>x.id===ua.dataset.unassign);sb.from("assignments").delete().eq("id",ua.dataset.unassign).then(async r=>{if(r.error){flash(sbMsg(r.error));return}await loadAssign();renderCoach();flash(a?`«${a.title}» bei ${pName(a.player_id)} entfernt`:"Entfernt")});return}
   const ce=t.closest("[data-cedit]");if(ce){state.active=ce.dataset.cedit;setMode("edit");scrollTo({top:0});return}
@@ -1480,6 +1487,7 @@ document.addEventListener("click",e=>{
     inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();fin()}else if(e.key==="Escape"){done=true;renderStats()}});
     inp.addEventListener("blur",()=>setTimeout(fin,150));document.getElementById("hRenameOk").addEventListener("click",fin);return}
   const hss=t.closest("[data-hsess]");if(hss){const h=hist()[+hss.dataset.hsess];if(!h)return;let nm=h.t&&h.t!=="Freies Training"?h.t:"Mein Training "+fmtDate(h.d);if(state.sessions.some(x=>x.t===nm))nm+=" ("+fmtDate(h.d)+")";const s=sessFromItems(h.items,nm);save();renderBar();savedMsg(s);return}
+  const sgx=t.closest("[data-suggest]");if(sgx){suggestEx(sgx.dataset.suggest);return}
   const sx=t.closest("[data-sendex]");if(sx){copyOrShare(exSendText(sx.dataset.sendex),"Übung kopiert – jetzt dem Coach schicken.","Neue Übung");return}
   if(t.closest("[data-savesess]")){saveFreeAsSess();return}
   if(t.closest("[data-sslink]")){const u=t.closest("[data-u]").dataset.u;const c=cur();const i=c.items.findIndex(x=>x.u===u);if(i<1)return;const it=c.items[i];it.ss=!it.ss;save();renderItems(`[data-u="${u}"] [data-sslink]`);
@@ -1909,7 +1917,18 @@ async function groupSessions(gid){const g=coachGroups.find(x=>x.id===gid);if(!g)
   try{const r=await sb.from("groups").update({sids:[...want]}).eq("id",gid);if(r.error)throw r.error;await grantSids(g.members,add);g.sids=[...want];await revokeSids(g.members,rem,gid);flash(`«${g.name}»: ${want.size} Einheit${want.size===1?"":"en"} zugewiesen`)}catch(e){flash("Speichern ging nicht: "+sbMsg(e))}
   await Promise.all([loadGroups(),loadAssign()]);renderCoach()}
 /* Neue Einheiten des Coaches: Gruppen-Zuweisungen bei Änderungen mitnehmen (Titel/Inhalt via pushAssignUpdates) */
-async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign(),loadGroups()]);await loadPlayerData();if(openBoard)await loadFeed(openBoard);if(state.mode==="coach")renderCoach()}
+var coachSugg=[];
+async function loadSugg(){coachSugg=[];try{const r=await sb.from("exercise_suggestions").select("id,user_id,data,created_at").eq("status","open");if(!r.error)coachSugg=(r.data||[]).sort((a,b)=>a.created_at<b.created_at?-1:1)}catch(e){}}
+function exLine(e){const cat=(CATS.find(c=>c[0]===e.k)||[,""])[1];return [cat,(e.l||[]).map(l=>LOADN[l]).join(", "),[e.s,e.w].filter(Boolean).join(" × "),e.p&&"Pause "+e.p,(e.m||[]).join(", "),e.mu].filter(Boolean).join(" · ")}
+function suggCardHTML(){const rows=coachSugg.map(x=>{const e=x.data||{};return `<div class="crow"><div class="cmain"><b>${esc(e.n||"Übung")}</b><span class="cmeta">von ${esc(e.by||pName(x.user_id))} · ${esc(exLine(e))}</span>${e.b?`<span class="cmeta">${esc(e.b)}</span>`:""}${(e.v||[])[0]?`<span class="cmeta"><a href="${esc(e.v[0])}" target="_blank" rel="noopener">Video</a></span>`:""}</div>
+    <div class="cbtns"><button type="button" class="primary" data-sapp="${esc(x.id)}">Freigeben</button><button type="button" data-sedit="${esc(x.id)}">Anpassen & freigeben</button><button type="button" class="danger" data-srej="${esc(x.id)}">Ablehnen</button></div></div>`}).join("");
+  const sh=SHARED.map(e=>`<div class="crow"><div class="cmain"><b>${esc(e.n)}</b><span class="cmeta">${esc(exLine(e))}${e.by?" · vorgeschlagen von "+esc(e.by):""}</span></div><div class="cbtns"><button type="button" data-shedit="${esc(e.id)}">Bearbeiten</button><button type="button" class="danger" data-shdel="${esc(e.id)}">Entfernen</button></div></div>`).join("");
+  return `<div class="card"><h2>Übungs-Vorschläge${coachSugg.length?` <span class="small">(${coachSugg.length} offen)</span>`:""}</h2>${rows||`<p class="empty">Keine offenen Vorschläge. Spieler können eigene Übungen mit «Übung vorschlagen» an dich schicken.</p>`}
+    ${SHARED.length?`<details class="ctable" style="margin-top:10px"><summary>Freigegebene Übungen (${SHARED.length})</summary>${sh}</details>`:""}</div>`}
+async function approveSugg(x,edited){const e=Object.assign({},x.data||{},edited||{});const id="s_"+uid();const data=Object.assign({},e,{from:(x.data||{}).id||null});delete data.id;delete data.own;
+  const r=await sb.from("shared_exercises").insert({id,data,created_by:sbUser.id});if(r.error){flash("Freigeben ging nicht: "+sbMsg(r.error));return}
+  await sb.from("exercise_suggestions").update({status:"approved",decided_at:new Date().toISOString()}).eq("id",x.id);await Promise.all([loadSugg(),loadShared()]);renderCoach();flash(`«${e.n}» ist jetzt für alle in der Übungsliste`)}
+async function openCoach(){if(!isCoach)return;await Promise.all([loadPlayers(),loadAssign(),loadGroups(),loadSugg()]);await loadPlayerData();if(openBoard)await loadFeed(openBoard);if(state.mode==="coach")renderCoach()}
 function pName(id){const p=coachPlayers.find(x=>x.player_id===id);return p?(p.name||p.email||"Spieler"):"Spieler"}
 function renderCoach(){const el=document.getElementById("coachView");if(!el)return;
   const S=state.sessions.filter(x=>!x.free).sort((a,b)=>(a.folder||"\uffff").localeCompare(b.folder||"\uffff","de"));let lastF;
@@ -1929,7 +1948,7 @@ function renderCoach(){const el=document.getElementById("coachView");if(!el)retu
     return `<div class="crow"><div class="cmain"><b>${esc(p.name||p.email||"Spieler")}</b><span class="cmeta">${H.length} Training${H.length===1?"":"s"} · ${wk} in den letzten 7 Tagen${last?` · zuletzt ${fmtDate(last.d)}: ${esc(last.t||"Training")}`:""}</span>
       <div class="chips">${as.length?as.map(a=>`<span class="chip">${esc(a.title||"Einheit")}<button type="button" data-unassign="${esc(a.id)}" aria-label="${esc(a.title||"Einheit")} entfernen" title="Zuweisung entfernen">×</button></span>`).join(""):`<span class="cmeta">Noch keine Einheit zugewiesen</span>`}</div></div>
       <div class="cbtns"><button type="button" data-cview="${esc(p.player_id)}">Trainings ansehen</button></div></div>`}).join("");
-  el.innerHTML=`<div class="card"><div class="dhead"><h2>Einheiten</h2><button type="button" id="cNew">＋ Neue Einheit</button></div>${sessRows}</div>
+  el.innerHTML=suggCardHTML()+`<div class="card"><div class="dhead"><h2>Einheiten</h2><button type="button" id="cNew">＋ Neue Einheit</button></div>${sessRows}</div>
     <div class="card"><div class="dhead"><h2>Gruppen</h2><button type="button" id="gNew">＋ Neue Gruppe</button></div><div id="gNewRow"></div>${groupRows||`<p class="empty">Noch keine Gruppen. Lege z. B. «U15» an und füge Spieler hinzu.</p>`}</div>
     <div class="card"><h2>Spieler</h2>${coachGroups.length?`<div class="cats" role="group" aria-label="Nach Gruppe filtern" style="margin-bottom:6px"><button type="button" class="cat" data-cfilter="" aria-pressed="${!coachFilter}">Alle</button>${coachGroups.map(g=>`<button type="button" class="cat" data-cfilter="${esc(g.id)}" aria-pressed="${coachFilter===g.id}">${esc(g.name)}</button>`).join("")}</div>`:""}${plRows||`<p class="empty">Noch keine Spieler. Sobald sich ein Spieler in der App ein Konto erstellt, erscheint er hier – ausser er wählt «Nicht mit dem Coach teilen».</p>`}
     <div class="toolbar"><button type="button" id="cReload">↻ Aktualisieren</button></div></div>`}
@@ -1986,7 +2005,7 @@ async function sbInit(){
   if(session){sbUser=session.user;cacheUser(sbUser);sbErr=""}
   else if(sbUser&&hasStoredSession()){sbErr="offline"}  /* Sitzung noch gespeichert, nur gerade keine Verbindung */
   else{sbUser=null;cacheUser(null)}
-  acctUI();if(session){sbPull(false);loadPlayers();checkCoach()}
+  acctUI();loadShared();if(session){sbPull(false);loadPlayers();checkCoach().then(loadShared)}
   sb.auth.onAuthStateChange((ev,ses)=>{if(ses){const first=!sbUser||sbErr==="offline";sbUser=ses.user;cacheUser(sbUser);if(first&&sbErr==="offline"){sbErr="";sbPull(false);loadPlayers();checkCoach()}}
     else if(ev==="SIGNED_OUT"){sbUser=null;cacheUser(null);if(!sbManualOut)flash("Bitte nochmals anmelden.")}acctUI()});
   document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
@@ -2014,14 +2033,28 @@ async function sbInit(){
     [items[i],items[j]]=[items[j],items[i]];if(items[0])items[0].ss=false;save();renderItems();if(typeof renderText==="function")renderText();const nh=document.querySelector(`[data-u="${u}"] [data-drag]`);if(nh)nh.focus()})})();
 /* Eigene Übung direkt im Training erstellen */
 const newExModal=document.getElementById("newExModal");
-function openNewEx(name){document.getElementById("nxCat").innerHTML=CATS.map(([k,n])=>`<option value="${k}"${k==="eigen"?" selected":""}>${n}</option>`).join("");
+var nxCb=null;
+function openNewEx(name){nxCb=null;document.getElementById("newExTitle").textContent="Eigene Übung erstellen";document.getElementById("nxSave").textContent="＋ Erstellen & zum Training hinzufügen";document.getElementById("nxCat").innerHTML=CATS.map(([k,n])=>`<option value="${k}"${k==="eigen"?" selected":""}>${n}</option>`).join("");
   ["nxReps","nxPause","nxMat","nxMus","nxVid","nxNote"].forEach(id=>document.getElementById(id).value="");document.getElementById("nxSets").value="3";document.getElementById("nxLoad").value="kw";
   document.getElementById("nxName").value=name||"";pickModal.hidden=true;newExModal.hidden=false;document.getElementById("nxName").focus({preventScroll:true})}
 newExModal.addEventListener("click",e=>{if(e.target===newExModal||e.target.closest("[data-close]")){newExModal.hidden=true;return}
   if(!e.target.closest("#nxSave"))return;const g=id=>document.getElementById(id).value.trim();
   const n=g("nxName");if(!n){flash("Bitte einen Namen eingeben.");document.getElementById("nxName").focus();return}const v=g("nxVid");
   const ex={id:"c_"+uid(),n,k:g("nxCat")||"eigen",s:g("nxSets"),w:g("nxReps"),p:g("nxPause"),r:"",b:g("nxNote"),v:/^https?:\/\//.test(v)?[v]:[],l:[g("nxLoad")],mu:g("nxMus"),m:g("nxMat").split(",").map(x=>x.trim()).filter(Boolean),own:1};
+  if(nxCb){const f=nxCb;nxCb=null;newExModal.hidden=true;delete ex.own;delete ex.id;f(ex);return}
   (state.custom=state.custom||[]).push(ex);save();newExModal.hidden=true;renderCustom();addPicked(ex,true)});
+var MYSUGG={};
+function suggestHTML(id){const appr=SHARED.find(x=>x.from===id);if(appr)return `<div class="alts"><span class="small">✓ Vom Coach freigegeben – die Übung ist jetzt für alle in der Liste.</span></div>`;
+  const st=MYSUGG[id];if(st==="open")return `<div class="alts"><span class="small">Vorgeschlagen – wartet auf Freigabe durch den Coach.</span></div>`;
+  return `<div class="alts"><span class="small">${st==="rejected"?"Der Coach hat den Vorschlag nicht übernommen. ":""}Eigene Übung – soll sie für alle in die Liste?</span>${sbUser&&sb?`<button type="button" class="primary" data-suggest="${esc(id)}">Übung vorschlagen</button>`:`<button type="button" class="primary" data-sendex="${esc(id)}">An Coach schicken</button>`}</div>`}
+async function loadShared(){if(!sb)return;try{const r=await sb.from("shared_exercises").select("id,data");if(!r.error){SHARED=(r.data||[]).map(x=>Object.assign({},x.data,{id:x.id,own:0}));try{localStorage.setItem("cz-shared",JSON.stringify(SHARED))}catch(e){}}
+  if(sbUser&&!isCoach){const q=await sb.from("exercise_suggestions").select("data,status").eq("user_id",sbUser.id);if(!q.error){MYSUGG={};(q.data||[]).forEach(x=>{if(x.data&&x.data.id)MYSUGG[x.data.id]=x.status})}}}catch(e){}
+  syncNames(state);renderCustom();renderAll()}
+async function suggestEx(id){const e=exById(id);if(!e||!sb||!sbUser)return;const nm=(sbUser.user_metadata||{}).name||String(sbUser.email||"").split("@")[0];
+  const data=Object.assign({},e,{by:nm});delete data.own;const r=await sb.from("exercise_suggestions").insert({user_id:sbUser.id,data});
+  if(r.error){flash("Vorschlag ging nicht: "+sbMsg(r.error));return}MYSUGG[id]="open";renderItems();flash(`«${shortN(e.n)}» vorgeschlagen – der Coach gibt sie frei`)}
+function openEditEx(e,title,btn,cb){openNewEx(e.n);document.getElementById("newExTitle").textContent=title;document.getElementById("nxSave").textContent=btn;
+  const set=(id,v)=>{document.getElementById(id).value=v||""};set("nxCat",e.k||"eigen");set("nxLoad",(e.l||["kw"])[0]);set("nxSets",e.s);set("nxReps",e.w);set("nxPause",e.p);set("nxMat",(e.m||[]).join(", "));set("nxMus",e.mu);set("nxVid",(e.v||[])[0]);set("nxNote",e.b);nxCb=cb}
 function exSendText(id){const e=exById(id);if(!e)return "";const cat=(CATS.find(c=>c[0]===e.k)||[,""])[1];
   return ["Neue Übung für CZ Training (bitte in die Übungsliste aufnehmen):","Name: "+e.n,"Kategorie: "+cat,"Belastung: "+(e.l||[]).map(l=>LOADN[l]).join(", "),
     "Sätze × Wdh/Zeit: "+[e.s,e.w].filter(Boolean).join(" × "),e.p?"Pause: "+e.p:"",(e.m||[]).length?"Material: "+e.m.join(", "):"",e.mu?"Muskeln: "+e.mu:"",(e.v||[]).length?"Video: "+e.v.join(" "):"",e.b?"Ausführung: "+e.b:""].filter(Boolean).join("\n")}
