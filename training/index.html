@@ -84,16 +84,22 @@ button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 .empty{color:var(--muted);font-size:.88rem}
 
 /* Modus-Umschalter */
-.acctbtn{min-height:40px;padding:6px 12px;border-radius:999px;font-size:.88rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
-.acctbtn.on{border-color:var(--ok);color:var(--ok)}
-.acctbtn.err{border-color:var(--warn);color:var(--warn)}
+.acctline{display:flex;justify-content:flex-end;margin:-8px 0 6px}
+.acctline[hidden]{display:none}
+.acctline button{border:none;background:none;padding:4px 0;min-height:32px;font-size:.85rem;color:var(--muted);cursor:pointer}
+.acctline button b{color:var(--ink)}
+.acctline button .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-left:6px;vertical-align:middle}
+.acctline button.err .dot{background:var(--warn)}
+@media (max-width:520px){header .modes{display:grid;width:100%}header .modes button{padding:8px 2px;min-width:0;font-size:.92rem}}
+@media (max-width:360px){header .modes button{font-size:.8rem;letter-spacing:-.01em;padding:8px 1px}header h1{font-size:1.75rem}.brand .logo{width:48px;height:48px}}
+.brand>div{min-width:0;overflow-wrap:break-word}
 .acctform{display:flex;flex-direction:column;gap:10px}
 .acctform label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted)}
 .acctform input{font-size:1rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-height:44px}
 .acctrow{display:flex;flex-wrap:wrap;gap:8px}
 .accterr{color:var(--warn);font-weight:600;margin:0;min-height:1.2em}
-.modes{display:inline-grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
-.modes button{border:none;padding:7px 16px;border-radius:7px;background:none}
+.modes{display:inline-grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.modes button{border:none;padding:7px 16px;border-radius:7px;background:none;text-align:center;white-space:nowrap;overflow:hidden}
 .modes button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 
 /* Einheiten-Leiste */
@@ -441,6 +447,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </head>
 <body data-mode="edit">
 <div class="wrap">
+  <div class="acctline" id="acctLine" hidden><button type="button" id="acctWho" aria-haspopup="dialog"></button></div>
   <header>
     <div class="brand">
       <img class="logo" src="icons/icon-192.png" alt="CZ Training by Calvin Zeller" width="64" height="64">
@@ -456,8 +463,8 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
       <button type="button" data-mode="train" aria-pressed="false">Training</button>
       <button type="button" data-mode="edit" aria-pressed="true">Bearbeiten</button>
       <button type="button" data-mode="stats" aria-pressed="false">Stats</button>
+      <button type="button" id="acctBtn" aria-haspopup="dialog" aria-pressed="false">Anmelden</button>
     </div>
-    <button type="button" class="acctbtn" id="acctBtn" aria-haspopup="dialog">☁️ Anmelden</button>
   </header>
 
   <div class="banner" id="shareBanner" role="status" hidden>
@@ -1588,8 +1595,10 @@ function mergeStates(a,b){/* b = neuerer Stand gewinnt bei Konflikten */
     units:Object.assign({},a.units||{},b.units||{}),imgs:Object.assign({},a.imgs||{},b.imgs||{}),imported:Object.assign({},a.imported||{},b.imported||{})});
   if(!out.sessions.length)out.sessions=[{id:uid(),t:"Neue Einheit",a:"",h:"",items:[]}];
   if(!out.sessions.some(x=>x.id===out.active))out.active=out.sessions[0].id;return out}
-function acctUI(){if(!sbUser){acctBtn.textContent="☁️ Anmelden";acctBtn.className="acctbtn";acctBtn.title="Anmelden, damit alles gesichert wird";return}
-  acctBtn.className="acctbtn "+(sbErr?"err":"on");acctBtn.textContent=sbErr?"☁️ Offline":"☁️ Gesichert";acctBtn.title=sbErr?"Noch nicht gesichert – wird nachgeholt":"Alles in deinem Konto gesichert"}
+function acctUI(){const line=document.getElementById("acctLine"),who=document.getElementById("acctWho");
+  acctBtn.hidden=!!sbUser;line.hidden=!sbUser;if(!sbUser)return;const nm=(sbUser.user_metadata||{}).name||String(sbUser.email||"").split("@")[0];
+  who.className=sbErr?"err":"";who.title=sbErr?"Gerade offline – wird automatisch nachgeholt":"Alles in deinem Konto gesichert";
+  who.innerHTML=`Angemeldet als: <b>${esc(nm)}</b><span class="dot" aria-hidden="true"></span>`}
 function sbQueue(){if(!sb||!sbUser)return;sbDirty=true;clearTimeout(sbT);sbT=setTimeout(sbPush,1500)}
 async function sbPush(){if(!sb||!sbUser||sbBusy)return;sbBusy=true;sbDirty=false;
   try{const {error}=await sb.from("app_state").upsert({user_id:sbUser.id,data:sbPayload(),updated_at:new Date().toISOString()});if(error)throw error;sbLast=Date.now();sbErr=""}
@@ -1615,7 +1624,7 @@ function acctRender(msg){const b=document.getElementById("acctBody");
     <p class="accterr" id="acErr">${esc(msg||"")}</p><p class="small">Passwort vergessen? Dem Coach Bescheid geben.</p></form>`}
 function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m))return "E-Mail oder Passwort stimmt nicht.";if(/already registered|already exists/i.test(m))return "Für diese E-Mail gibt es schon ein Konto – bitte «Anmelden».";
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/Email not confirmed/i.test(m))return "Die E-Mail ist noch nicht bestätigt.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
-acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});
+acctBtn.addEventListener("click",()=>{acctRender();acctModal.hidden=false});document.getElementById("acctWho").addEventListener("click",()=>{acctRender();acctModal.hidden=false});
 acctModal.addEventListener("click",async e=>{if(e.target===acctModal||e.target.closest("[data-close]")){acctModal.hidden=true;return}
   if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;acctUI();acctRender();flash("Abgemeldet – deine Daten bleiben auf diesem Gerät.");return}
   if(e.target.closest("#acSync")){e.target.disabled=true;await sbPull(false);acctRender(sbErr?sbMsg(sbErr):"✓ Synchronisiert");return}
