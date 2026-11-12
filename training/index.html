@@ -1083,7 +1083,7 @@ function totalHTML(it,log){const t=totalOf(it,log);if(t===null)return "";const t
 function setsHTML(it){
   if(isSimple(it))return simpleSetsHTML(it);
   const log=it.log||[],p=plannedSets(it);
-  const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.pr?`<span class="prtag" aria-label="Bestwert">PR</span>`:e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
+  const boxes=log.map((e,j)=>`<button type="button" class="setbox ${e.st}" data-edit="${j}" aria-label="Satz ${j+1}: ${esc(setVal(it,e))}${e.kg?", "+esc(kgTxt(e.kg)):""}, ${ST[e.st]}. Ändern"><span class="sv">${e.pr?`<span class="fire" aria-label="Bestwert">🏆</span>`:e.st==="more"?`<span class="fire" aria-hidden="true">🔥</span>`:""}${esc(setVal(it,e))}</span>${e.kg?`<small>${esc(kgTxt(e.kg))}</small>`:""}</button>`).join("");
   /* offene Sätze sind selbst die Buttons: Antippen öffnet den nächsten Satz */
   const n=log.length+1;
   const todo=Array.from({length:Math.max(0,p-log.length)},(_,j)=>`<button type="button" class="setbox todo${j===0?" next":""}" data-log="1"${j?` tabindex="-1"`:""} aria-label="Satz ${n} eintragen (Plan ${esc(planShort(it))})">${esc(planShort(it))}</button>`).join("");
@@ -1494,7 +1494,7 @@ function prCheck(it,entry){if(isSimple(it)||!histFor(it.id).length)return null;c
   if(kg!==null){const ks=prev.map(e=>numOf(e.kg)).filter(x=>x!==null);if(ks.length&&kg>Math.max(...ks))return `${kgTxt(String(kg))} – so schwer wie noch nie!`;return null}
   if(prev.some(e=>numOf(e.kg)!==null))return null;
   const v=numV(entry.v);const vs=prev.map(e=>numV(e.v)).filter(x=>x!==null);if(v!==null&&vs.length&&v>Math.max(...vs))return `${setVal(it,entry)} – so viel wie noch nie!`;return null}
-function showPR(txt){const t=document.getElementById("prToast");t.innerHTML=`<b>Neuer Bestwert!</b><span>${esc(txt)}</span>`;t.classList.add("show");if(navigator.vibrate)try{navigator.vibrate([60,40,60])}catch(e){}
+function showPR(txt){const t=document.getElementById("prToast");t.innerHTML=`<b>🏆 Neuer Bestwert!</b><span>${esc(txt)}</span>`;t.classList.add("show");if(navigator.vibrate)try{navigator.vibrate([60,40,60])}catch(e){}
   clearTimeout(showPR.t);showPR.t=setTimeout(()=>t.classList.remove("show"),3200)}
 /* Pausen-Timer */
 function pauseSec(p){const t=String(p||"");const m=t.match(/\d+(?:[.,]\d+)?/);if(!m)return 0;const n=parseFloat(m[0].replace(",","."));return Math.round(/min/i.test(t)?n*60:n)}
