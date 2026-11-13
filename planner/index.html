@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
 <style>
 /* CZ Planner: ganze Woche planen – Schlaf, Weg (Zug, Bus, Velo), Schule/Arbeit, Training, Lernen, Freizeit, Essen */
 :root{
@@ -116,6 +117,12 @@ button{cursor:pointer}
 .chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font-size:.85rem;font-weight:600}
 .chips button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .hint{font-size:.8rem;color:var(--muted);margin:2px 0 10px}
+.acctline{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+.acctline button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.acctline .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.acctline button.err .dot{background:var(--warn)}
+.acctform{display:grid;gap:10px}
+.accterr{color:var(--warn);font-size:.88rem;min-height:1.2em;margin:8px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:10px;font-size:.9rem;z-index:60;max-width:90vw}
 .c-schlaf{--c:var(--k-schlaf);--cbg:var(--k-schlaf-bg)}.c-weg{--c:var(--k-weg);--cbg:var(--k-weg-bg)}
 .c-schule{--c:var(--k-schule);--cbg:var(--k-schule-bg)}.c-train{--c:var(--k-train);--cbg:var(--k-train-bg)}
@@ -134,6 +141,7 @@ button{cursor:pointer}
     </div>
   </div>
 
+  <div class="acctline"><button type="button" id="acctBtn">Anmelden</button></div>
   <div class="seg" role="group" aria-label="Ansicht">
     <button type="button" id="vWeek" aria-pressed="true">Diese Woche</button>
     <button type="button" id="vTpl" aria-pressed="false">Standardwoche</button>
@@ -190,7 +198,7 @@ function blank(){const tpl={};DAYS.forEach(([d])=>tpl[d]={b:[],wake:d==="sa"||d=
   return {tpl,ov:{},food:true,goal:9,view:"week"}}
 let state=readJSON(KEY)||blank();
 state.tpl=state.tpl||blank().tpl;state.ov=state.ov||{};if(state.goal==null)state.goal=9;if(state.food==null)state.food=true;
-function save(){state.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function save(){state.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}sbQueue()}
 
 /* ---------- Datum ---------- */
 function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
@@ -413,7 +421,63 @@ $("themeBtn").addEventListener("click",()=>{const r=document.documentElement;con
 addEventListener("storage",e=>{if(e.key===TKEY||e.key===KEY){if(e.key===KEY)state=readJSON(KEY)||state;render()}});
 addEventListener("pageshow",()=>render());
 setInterval(()=>{const n=new Date();if(n.getMinutes()!==today.getMinutes()){today.setTime(n.getTime());if($("modal").hidden)renderDay()}},30000);
-render();
+/* ---------- Konto (gleiches Konto wie die Trainingsapp, Anmeldung gilt für beide) ---------- */
+const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl",UKEY="cz-training-user",AKEY="cz-training-auth";
+let sb=null,sbUser=null,sbT=null,sbBusy=false,sbDirty=false,sbErr="",sbLast=0,sbNoTable=false;
+function sbPayload(){const {view,...rest}=state;return rest}
+function cacheUser(u){try{u?localStorage.setItem(UKEY,JSON.stringify({id:u.id,email:u.email,user_metadata:u.user_metadata||{}})):localStorage.removeItem(UKEY)}catch(e){}}
+function uname(){return sbUser?((sbUser.user_metadata||{}).name||String(sbUser.email||"").split("@")[0]):""}
+function acctUI(){const b=$("acctBtn");if(!sbUser){b.className="";b.textContent="Anmelden";return}
+  b.className=sbErr?"err":"";b.title=sbErr?"Gerade nicht synchronisiert – wird nachgeholt":"Wochenplan im Konto gesichert";
+  b.innerHTML=`Angemeldet als: <b>${esc(uname())}</b><span class="dot" aria-hidden="true"></span>`}
+function sbQueue(){if(!sb||!sbUser||sbNoTable)return;sbDirty=true;clearTimeout(sbT);sbT=setTimeout(sbPush,1200)}
+function tableMissing(e){const m=String(e&&(e.code||"")+" "+(e.message||""));return /42P01|PGRST205|planner_state/.test(m)&&/exist|find|schema/i.test(m)}
+async function sbPush(){if(!sb||!sbUser||sbBusy)return;sbBusy=true;sbDirty=false;
+  try{const {error}=await sb.from("planner_state").upsert({user_id:sbUser.id,data:sbPayload(),updated_at:new Date().toISOString()});if(error)throw error;sbErr="";sbLast=Date.now()}
+  catch(e){if(tableMissing(e))sbNoTable=true;sbErr=String(e&&e.message||e);sbDirty=!sbNoTable}finally{sbBusy=false;acctUI();if(sbDirty&&!sbErr)sbQueue()}}
+async function sbPull(first){if(!sb||!sbUser)return;
+  try{const {data,error}=await sb.from("planner_state").select("data").eq("user_id",sbUser.id).maybeSingle();if(error)throw error;sbNoTable=false;
+    const r=data&&data.data;const hasLocal=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length;
+    if(r&&r.tpl&&((r.upd||0)>(state.upd||0)||!hasLocal)){const view=state.view;state=Object.assign(blank(),r,{view});try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}render()}
+    else if(!r||(state.upd||0)>(r.upd||0))await sbPush();
+    sbErr="";sbLast=Date.now();if(first)toast("Mit deinem Konto synchronisiert")}
+  catch(e){if(tableMissing(e))sbNoTable=true;sbErr=String(e&&e.message||e)}acctUI()}
+function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m))return "E-Mail oder Passwort stimmt nicht.";if(/already registered|already exists/i.test(m))return "Für diese E-Mail gibt es schon ein Konto – bitte «Anmelden».";
+  if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
+function openAcct(msg){
+  if(!sb){openModal(`<h3>Konto</h3><p>Die Anmeldung braucht Internet. Bitte später nochmals versuchen.</p><div class="acts"><button type="button" class="btn" id="eCancel">Schliessen</button></div>`);return}
+  if(sbUser){openModal(`<h3>Konto</h3><p>Angemeldet als <b>${esc(uname())}</b><br><span class="hint">${esc(sbUser.email||"")}</span></p>
+    <p class="hint">${sbNoTable?"Der Wochenplan kann noch nicht im Konto gespeichert werden: In Supabase fehlt die Tabelle «planner_state» (SQL-Skript Teil 6). Bis dahin bleibt alles auf diesem Gerät.":sbErr?"Gerade keine Verbindung – dein Wochenplan ist auf dem Gerät gespeichert und wird automatisch nachgeladen.":`Dein Wochenplan ist im Konto gesichert${sbLast?` (zuletzt ${new Date(sbLast).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})})`:""}. Die Anmeldung gilt auch für die Trainingsapp.`}</p>
+    <div class="acts"><button type="button" class="btn pri" id="acSync">Jetzt synchronisieren</button><button type="button" class="btn" id="acOut">Abmelden</button><button type="button" class="btn" id="eCancel">Schliessen</button></div><p class="accterr">${esc(msg||"")}</p>`);return}
+  openModal(`<h3>Anmelden</h3><p class="hint">Freiwillig: Mit einem Konto ist dein Wochenplan gesichert und auf jedem Gerät gleich. Es ist das gleiche Konto wie in der Trainingsapp.</p>
+    <form class="acctform" id="acForm" autocomplete="on">
+      <div class="f"><label for="acMail">E-Mail</label><input type="email" id="acMail" autocomplete="email" required inputmode="email" autocapitalize="off"></div>
+      <div class="f"><label for="acPw">Passwort (mind. 6 Zeichen)</label><input type="password" id="acPw" autocomplete="current-password" required minlength="6"></div>
+      <div class="f"><label for="acName">Name (nur für neues Konto)</label><input type="text" id="acName" autocomplete="given-name" placeholder="Vorname"></div>
+      <div class="acts"><button type="submit" class="btn pri">Anmelden</button><button type="button" class="btn" id="acUp">Neues Konto erstellen</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>
+    </form><p class="accterr" id="acErr">${esc(msg||"")}</p>`)}
+async function afterLogin(u){sbUser=u;cacheUser(u);closeModal();acctUI();await sbPull(true)}
+$("acctBtn").addEventListener("click",()=>openAcct());
+$("sheet").addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();
+  const {data,error}=await sb.auth.signInWithPassword({email:$("acMail").value.trim(),password:$("acPw").value});if(error){$("acErr").textContent=sbMsg(error);return}afterLogin(data.user)});
+$("sheet").addEventListener("click",async e=>{
+  if(e.target.closest("#acUp")){const f=$("acForm");if(!f.reportValidity())return;const name=$("acName").value.trim();
+    const {data,error}=await sb.auth.signUp({email:$("acMail").value.trim(),password:$("acPw").value,options:{data:{name}}});if(error){$("acErr").textContent=sbMsg(error);return}
+    if(!data.session){$("acErr").textContent="Konto erstellt – bitte E-Mail bestätigen und dann anmelden.";return}
+    if(name)try{await sb.from("profiles").update({name}).eq("id",data.user.id)}catch(_){}afterLogin(data.user);return}
+  if(e.target.closest("#acSync")){await sbPull(false);openAcct(sbNoTable?"":sbErr?sbMsg(sbErr):"Synchronisiert");return}
+  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;cacheUser(null);closeModal();acctUI();toast("Abgemeldet – dein Wochenplan bleibt auf diesem Gerät")}});
+async function sbInit(){
+  try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null;return}
+  let ses=null;try{const {data}=await sb.auth.getSession();ses=data&&data.session}catch(e){}
+  if(ses){sbUser=ses.user;cacheUser(sbUser);sbErr=""}else if(sbUser){sbErr="offline"}
+  acctUI();if(ses)sbPull(false);
+  sb.auth.onAuthStateChange((ev,s2)=>{if(s2){const was=!sbUser||sbErr==="offline";sbUser=s2.user;if(was&&sbErr==="offline"){sbErr="";sbPull(false)}}else if(ev==="SIGNED_OUT"){sbUser=null}acctUI()});
+  document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
+  addEventListener("online",()=>{if(sbUser)sbPull(false)})}
+{let cu=null;try{cu=JSON.parse(localStorage.getItem(UKEY)||"null")}catch(e){}let has=false;try{has=!!localStorage.getItem(AKEY)}catch(e){}if(cu&&has){sbUser=cu;}
+ let tries=0;const go=()=>{if(window.supabase&&window.supabase.createClient){sbInit();return}if(++tries<150)setTimeout(go,100);else{if(sbUser)sbErr="offline";acctUI()}};go()}
+render();acctUI();
 </script>
 </body>
 </html>
