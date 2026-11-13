@@ -48,6 +48,7 @@
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}
 
 [hidden]{display:none!important}
+.plink{margin-right:auto;font-weight:600;font-size:.88rem;color:var(--accent);text-decoration:none;align-self:center}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
@@ -527,7 +528,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </head>
 <body data-mode="edit">
 <div class="wrap">
-  <div class="acctline" id="acctLine"><button type="button" class="themebtn" id="themeBtn"></button><button type="button" id="acctWho" aria-haspopup="dialog" hidden></button></div>
+  <div class="acctline" id="acctLine"><a class="plink" href="../planner/">‹ Wochenplaner</a><button type="button" class="themebtn" id="themeBtn"></button><button type="button" id="acctWho" aria-haspopup="dialog" hidden></button></div>
   <header>
     <div class="brand">
       <img class="logo" src="icons/icon-192.png" alt="CZ Training by Calvin Zeller" width="64" height="64">
@@ -2239,6 +2240,11 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().
 {const c=codeFrom(location.hash);if(c)importCode(c)}
 /* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
 addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
+/* Aus dem Wochenplaner: #open=<Einheit> öffnet diese Einheit direkt im Trainingsmodus */
+function openFromHash(){const m=/#open=([^&]+)/.exec(location.hash);if(!m)return;const sid=decodeURIComponent(m[1]);
+  if(state.sessions.some(s=>s.id===sid)){state.active=sid;setMode("train");renderAll();scrollTo(0,0)}else flash("Diese Einheit gibt es auf diesem Gerät nicht mehr.");
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}
+openFromHash();addEventListener("hashchange",openFromHash);
 </script>
 </body>
 </html>
