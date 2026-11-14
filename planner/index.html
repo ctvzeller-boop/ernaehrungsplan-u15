@@ -62,20 +62,25 @@ button{cursor:pointer}
 .weekbar .lbl{flex:1;text-align:center}
 .weekbar .lbl b{font-family:var(--display);font-size:1.25rem;display:block;line-height:1.1}
 .weekbar .lbl span{font-size:.8rem;color:var(--muted)}
-.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:10px}
-.seg button{border:0;background:none;border-radius:9px;padding:7px;font-weight:600;font-size:.9rem}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
-.tplnote{font-size:.85rem;color:var(--muted);background:var(--accent-soft);border-radius:10px;padding:8px 12px;margin:0 0 10px}
+.tplnote{display:flex;align-items:center;gap:10px;font-size:.88rem;background:var(--accent-soft);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.tplnote span{flex:1}
+.coachbar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px;margin:0 0 10px}
+.coachbar label{font-size:.8rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.coachbar select{flex:1;min-width:0;border:0;background:var(--bg);border-radius:9px;padding:8px 10px;font-weight:600}
+.viewing{background:var(--k-lernen-bg);border:1px solid var(--k-lernen);border-radius:12px;padding:9px 12px;margin:0 0 10px;font-size:.88rem;display:flex;gap:10px;align-items:center}
+.viewing span{flex:1}
+.todaybtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:600;margin-top:3px}
 .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:14px}
 .day{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 4px 5px;text-align:center;min-width:0}
 .day b{display:block;font-size:.85rem}
 .day em{display:block;font-style:normal;font-size:.72rem;color:var(--muted)}
 .day[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .day.today em{color:var(--accent);font-weight:600}
-.strip{position:relative;height:46px;margin-top:4px;border-radius:5px;background:var(--bg);overflow:hidden}
+.strip{position:relative;height:30px;margin-top:4px;border-radius:5px;background:var(--bg);overflow:hidden}
 .strip i{position:absolute;left:2px;right:2px;border-radius:2px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
-.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.dright{display:flex;align-items:center;gap:6px}
 .dhead h2{font-family:var(--display);font-size:1.5rem;margin:0;line-height:1.1}
 .dtype{display:inline-block;margin-top:4px;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--k-train-bg);color:var(--k-train)}
 .dtype.leicht{background:var(--k-frei-bg);color:var(--k-frei)}
@@ -83,17 +88,24 @@ button{cursor:pointer}
 .sw input{width:18px;height:18px;accent-color:var(--k-essen)}
 .next{border-radius:12px;background:var(--accent-soft);padding:9px 12px;margin:0 0 10px;font-size:.92rem}
 .next b{font-weight:600}
-.row{display:grid;grid-template-columns:46px minmax(0,1fr);gap:8px;align-items:start;margin-bottom:6px;position:relative}
-.tm{font-size:.82rem;color:var(--muted);padding-top:9px;font-variant-numeric:tabular-nums}
-.blk{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--c);background:var(--cbg);color:var(--ink);border-radius:0 10px 10px 0;padding:8px 11px;position:relative}
-.blk.c-essen{padding:6px 11px}
+.row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start;margin-bottom:5px;position:relative}
+.tm{font-size:.82rem;color:var(--ink);font-weight:600;padding-top:8px;font-variant-numeric:tabular-nums}
+.blk{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--c);background:var(--cbg);color:var(--ink);border-radius:0 10px 10px 0;padding:7px 11px;position:relative}
+.row.quiet{margin-bottom:3px}
+.row.quiet .tm{font-weight:400;color:var(--muted);padding-top:4px}
+.row.quiet .blk{background:transparent;border-left-width:2px;padding:3px 10px;color:var(--muted)}
+.row.quiet .blk .t{font-weight:500;font-size:.9rem;display:inline}
+.row.quiet .blk.c-essen{color:var(--ink)}
+.row.quiet .blk .s{display:inline;margin-left:6px}
+.blk.big{padding:11px 12px}
+.blk.big .t{font-size:1.02rem}
 .blk .t{font-weight:600;display:flex;align-items:center;gap:6px}
 .blk .s{display:block;font-size:.8rem;color:var(--muted)}
 .blk .go{font-size:.8rem;color:var(--c);font-weight:600}
 .blk.done .t::after{content:"erledigt";font-size:.72rem;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:0 7px;margin-left:auto}
-.sub{display:block;margin:6px 0 0;border-radius:7px;padding:4px 8px;font-size:.82rem;background:var(--k-essen-bg);color:var(--ink);border:0;text-align:left;width:100%;border-left:3px solid var(--k-essen)}
+.sub{display:block;margin:5px 0 0;border-radius:0 7px 7px 0;padding:3px 8px;font-size:.82rem;background:transparent;color:var(--ink);border:0;text-align:left;width:100%;border-left:3px solid var(--k-essen)}
 .edit{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:1rem}
-.now{height:0;border-top:2px solid var(--warn);margin:2px 0 8px 54px;position:relative}
+.now{height:0;border-top:2px solid var(--warn);margin:3px 0 7px 50px;position:relative}
 .now::before{content:"";position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--warn)}
 .empty{color:var(--muted);font-size:.92rem;padding:8px 0 4px}
 .warnline{font-size:.8rem;color:var(--warn)}
@@ -101,7 +113,7 @@ button{cursor:pointer}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 13px;font-weight:600}
 .btn.pri{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .btn.danger{color:var(--warn)}
-.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));border:0;border-radius:16px;background:var(--ink);color:var(--surface);font-weight:700;padding:14px 20px;font-size:1rem;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));border:0;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;padding:14px 20px;font-size:1rem;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .modal{position:fixed;inset:0;background:rgba(10,18,24,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 .sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
 @media (min-width:640px){.modal{align-items:center}.sheet{border-radius:18px}}
@@ -118,6 +130,9 @@ button{cursor:pointer}
 .chips button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .hint{font-size:.8rem;color:var(--muted);margin:2px 0 10px}
 .acctline{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+.menu{display:grid;gap:8px}
+.menu .btn{text-align:left;padding:12px 14px}
+.menu .btn small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
 .acctline button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:7px}
 .acctline .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .acctline button.err .dot{background:var(--warn)}
@@ -142,14 +157,12 @@ button{cursor:pointer}
   </div>
 
   <div class="acctline"><button type="button" id="acctBtn">Anmelden</button></div>
-  <div class="seg" role="group" aria-label="Ansicht">
-    <button type="button" id="vWeek" aria-pressed="true">Diese Woche</button>
-    <button type="button" id="vTpl" aria-pressed="false">Standardwoche</button>
-  </div>
-  <p class="tplnote" id="tplNote" hidden>Die Standardwoche gilt für jede Woche. Was du hier einträgst, erscheint automatisch in allen Wochen. Änderungen nur für eine bestimmte Woche machst du unter «Diese Woche».</p>
+  <div class="coachbar" id="coachBar" hidden><label for="whoSel">Plan von</label><select id="whoSel"></select></div>
+  <div class="viewing" id="viewing" hidden><span id="viewingTxt"></span><button type="button" class="btn" id="backOwn">Mein Plan</button></div>
+  <div class="tplnote" id="tplNote" hidden><span><b>Standardwoche bearbeiten.</b> Was du hier einträgst, gilt für jede Woche.</span><button type="button" class="btn pri" id="vWeek">Fertig</button></div>
   <div class="weekbar" id="weekBar">
     <button class="iconbtn" type="button" id="prevW" aria-label="Vorherige Woche">‹</button>
-    <div class="lbl"><b id="wTitle"></b><span id="wSub"></span></div>
+    <div class="lbl"><b id="wTitle"></b><span id="wSub"></span><br><button type="button" class="todaybtn" id="todayBtn" hidden>Zu heute</button></div>
     <button class="iconbtn" type="button" id="nextW" aria-label="Nächste Woche">›</button>
   </div>
   <div class="days" id="days"></div>
@@ -157,18 +170,17 @@ button{cursor:pointer}
   <section class="card" id="dayCard">
     <div class="dhead">
       <div><h2 id="dTitle"></h2><span class="dtype" id="dType"></span></div>
-      <label class="sw"><input type="checkbox" id="foodSw"> Ernährung</label>
+      <div class="dright"><label class="sw"><input type="checkbox" id="foodSw"> Essen</label><button class="iconbtn" type="button" id="moreBtn" aria-label="Mehr">⋯</button></div>
     </div>
     <div class="next" id="nextBox" hidden></div>
     <div id="timeline"></div>
-    <div class="acts">
-      <button class="btn" type="button" id="mealsBtn">Essen automatisch einplanen</button>
-      <button class="btn" type="button" id="copyDayBtn">Tag kopieren auf …</button>
-      <button class="btn" type="button" id="exampleBtn" hidden>Beispielwoche laden</button>
+    <div class="acts" id="emptyActs" hidden>
+      <button class="btn" type="button" id="exampleBtn">Beispielwoche laden</button>
+      <button class="btn" type="button" id="vTpl2">Standardwoche einrichten</button>
     </div>
   </section>
 </div>
-<button class="fab" type="button" id="addBtn">+ Eintrag</button>
+<button class="fab" type="button" id="addBtn" aria-label="Eintrag hinzufügen">+ Eintrag</button>
 
 <div class="modal" id="modal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle" id="sheet"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -184,6 +196,8 @@ const KBY=Object.fromEntries(KINDS.map(k=>[k[0],k]));
 const MODES=[["zug","Zug"],["bus","Bus"],["tram","Tram"],["velo","Velo"],["auto","Auto"],["fuss","zu Fuss"]];
 const MEALS=[["fruehstueck","Frühstück"],["znueni","Znüni"],["mittag","Mittagessen"],["vor","Zvieri / vor dem Training"],["abend","Nachtessen"],["nach","Nach-Training-Snack"]];
 const TRAINK=new Set(["unihockey","gym","match","sport"]);
+/* Übersicht: Wichtiges gross, Nebensächliches (Weg, Freizeit, Regeneration) schlicht */
+const BIG=new Set(["unihockey","gym","match","sport"]),QUIET=new Set(["weg","frei","rec","essen"]),STRIP=new Set(["schule","arbeit","unihockey","gym","match","sport","lernen"]);
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -198,7 +212,8 @@ function blank(){const tpl={};DAYS.forEach(([d])=>tpl[d]={b:[],wake:d==="sa"||d=
   return {tpl,ov:{},food:true,goal:9,view:"week"}}
 let state=readJSON(KEY)||blank();
 state.tpl=state.tpl||blank().tpl;state.ov=state.ov||{};if(state.goal==null)state.goal=9;if(state.food==null)state.food=true;
-function save(){state.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}sbQueue()}
+function save(){state.upd=Date.now();if(viewing){coachQueue();return}try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}sbQueue()}
+let viewing=null,own=null,isCoach=false,players=[],playerTS=null;
 
 /* ---------- Datum ---------- */
 function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
@@ -220,7 +235,7 @@ function sorted(b){return [...b].sort((x,y)=>(toM(x.s)??0)-(toM(y.s)??0)||(x.k==
 function endM(b){const s=toM(b.s),e=toM(b.e);if(e==null)return s+(b.dur||KBY[b.k][3]);return e<=s?e+1440:e}
 
 /* ---------- Trainingsapp ---------- */
-function tstate(){return readJSON(TKEY)||{sessions:[],hist:[]}}
+function tstate(){return viewing?(playerTS||{sessions:[],hist:[]}):(readJSON(TKEY)||{sessions:[],hist:[]})}
 function sessTitle(sid){const s=(tstate().sessions||[]).find(x=>x.id===sid);return s?s.t:null}
 function gymDone(sid,date){const st=tstate();return (st.hist||[]).some(h=>h.sid===sid&&dkey(new Date(h.d))===dkey(date))}
 function nutMeal(i,slot){const n=readJSON(NKEY);if(!n)return "";let plan=n.plan;if(Array.isArray(n.plans)){const a=n.plans.find(p=>p.id===n.active);if(a&&a.plan)plan=a.plan}
@@ -237,13 +252,14 @@ function dayType(b){const tr=b.filter(x=>TRAINK.has(x.k));if(b.some(x=>x.k==="ma
 
 /* ---------- Anzeige ---------- */
 function render(){
-  const tpl=state.view==="tpl";$("vWeek").setAttribute("aria-pressed",!tpl);$("vTpl").setAttribute("aria-pressed",tpl);
+  const tpl=state.view==="tpl";
   $("tplNote").hidden=!tpl;$("weekBar").hidden=tpl;$("foodSw").checked=!!state.food;
+  $("todayBtn").hidden=dkey(wk)===dkey(monday(today));coachUI();
   const end=addDays(wk,6);$("wTitle").textContent="Woche "+isoWeek(wk);
   const changed=DAYS.some((_,i)=>{const o=state.ov[dkey(dateOf(i))];return o&&(o.del.length||o.add.length||Object.keys(o.mod).length||o.wake||o.bed)});
-  $("wSub").textContent=`${wk.getDate()}.${wk.getMonth()+1}. – ${end.getDate()}.${end.getMonth()+1}.${end.getFullYear()}`+(changed?" · angepasst":" · wie Standardwoche");
+  $("wSub").textContent=`${wk.getDate()}.${wk.getMonth()+1}. – ${end.getDate()}.${end.getMonth()+1}.${end.getFullYear()}`+(changed?" · angepasst":"");
   $("days").innerHTML=DAYS.map(([d,,s],i)=>{const dd=dayData(i),dt=dateOf(i);const isT=!tpl&&dkey(dt)===dkey(today);
-    const bars=sorted(dd.b).filter(b=>state.food||b.k!=="essen").map(b=>{const a=toM(b.s),e=Math.min(endM(b),1440);const top=Math.max(0,(a-360)/1080*100),h=Math.max(3,(e-a)/1080*100);
+    const bars=sorted(dd.b).filter(b=>STRIP.has(b.k)).map(b=>{const a=toM(b.s),e=Math.min(endM(b),1440);const top=Math.max(0,(a-360)/1080*100),h=Math.max(3,(e-a)/1080*100);
       return `<i class="c-${KBY[b.k][2]}" style="top:${top.toFixed(1)}%;height:${h.toFixed(1)}%;background:var(--c)"></i>`}).join("");
     return `<button type="button" class="day${isT?" today":""}" data-i="${i}" aria-pressed="${i===sel}"><b>${s}</b><em>${tpl?"&nbsp;":dt.getDate()+"."}</em><div class="strip" aria-hidden="true">${bars}</div></button>`}).join("");
   renderDay()}
@@ -258,23 +274,24 @@ function renderDay(){
   food.forEach(f=>{const m=toM(f.s);const host=main.find(h=>h.k!=="gym"&&h.k!=="match"&&h.k!=="unihockey"&&toM(h.s)<=m&&m<endM(h));if(host){(inside.get(host)||inside.set(host,[]).get(host)).push(f)}else loose.push(f)});
   const rows=[...main.map(b=>({b,m:toM(b.s)})),...(state.food?loose.map(b=>({b,m:toM(b.s)})):[])].sort((a,c)=>a.m-c.m);
   const nowM=today.getHours()*60+today.getMinutes();const isToday=!tpl&&dkey(dt)===dkey(today);let nowDone=!isToday;
-  let h=`<div class="row"><div class="tm">${esc(dd.wake)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Aufstehen</span></button></div>`;
+  let h=`<div class="row quiet"><div class="tm">${esc(dd.wake)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Aufstehen</span></button></div>`;
   if(isToday&&nowM<toM(dd.wake)){h=`<div class="now" aria-label="Jetzt"></div>`+h;nowDone=true}
   rows.forEach(({b,m})=>{if(!nowDone&&m>nowM){h+=`<div class="now" aria-label="Jetzt"></div>`;nowDone=true}
     const g=KBY[b.k][2],e=endM(b),subs=state.food?(inside.get(b)||[]):[];
-    let s=`${esc(b.s)} – ${fmt(e)} · ${durTxt(e-toM(b.s))}`;
+    const quiet=QUIET.has(b.k)&&!subs.length,big=BIG.has(b.k);
+    let s=quiet?`bis ${fmt(e)}`:`bis ${fmt(e)} · ${durTxt(e-toM(b.s))}`;
     if(b.k==="weg"&&b.t&&(b.from||b.to))s=[b.from,b.to].filter(Boolean).map(esc).join(" – ")+" · "+s;
     if(b.k==="essen")s=esc(b.note||"");
     else if(b.note)s+=" · "+esc(b.note);
     const done=b.k==="gym"&&!tpl&&b.sid&&gymDone(b.sid,dt);
-    const go=b.k==="gym"?`<span class="go">${b.sid?"In der Trainingsapp öffnen ›":"Einheit wählen"}</span>`:"";
-    h+=`<div class="row"><div class="tm">${esc(b.s)}</div><div><button type="button" class="blk c-${g}${done?" done":""}" data-id="${b.id}" ${b.k==="gym"&&b.sid?`data-gym="${esc(b.sid)}"`:""}><span class="t">${esc(title(b))}</span>${s?`<span class="s">${s}</span>`:""}${go}</button>`
-      +(b.k==="gym"?`<button type="button" class="edit" data-edit="${b.id}" aria-label="Bearbeiten">✎</button>`:"")
+    const go=b.k==="gym"&&!viewing?`<span class="go">${b.sid?"Training starten ›":"Einheit wählen"}</span>`:"";
+    h+=`<div class="row${quiet?" quiet":""}"><div class="tm">${esc(b.s)}</div><div><button type="button" class="blk c-${g}${done?" done":""}${big?" big":""}" data-id="${b.id}" ${b.k==="gym"&&b.sid&&!viewing?`data-gym="${esc(b.sid)}"`:""}><span class="t">${esc(title(b))}</span>${s?`<span class="s">${s}</span>`:""}${go}</button>`
+      +(b.k==="gym"&&!viewing?`<button type="button" class="edit" data-edit="${b.id}" aria-label="Bearbeiten">✎</button>`:"")
       +subs.map(f=>`<button type="button" class="sub" data-id="${f.id}">${esc(f.s)} ${esc(title(f))}${b.k==="weg"?" · unterwegs":""}</button>`).join("")+`</div></div>`});
   if(!nowDone&&isToday&&nowM<toM(dd.bed))h+=`<div class="now" aria-label="Jetzt"></div>`;
-  h+=`<div class="row"><div class="tm">${esc(dd.bed)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Schlafen</span><span class="s">${durTxt(sleepM)} Schlaf bis ${DAYS[(i+1)%7][2]} ${esc(nx)}</span>${short>10?`<span class="warnline">${durTxt(short)} weniger als dein Ziel von ${state.goal} h</span>`:""}</button></div>`;
-  $("timeline").innerHTML=(main.length?"":`<p class="empty">${tpl?"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings.":"Noch nichts geplant. Tippe auf «+ Eintrag»."}</p>`)+h;
-  $("exampleBtn").hidden=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length>0;
+  h+=`<div class="row${short>10?"":" quiet"}"><div class="tm">${esc(dd.bed)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Schlafen</span><span class="s">${durTxt(sleepM)} Schlaf</span>${short>10?`<span class="warnline">${durTxt(short)} weniger als dein Ziel von ${state.goal} h</span>`:""}</button></div>`;
+  $("timeline").innerHTML=(main.length?"":`<p class="empty">${tpl?"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings.":"Noch nichts geplant. Tippe auf «+ Eintrag» oder richte deine Standardwoche ein."}</p>`)+h;
+  $("emptyActs").hidden=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length>0;$("vTpl2").hidden=tpl;
   /* Als Nächstes (nur heute) */
   const nb=$("nextBox");nb.hidden=true;
   if(isToday){const up=list.filter(b=>(state.food||b.k!=="essen")&&endM(b)>nowM);const curB=up.find(b=>toM(b.s)<=nowM&&b.k!=="essen"),nxt=up.find(b=>toM(b.s)>nowM);
@@ -385,17 +402,27 @@ function loadExample(){const mk=(k,s,e,x)=>Object.assign({id:uid(),k,s,e},x||{})
   save();render();toast("Beispielwoche geladen – alles lässt sich anpassen oder löschen")}
 
 /* ---------- Ereignisse ---------- */
+function saveView(){if(viewing)return;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function openMore(){const tpl=state.view==="tpl";
+  openModal(`<h3>${DAYS[sel][1]}</h3><div class="menu">
+    <button type="button" class="btn" id="mealsBtn">Essen automatisch einplanen<small>Frühstück, Znüni, Zvieri vor und Snack nach dem Training – passend zu deinem Tag</small></button>
+    <button type="button" class="btn" id="copyDayBtn">Tag kopieren auf …<small>z. B. Montag auf Dienstag bis Freitag</small></button>
+    ${tpl?"":`<button type="button" class="btn" id="vTpl">Standardwoche bearbeiten<small>Was jede Woche gleich ist: Schule, Arbeit, Teamtrainings</small></button>`}
+    <button type="button" class="btn" id="eCancel">Schliessen</button></div>`)}
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
 document.addEventListener("click",e=>{const t=e.target;
   const day=t.closest(".day");if(day){sel=+day.dataset.i;render();return}
-  if(t.closest("#vWeek")){state.view="week";save();render();return}
-  if(t.closest("#vTpl")){state.view="tpl";save();render();return}
+  if(t.closest("#vWeek")){state.view="week";saveView();render();return}
+  if(t.closest("#vTpl,#vTpl2")){closeModal();state.view="tpl";saveView();render();scrollTo({top:0,behavior:"smooth"});return}
+  if(t.closest("#todayBtn")){wk=monday(today);sel=(today.getDay()+6)%7;render();return}
+  if(t.closest("#moreBtn")){openMore();return}
+  if(t.closest("#backOwn")){setWho("");return}
   if(t.closest("#prevW")){wk=addDays(wk,-7);render();return}
   if(t.closest("#nextW")){wk=addDays(wk,7);render();return}
   if(t.closest("#addBtn")){openEditor(null);return}
-  if(t.closest("#mealsBtn")){planMeals();return}
+  if(t.closest("#mealsBtn")){closeModal();planMeals();return}
   if(t.closest("#copyDayBtn")){openCopy();return}
-  if(t.closest("#exampleBtn")){loadExample();return}
+  if(t.closest("#exampleBtn")){closeModal();loadExample();return}
   if(t.closest("[data-sleep]")){openSleep();return}
   const ed=t.closest("[data-edit]");if(ed){openEditor(findBlock(ed.dataset.edit));return}
   const gym=t.closest("[data-gym]");if(gym){location.href="../training/#open="+encodeURIComponent(gym.dataset.gym);return}
@@ -418,7 +445,7 @@ $("foodSw").addEventListener("change",e=>{state.food=e.target.checked;save();ren
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("modal").hidden)closeModal()});
 $("themeBtn").addEventListener("click",()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
   r.dataset.theme=dark?"light":"dark";try{localStorage.setItem("cz-theme",r.dataset.theme)}catch(e){}});
-addEventListener("storage",e=>{if(e.key===TKEY||e.key===KEY){if(e.key===KEY)state=readJSON(KEY)||state;render()}});
+addEventListener("storage",e=>{if(viewing)return;if(e.key===TKEY||e.key===KEY){if(e.key===KEY)state=readJSON(KEY)||state;render()}});
 addEventListener("pageshow",()=>render());
 setInterval(()=>{const n=new Date();if(n.getMinutes()!==today.getMinutes()){today.setTime(n.getTime());if($("modal").hidden)renderDay()}},30000);
 /* ---------- Konto (gleiches Konto wie die Trainingsapp, Anmeldung gilt für beide) ---------- */
@@ -435,7 +462,7 @@ function tableMissing(e){const m=String(e&&(e.code||"")+" "+(e.message||""));ret
 async function sbPush(){if(!sb||!sbUser||sbBusy)return;sbBusy=true;sbDirty=false;
   try{const {error}=await sb.from("planner_state").upsert({user_id:sbUser.id,data:sbPayload(),updated_at:new Date().toISOString()});if(error)throw error;sbErr="";sbLast=Date.now()}
   catch(e){if(tableMissing(e))sbNoTable=true;sbErr=String(e&&e.message||e);sbDirty=!sbNoTable}finally{sbBusy=false;acctUI();if(sbDirty&&!sbErr)sbQueue()}}
-async function sbPull(first){if(!sb||!sbUser)return;
+async function sbPull(first){if(!sb||!sbUser||viewing)return;
   try{const {data,error}=await sb.from("planner_state").select("data").eq("user_id",sbUser.id).maybeSingle();if(error)throw error;sbNoTable=false;
     const r=data&&data.data;const hasLocal=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length;
     if(r&&r.tpl&&((r.upd||0)>(state.upd||0)||!hasLocal)){const view=state.view;state=Object.assign(blank(),r,{view});try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}render()}
@@ -456,7 +483,28 @@ function openAcct(msg){
       <div class="f"><label for="acName">Name (nur für neues Konto)</label><input type="text" id="acName" autocomplete="given-name" placeholder="Vorname"></div>
       <div class="acts"><button type="submit" class="btn pri">Anmelden</button><button type="button" class="btn" id="acUp">Neues Konto erstellen</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>
     </form><p class="accterr" id="acErr">${esc(msg||"")}</p>`)}
-async function afterLogin(u){sbUser=u;cacheUser(u);closeModal();acctUI();await sbPull(true)}
+async function afterLogin(u){sbUser=u;cacheUser(u);closeModal();acctUI();await sbPull(true);checkCoach()}
+/* ---------- Coach: zwischen Spielern wechseln ---------- */
+async function checkCoach(){isCoach=false;players=[];if(!sb||!sbUser){coachUI();return}
+  try{const {data}=await sb.from("profiles").select("is_coach").eq("id",sbUser.id).maybeSingle();isCoach=!!(data&&data.is_coach)}catch(e){}
+  if(isCoach)try{const {data,error}=await sb.rpc("my_players");if(!error)players=data||[]}catch(e){}
+  coachUI()}
+function coachUI(){const bar=$("coachBar");bar.hidden=!isCoach;$("viewing").hidden=!viewing;
+  if(viewing)$("viewingTxt").innerHTML=`Du siehst und bearbeitest den Plan von <b>${esc(viewing.name)}</b>.${viewing.err?` <span class="warnline">${esc(viewing.err)}</span>`:""}`;
+  if(!isCoach)return;const sel2=$("whoSel");const v=viewing?viewing.id:"";
+  sel2.innerHTML=`<option value="">Mein Plan</option>`+players.map(p=>`<option value="${esc(p.player_id)}">${esc(p.name||p.email||"Spieler")}</option>`).join("")+(players.length?"":`<option value="" disabled>Noch keine Spieler mit Konto</option>`);
+  sel2.value=v;wpTargetUI()}
+async function setWho(id){if(!id){if(viewing){state=own;own=null;viewing=null;playerTS=null;render();sbPull(false)}return}
+  const p=players.find(x=>x.player_id===id);if(!p)return;
+  try{const [a,b]=await Promise.all([sb.from("planner_state").select("data").eq("user_id",id).maybeSingle(),sb.from("app_state").select("data").eq("user_id",id).maybeSingle()]);
+    if(a.error)throw a.error;if(!viewing)own=state;viewing={id,name:p.name||p.email||"Spieler"};
+    const r=a.data&&a.data.data;state=Object.assign(blank(),r||{},{view:"week"});playerTS=(b.data&&b.data.data)||{sessions:[],hist:[]};
+    wk=monday(today);sel=(today.getDay()+6)%7;render();if(!r)toast(`${viewing.name} hat noch keinen Wochenplan. Du kannst ihn hier erstellen.`)}
+  catch(e){toast("Plan konnte nicht geladen werden.");coachUI()}}
+let cqT=null;function coachQueue(){clearTimeout(cqT);const v=viewing,data=sbPayload();cqT=setTimeout(async()=>{
+  try{const {error}=await sb.from("planner_state").upsert({user_id:v.id,data,updated_at:new Date().toISOString()});if(error)throw error;if(viewing===v){delete v.err;coachUI()}}
+  catch(e){v.err=/row-level|policy|permission/i.test(String(e&&e.message||e))?"Speichern nicht erlaubt – in Supabase fehlt noch das SQL-Skript Teil 7.":"Gerade keine Verbindung – nicht gespeichert.";if(viewing===v)coachUI()}},800)}
+$("whoSel").addEventListener("change",e=>setWho(e.target.value));
 $("acctBtn").addEventListener("click",()=>openAcct());
 $("sheet").addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();
   const {data,error}=await sb.auth.signInWithPassword({email:$("acMail").value.trim(),password:$("acPw").value});if(error){$("acErr").textContent=sbMsg(error);return}afterLogin(data.user)});
@@ -466,12 +514,12 @@ $("sheet").addEventListener("click",async e=>{
     if(!data.session){$("acErr").textContent="Konto erstellt – bitte E-Mail bestätigen und dann anmelden.";return}
     if(name)try{await sb.from("profiles").update({name}).eq("id",data.user.id)}catch(_){}afterLogin(data.user);return}
   if(e.target.closest("#acSync")){await sbPull(false);openAcct(sbNoTable?"":sbErr?sbMsg(sbErr):"Synchronisiert");return}
-  if(e.target.closest("#acOut")){await sb.auth.signOut();sbUser=null;cacheUser(null);closeModal();acctUI();toast("Abgemeldet – dein Wochenplan bleibt auf diesem Gerät")}});
+  if(e.target.closest("#acOut")){if(viewing)setWho("");await sb.auth.signOut();isCoach=false;players=[];coachUI();sbUser=null;cacheUser(null);closeModal();acctUI();toast("Abgemeldet – dein Wochenplan bleibt auf diesem Gerät")}});
 async function sbInit(){
   try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null;return}
   let ses=null;try{const {data}=await sb.auth.getSession();ses=data&&data.session}catch(e){}
   if(ses){sbUser=ses.user;cacheUser(sbUser);sbErr=""}else if(sbUser){sbErr="offline"}
-  acctUI();if(ses)sbPull(false);
+  acctUI();if(ses){sbPull(false);checkCoach()}
   sb.auth.onAuthStateChange((ev,s2)=>{if(s2){const was=!sbUser||sbErr==="offline";sbUser=s2.user;if(was&&sbErr==="offline"){sbErr="";sbPull(false)}}else if(ev==="SIGNED_OUT"){sbUser=null}acctUI()});
   document.addEventListener("visibilitychange",()=>{if(!sbUser)return;if(document.hidden){if(sbDirty){clearTimeout(sbT);sbPush()}}else sbPull(false)});
   addEventListener("online",()=>{if(sbUser)sbPull(false)})}
@@ -492,15 +540,20 @@ function decodeWP(str){const days=str.split(".");if(days.length!==7||days.some(d
       let meal=first&&m<=11*60?"fruehstueck":afterT?"nach":m<10*60+30?"znueni":m<14*60+30?"mittag":m<18*60?"vor":"abend";first=false;
       b.push({id:uid(),k:"essen",meal,s:fmt(m),e:fmt(at(r.j+r.n))})});
     tpl[DAYS[i][0]]={b,wake,bed}});return tpl}
-function importFromHash(){const m=/[#&]wp=([A-Z.]+)/.exec(location.hash);if(!m)return;const tpl=decodeWP(m[1]);const n=/[#&]n=([^&]*)/.exec(location.hash);const name=n?decodeURIComponent(n[1]):"Wochenplan";
+function importFromHash(){if(!location.hash.includes("wp="))return;const m=/[#&]wp=([A-Z.]+)/.exec(location.hash);if(!m)return;const tpl=decodeWP(m[1]);const n=/[#&]n=([^&]*)/.exec(location.hash);const name=n?decodeURIComponent(n[1]):"Wochenplan";
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
   if(!tpl){toast("Der Link enthält keinen gültigen Wochenplan.");return}
   const has=Object.values(state.tpl).some(d=>d.b.length);
-  openModal(`<h3>Wochenplan übernehmen</h3><p>«${esc(name)}» als Standardwoche übernehmen? Er gilt dann für jede Woche und lässt sich danach beliebig anpassen.</p>
+  openModal(`<h3>Wochenplan übernehmen</h3><p>«${esc(name)}» als Standardwoche ${viewing?`von <b>${esc(viewing.name)}</b> `:""}übernehmen? Er gilt dann für jede Woche und lässt sich danach beliebig anpassen.</p>
     ${has?`<p class="hint">Deine bisherige Standardwoche wird dabei ersetzt. Änderungen, die du nur für einzelne Wochen gemacht hast, bleiben.</p>`:""}
+    <div id="wpTarget"></div>
     <div class="acts"><button type="button" class="btn pri" id="wpYes">Übernehmen</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>`);
-  importFromHash.tpl=tpl}
-$("sheet").addEventListener("click",e=>{if(!e.target.closest("#wpYes"))return;state.tpl=importFromHash.tpl;state.view="tpl";sel=0;save();closeModal();render();toast("Wochenplan übernommen")});
+  importFromHash.tpl=tpl;wpTargetUI()}
+function wpTargetUI(){const box=$("wpTarget");if(!box||!isCoach||!players.length||viewing)return;
+  box.innerHTML=`<div class="f"><label for="wpWho">Für wen?</label><select id="wpWho"><option value="">Mein Plan</option>${players.map(p=>`<option value="${esc(p.player_id)}">${esc(p.name||p.email||"Spieler")}</option>`).join("")}</select></div>`}
+$("sheet").addEventListener("click",async e=>{if(!e.target.closest("#wpYes"))return;const who=$("wpWho")?$("wpWho").value:"";const tpl=importFromHash.tpl;closeModal();
+  if(who){await setWho(who);if(!viewing||viewing.id!==who)return}
+  state.tpl=tpl;state.view="tpl";sel=0;save();render();toast(viewing?`Wochenplan für ${viewing.name} übernommen`:"Wochenplan übernommen")});
 addEventListener("hashchange",importFromHash);
 render();acctUI();importFromHash();
 </script>
