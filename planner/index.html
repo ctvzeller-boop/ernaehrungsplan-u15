@@ -477,7 +477,32 @@ async function sbInit(){
   addEventListener("online",()=>{if(sbUser)sbPull(false)})}
 {let cu=null;try{cu=JSON.parse(localStorage.getItem(UKEY)||"null")}catch(e){}let has=false;try{has=!!localStorage.getItem(AKEY)}catch(e){}if(cu&&has){sbUser=cu;}
  let tries=0;const go=()=>{if(window.supabase&&window.supabase.createClient){sbInit();return}if(++tries<150)setTimeout(go,100);else{if(sbUser)sbErr="offline";acctUI()}};go()}
-render();acctUI();
+/* ---------- Wochenplan per Link übernehmen: #wp=<7 Tage, je 36 Halbstunden 06:00–24:00> ---------- */
+/* Codes: S Schlafen · V Verpflegung · R Reisezeit · U Schule · A Arbeit · T Team-Training · L RLZ-Training · I Indiv.-Training · G Regeneration · H Hausaufgaben/Lernen · F Freizeit */
+const WPC={R:["weg",{t:"Reisezeit",mode:"zug"}],U:["schule"],A:["arbeit"],T:["unihockey",{t:"Team-Training"}],L:["unihockey",{t:"RLZ-Training"}],I:["sport",{t:"Indiv.-Training"}],
+  G:["rec",{t:"Regeneration"}],H:["lernen",{t:"Hausaufgaben / Lernen"}],F:["frei"]};
+function decodeWP(str){const days=str.split(".");if(days.length!==7||days.some(d=>!/^[SVRUATLIGHF]{36}$/.test(d)))return null;
+  const tpl={};days.forEach((code,i)=>{const runs=[];for(let j=0;j<36;j++){const c=code[j];if(runs.length&&runs[runs.length-1].c===c)runs[runs.length-1].n++;else runs.push({c,j,n:1})}
+    const at=j=>360+j*30;const b=[];let wake=null,bed=null;
+    runs.forEach((r,k)=>{if(r.c==="S"){if(k===0)wake=fmt(at(r.n));if(k===runs.length-1)bed=fmt(at(r.j));return}
+      if(r.c==="V")return;const [kind,x]=WPC[r.c];b.push(Object.assign({id:uid(),k:kind,s:fmt(at(r.j)),e:fmt(at(r.j+r.n))},x||{}))});
+    if(!wake)wake="06:00";if(!bed)bed="23:59";
+    const trains=b.filter(x=>TRAINK.has(x.k));let first=true;
+    runs.filter(r=>r.c==="V").forEach(r=>{const m=at(r.j);const afterT=trains.some(t=>{const e=toM(t.e);return m>=e&&m-e<=75});
+      let meal=first&&m<=11*60?"fruehstueck":afterT?"nach":m<10*60+30?"znueni":m<14*60+30?"mittag":m<18*60?"vor":"abend";first=false;
+      b.push({id:uid(),k:"essen",meal,s:fmt(m),e:fmt(at(r.j+r.n))})});
+    tpl[DAYS[i][0]]={b,wake,bed}});return tpl}
+function importFromHash(){const m=/[#&]wp=([A-Z.]+)/.exec(location.hash);if(!m)return;const tpl=decodeWP(m[1]);const n=/[#&]n=([^&]*)/.exec(location.hash);const name=n?decodeURIComponent(n[1]):"Wochenplan";
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  if(!tpl){toast("Der Link enthält keinen gültigen Wochenplan.");return}
+  const has=Object.values(state.tpl).some(d=>d.b.length);
+  openModal(`<h3>Wochenplan übernehmen</h3><p>«${esc(name)}» als Standardwoche übernehmen? Er gilt dann für jede Woche und lässt sich danach beliebig anpassen.</p>
+    ${has?`<p class="hint">Deine bisherige Standardwoche wird dabei ersetzt. Änderungen, die du nur für einzelne Wochen gemacht hast, bleiben.</p>`:""}
+    <div class="acts"><button type="button" class="btn pri" id="wpYes">Übernehmen</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>`);
+  importFromHash.tpl=tpl}
+$("sheet").addEventListener("click",e=>{if(!e.target.closest("#wpYes"))return;state.tpl=importFromHash.tpl;state.view="tpl";sel=0;save();closeModal();render();toast("Wochenplan übernommen")});
+addEventListener("hashchange",importFromHash);
+render();acctUI();importFromHash();
 </script>
 </body>
 </html>
