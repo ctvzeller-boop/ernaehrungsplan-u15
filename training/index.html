@@ -48,7 +48,12 @@
   --c-rumpf:#B79CF2; --c-rumpf-bg:#2C2240; --c-eigen:#97A7B0; --c-eigen-bg:#22303A; color-scheme:dark}
 
 [hidden]{display:none!important}
-.plink{margin-right:auto;font-weight:600;font-size:.88rem;color:var(--accent);text-decoration:none;align-self:center}
+/* Gemeinsame Navigation über alle drei Apps */
+.appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
+.appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
+.lib{top:calc(62px + env(safe-area-inset-top,0px))!important;max-height:calc(100vh - 74px)!important}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
@@ -115,7 +120,7 @@ button.confirm{background:var(--ok);border-color:var(--ok);color:#fff}
 .empty{color:var(--muted);font-size:.88rem}
 
 /* Modus-Umschalter */
-.acctline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-8px 0 6px}
+.acctline{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-8px 0 6px}
 .acctline #acctWho{margin-left:auto}
 .acctline button#acctWho[hidden]{display:none}
 .themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:32px;padding:3px 12px;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -527,8 +532,9 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </style>
 </head>
 <body data-mode="edit">
+<nav class="appnav" aria-label="Apps"><div><a href="../planner/">Planner</a><a href="../training/" aria-current="page">Workout</a><a href="../">Nutrition</a></div></nav>
 <div class="wrap">
-  <div class="acctline" id="acctLine"><a class="plink" href="../planner/">‹ Wochenplaner</a><button type="button" class="themebtn" id="themeBtn"></button><button type="button" id="acctWho" aria-haspopup="dialog" hidden></button></div>
+  <div class="acctline" id="acctLine"><button type="button" class="themebtn" id="themeBtn"></button><button type="button" id="acctWho" aria-haspopup="dialog" hidden></button></div>
   <header>
     <div class="brand">
       <img class="logo" src="icons/icon-192.png" alt="CZ Training by Calvin Zeller" width="64" height="64">

@@ -60,7 +60,12 @@ h2{font-size:1.5rem;text-transform:uppercase;letter-spacing:.04em}
 @media (max-width:760px){.logo{width:52px;height:52px;border-radius:12px}}
 header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
 .themeline{display:flex;justify-content:flex-end;align-items:center;margin:-6px 0 6px}
-.plink{margin-right:auto;font-weight:600;font-size:.9rem;text-decoration:none;color:inherit;opacity:.85}
+/* Gemeinsame Navigation über alle drei Apps */
+.appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
+.appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
+
 .themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:32px;padding:3px 12px;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .themebtn .tdot{width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
 
@@ -225,7 +230,7 @@ textarea{width:100%;box-sizing:border-box;font:inherit;font-size:.85rem;min-heig
   .addrow{grid-template-columns:1fr}
 }
 /* Navigation */
-.mainnav{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+.mainnav{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:5px;position:sticky;top:calc(56px + env(safe-area-inset-top,0px));z-index:30}
 .mainnav a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600}
 .mainnav a:hover{color:var(--ink);background:var(--bg)}
 .mainnav a[aria-current="page"]{background:var(--accent);color:var(--surface)}
@@ -461,8 +466,9 @@ details.info[open] summary{margin-bottom:4px;display:block}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
+<nav class="appnav" aria-label="Apps"><div><a href="planner/">Planner</a><a href="training/">Workout</a><a href="./" aria-current="page">Nutrition</a></div></nav>
 <div class="wrap">
-  <div class="themeline"><a class="plink" href="planner/">Wochenplaner ›</a><button type="button" class="themebtn" id="themeBtn"></button></div>
+  <div class="themeline"><button type="button" class="themebtn" id="themeBtn"></button></div>
   <header>
     <div class="brand">
       <img class="logo" src="icons/icon-192.png" alt="CZ Nutrition by Calvin Zeller" width="64" height="64">
