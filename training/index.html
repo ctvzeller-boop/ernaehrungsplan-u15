@@ -529,6 +529,32 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
   .lead{font-size:.95rem}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Kompakte Übungskarte im Bearbeiten-Modus */
+.ecard{gap:8px;padding:10px 12px}
+.ecard .ihead{align-items:center}
+.ecard .iname{font-size:1rem}
+.ecard .iname .de{font-size:.8rem}
+.ecard .thumb{width:52px;height:40px;flex-basis:52px}
+.dose{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 8px;padding-left:2px}
+.dose label{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dose label span{font-size:.66rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-left:2px}
+.dose input{padding:6px 8px;font-size:.95rem;font-weight:600;font-variant-numeric:tabular-nums;border-radius:8px;width:100%}
+.dose input::placeholder{color:var(--muted);font-weight:400}
+.dose .d-s{width:3.6em}.dose .d-w{width:8.5em}.dose .d-kg{width:7.5em}.dose .d-p{width:6em}.dose .d-r{width:3.8em}
+.dose .dx{align-self:flex-start;padding-top:7px;color:var(--muted);font-weight:600}
+.imore>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.85rem;font-weight:600;color:var(--accent,#1f6feb)}
+.imore>summary::-webkit-details-marker{display:none}
+.imore>summary>span::before{content:"▸ ";display:inline-block;transition:transform .15s}
+.imore[open]>summary>span::before{content:"▾ "}
+.mtag{font-size:.7rem;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.imorebody{display:flex;flex-direction:column;gap:8px;padding-top:8px}
+.ichecks{display:flex;flex-wrap:wrap;gap:6px 16px}
+.iinfo{display:flex;flex-direction:column;gap:2px;font-size:.85rem}
+.iimg{display:flex;align-items:center;gap:8px}
+.iimg .thumb.none{width:52px;height:40px}
+.iimg:not(:has(.thumb)){display:none}
+@media (max-width:600px){.dose .d-w{width:7.2em}.dose .d-kg{width:6.4em}.dose .d-p{width:5.4em}.ecard .imove .iconbtn{width:32px;height:32px}}
 </style>
 </head>
 <body data-mode="edit">
@@ -1241,6 +1267,8 @@ function setsHTML(it){
   const addrm=`<button type="button" class="setbox addset" data-addset="1" aria-label="Satz hinzufügen">＋ Satz</button>${(it.xs||0)>0&&p>log.length?`<button type="button" class="setbox addset" data-rmset="1" aria-label="Zusätzlichen Satz entfernen">−</button>`:""}`;
   return `<div class="sets">${boxes}${todo}${addrm}</div>${totalHTML(it,log)}`;
 }
+var openMore;
+document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.imore")){openMore=openMore||new Set();d.open?openMore.add(d.dataset.more):openMore.delete(d.dataset.more)}},true);
 function renderItems(focusSel){
   const c=cur(),lab=labels(c.items);const el=document.getElementById("items");const train=state.mode==="train";
   if(!c.items.length){el.innerHTML=`<div class="emptysess">${train?(c.free?"Freies Training: Tippe unten auf <b>＋ Übung hinzufügen</b> und wähle deine erste Übung. Danach einfach Sätze eintragen und die nächste Übung hinzufügen.":"Diese Einheit ist noch leer."):"Noch keine Übungen. Wähle in der Übungsliste eine Übung mit <b>+</b>."}</div>`}
@@ -1257,28 +1285,36 @@ function renderItems(focusSel){
       ${(it.added||c.free)&&i>0?`<button type="button" class="ssbtn${it.ss?" on":""}" data-sslink="1" aria-pressed="${!!it.ss}">${it.ss?`✓ Superset mit ${esc(shortN(c.items[i-1].n))}`:`＋ Superset mit ${esc(shortN(c.items[i-1].n))}`}</button>`:""}
       ${chartDetails(it.id,false)}
     </div>`;
-    return `<div class="${cls}" data-u="${it.u}">
-      <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${lab[i]}</span>${thumbHTML(it.id,it.n,it.v)}
-        <div class="iname">${nameHTML(it.n)}${vidLinks(it.v)}${infoHTML(it.id)}</div>
+    const th=thumbHTML(it.id,it.n,it.v),hasImg=!/class="thumb none"/.test(th),g=it.goal&&GOALS[it.goal]?GOALS[it.goal].n:"";
+    const tags=[g&&`Ziel: ${g}`,it.ss&&i>0&&"Superset",it.opt&&"Optional",it.b&&"Bemerkung"].filter(Boolean);
+    const vids=vidLinks(it.v),info=infoHTML(it.id),how=howtoHTML(it.id);
+    return `<div class="${cls} ecard" data-u="${it.u}">
+      <div class="ihead"><button type="button" class="draghandle" data-drag="1" aria-label="${esc(shortN(it.n))} verschieben (gedrückt halten und ziehen)">⠿</button><span class="badge">${lab[i]}</span>${hasImg?th:""}
+        <div class="iname">${nameHTML(it.n)}</div>
         <div class="imove">
           <button type="button" class="iconbtn" data-act="up" aria-label="${esc(it.n)} nach oben"${i===0?" disabled":""}>↑</button>
           <button type="button" class="iconbtn" data-act="down" aria-label="${esc(it.n)} nach unten"${i===c.items.length-1?" disabled":""}>↓</button>
           <button type="button" class="iconbtn" data-act="rm" aria-label="${esc(it.n)} entfernen">×</button>
         </div></div>
-      ${goalHTML(it)}
-      <div class="params">
-        <label>Sätze<input type="text" data-f="s" value="${esc(it.s)}"></label>
-        <label>Wdh / Zeit<input type="text" data-f="w" value="${esc(it.w)}"></label>
-        <label>Gewicht (kg) / Band<input type="text" data-f="kg" value="${esc(it.kg||"")}" placeholder="kg, «50 lbs» oder Band"></label>
-        <label>Pause<input type="text" data-f="p" value="${esc(it.p)}"></label>
-        <label>RIR<input type="text" data-f="r" value="${esc(it.r)}"></label>
+      <div class="dose">
+        <label class="d-s"><input type="text" inputmode="numeric" data-f="s" value="${esc(it.s)}" placeholder="–"><span>Sätze</span></label>
+        <span class="dx" aria-hidden="true">×</span>
+        <label class="d-w"><input type="text" data-f="w" value="${esc(it.w)}" placeholder="–"><span>Wdh / Zeit</span></label>
+        <label class="d-kg"><input type="text" data-f="kg" value="${esc(it.kg||"")}" placeholder="–"><span>kg / Band</span></label>
+        <label class="d-p"><input type="text" data-f="p" value="${esc(it.p)}" placeholder="–"><span>Pause</span></label>
+        <label class="d-r"><input type="text" inputmode="numeric" data-f="r" value="${esc(it.r)}" placeholder="–"><span title="Wiederholungen im Tank">RIR</span></label>
       </div>
-      <div class="ifoot">
-        <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
-        ${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
-        <label class="sslink"><input type="checkbox" data-f="opt"${it.opt?" checked":""}> Optional</label>
-      </div>
-      ${howtoHTML(it.id)}
+      <details class="imore"${openMore&&openMore.has(it.u)?" open":""} data-more="${it.u}"><summary><span>Mehr</span>${tags.map(t=>`<b class="mtag">${esc(t)}</b>`).join("")}</summary>
+        <div class="imorebody">
+          ${goalHTML(it)}
+          <input type="text" data-f="b" value="${esc(it.b)}" placeholder="Bemerkung für diese Einheit" aria-label="Bemerkung ${esc(it.n)}">
+          <div class="ichecks">${i>0?`<label class="sslink"><input type="checkbox" data-f="ss"${it.ss?" checked":""}> Superset mit vorheriger</label>`:""}
+          <label class="sslink"><input type="checkbox" data-f="opt"${it.opt?" checked":""}> Optional</label></div>
+          ${vids||info?`<div class="iinfo">${vids}${info}</div>`:""}
+          <div class="iimg">${hasImg?"":th}<span class="small">${hasImg?"":"Eigenes Bild hinzufügen"}</span></div>
+          ${how}
+        </div>
+      </details>
     </div>`}).join("");
   renderSummary();renderProgress();
   if(focusSel){const f=el.querySelector(focusSel);if(f)f.focus()}
