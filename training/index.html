@@ -885,6 +885,7 @@ const EX=[
  ["bottomup","Bottom-ups (Becken in die Kerze heben)","rumpf","2–3","30 s","30 s","","In die Kerze hochdrücken, dann kontrolliert mit dem Po zurück zum Boden und wieder hoch. Optional über dem Kopf festhalten.",[]],
  ["bicycle","Bicycle Crunches (Fahrrad-Crunches)","rumpf","2–3","30 s","30 s","","Abwechselnd Ellbogen zum gegenüberliegenden Knie, das andere Bein gestreckt halten.",[]],
  ["spiderman","Spiderman Planks (Spiderman-Stütz)","rumpf","2–3","30 s","30 s","","Aus der Plank abwechselnd das Knie zum gleichseitigen Ellbogen ziehen, Rumpf stabil.",[]],
+ ["abs11","11 Min Abs Workout (Bauch-Workout non-stop, Video)","rumpf","1","11 Min. non-stop","","","Ein Durchgang ohne Pause, genau wie im Video mitmachen. Unterer Rücken bleibt am Boden.",[Y("g3IM17WB2zQ")]],
  ["lowerabs","Lower Abs Routine (untere Bauchmuskulatur, Video-Programm)","rumpf","3","1 Runde","60 s","","Im Video sind es 3 Sätze. Wenn es zu streng ist, sind auch 2 oder 1 Satz in Ordnung. Unterer Rücken muss immer den Boden berühren.",[Y("RZRzD9h5RL4")]],
  ["hollow","Hollow Hold (Bananen-Halte)","rumpf","3","20–30 s","60 s","","Rückenlage, unterer Rücken bleibt am Boden, Arme und Beine gestreckt knapp über dem Boden halten. Gleiche Körperspannung wie beim Klimmzug.",[]],
  ["deadbug","Dead Bug (Käfer Crunch)","rumpf","2–3","10–12","60 s","","Rückenlage, Arme und Beine in der Luft. Gegengleich Arm und Bein langsam strecken, unterer Rücken bleibt am Boden.",[]],
@@ -898,12 +899,12 @@ const LOADS=[["kw","Körpergewicht"],["gew","Gewicht"],["band","Resistance Band"
 /* Fokus (Mehrfach-Zuordnung möglich) */
 const FOCI=[["cardio","Cardio / Ausdauer"],["schnell","Schnelligkeit Beine"],["kraftb","Kraft Beine"],["kraftob","Kraft Oberkörper"],["explob","Explosivität Oberkörper"],["stab","Rumpfstabilität"],["rot","Rumpf Rotation"],["bauch","Bauch / Rumpfkraft"],["mob","Mobilität & Aufwärmen"]];
 const CAT2FOC={warm:["mob"],plyo:["schnell"],beine:["kraftb"],ober:["kraftob"],rumpf:["stab"],cardio:["cardio"],eigen:[]};
-const FOC={hollow:"bauch stab",deadbug:"bauch stab",rtwist:"rot bauch",situp:"bauch",backext:"stab",shtap:"stab",abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandshoulder:"mob",mbchest:"explob",
+const FOC={abs11:"bauch",hollow:"bauch stab",deadbug:"bauch stab",rtwist:"rot bauch",situp:"bauch",backext:"stab",shtap:"stab",abc:"mob schnell",warmup:"mob",mobroutine:"mob",stretch:"mob",bandshoulder:"mob",mbchest:"explob",
  pallof:"stab",chop:"rot",birddog:"stab",lmrot:"rot",sprow:"stab",mbrot:"rot explob",rollout:"stab",plank:"stab",copenhagen:"stab",
  flutter:"bauch",dslr:"bauch",scissor:"bauch",bottomup:"bauch",bicycle:"bauch rot",spiderman:"stab",lowerabs:"bauch"};
 const LOADN=Object.fromEntries(LOADS);
 /* Alternativen, falls eine Übung nicht geht oder Material fehlt */
-const ALT={eccpull:"pullup scappull invrow",scappull:"deadhang eccpull",deadhang:"scappull",invrow:"row1 cablerow rowstand",latpull:"pullup eccpull cablerow",rowstand:"cablerow row1 invrow",
+const ALT={abs11:"lowerabs",lowerabs:"abs11",eccpull:"pullup scappull invrow",scappull:"deadhang eccpull",deadhang:"scappull",invrow:"row1 cablerow rowstand",latpull:"pullup eccpull cablerow",rowstand:"cablerow row1 invrow",
  shmach:"shpress lmpress",kbpress:"lmpress shpress",butterfly:"flies pushup",cablecurl:"curls",kbsldl:"rdl hipthrust",dbdeadlift:"trapbar rdl",smlunge:"splitsq latlunge",legcurl:"ballcurl nordic hamiso",ballcurl:"legcurl hamiso",
  abdmach:"bandabd",addmach:"copenhagen",bandabd:"abdmach",hollow:"plank dslr",deadbug:"birddog plank",rtwist:"bicycle mbrot",situp:"bicycle",backext:"birddog",shtap:"plank spiderman",
 bike:"airbike rowerg ride",treadmill:"run stair bike",airbike:"bike rowerg skierg",rowerg:"skierg airbike bike",skierg:"rowerg airbike",stair:"treadmill bike",run:"treadmill bike",ride:"bike",skater:"latbounds",latbounds:"skater",boxjump:"boxvar sprints",boxvar:"boxjump",depth:"boxjump",explsplit:"bsqjump splitsq",bsqjump:"explsplit",hillsprint:"sprints",sprints:"hillsprint",mbchest:"pushup",
@@ -928,7 +929,7 @@ function swapItem(it,to){const e=EXBY[to];if(!e||(it.log||[]).length)return fals
   const g=it.goal;Object.assign(it,{id:e.id,n:e.n,k:e.k,s:e.s,w:e.w,p:e.p,r:e.r,v:(e.v||[]).slice(),kg:""});it.goal="";
   if(g&&goalsFor(it).includes(g))applyGoal(it,g);return true}
 /* Material: einheitliche Namen; "A|B" = A oder B, "?A" = optional */
-const MAT={kbsldl:["gew",["Kettlebell"]],dbdeadlift:["gew",["Kurzhanteln"]],smlunge:["gew",["Multipresse"]],legcurl:["gew",["Beinbeuger-Maschine"]],ballcurl:["kw",["Gymnastikball","Matte"]],
+const MAT={abs11:["kw",["Matte"]],kbsldl:["gew",["Kettlebell"]],dbdeadlift:["gew",["Kurzhanteln"]],smlunge:["gew",["Multipresse"]],legcurl:["gew",["Beinbeuger-Maschine"]],ballcurl:["kw",["Gymnastikball","Matte"]],
  abdmach:["gew",["Abduktionsmaschine"]],addmach:["gew",["Adduktionsmaschine"]],bandabd:["band",["Resistance Band"]],
  eccpull:["kw",["Klimmzugstange","Box|Bank"]],scappull:["kw",["Klimmzugstange"]],deadhang:["kw",["Klimmzugstange"]],invrow:["kw",["Multipresse|Rack"]],
  latpull:["gew",["Kabelzug"]],rowstand:["gew",["Kabelzug"]],shmach:["gew",["Schulterpresse-Maschine"]],kbpress:["gew",["Kettlebell","?Matte"]],butterfly:["gew",["Butterfly-Maschine"]],cablecurl:["gew",["Kabelzug"]],
@@ -954,7 +955,7 @@ bike:["kw",["Indoor-Bike"]],treadmill:["kw",["Laufband"]],airbike:["kw",["Air Bi
 Object.entries(MAT).forEach(([id,[l,m]])=>{const e=EX.find(x=>x.id===id);if(e){e.l=l.split(" ");e.m=m}});
 EX.forEach(e=>{e.f=FOC[e.id]?FOC[e.id].split(" "):CAT2FOC[e.k].slice()});
 /* Primär trainierte Muskelgruppen */
-const MUS={kbsldl:"Hamstrings, Gesäss, Gleichgewicht",dbdeadlift:"Gesäss, Hamstrings, Quadrizeps, unterer Rücken",smlunge:"Quadrizeps, Gesäss",legcurl:"Hamstrings",ballcurl:"Hamstrings, Gesäss",
+const MUS={abs11:"gerade und schräge Bauchmuskeln, Rumpf",kbsldl:"Hamstrings, Gesäss, Gleichgewicht",dbdeadlift:"Gesäss, Hamstrings, Quadrizeps, unterer Rücken",smlunge:"Quadrizeps, Gesäss",legcurl:"Hamstrings",ballcurl:"Hamstrings, Gesäss",
  abdmach:"seitliches Gesäss (Abduktoren)",addmach:"Adduktoren",bandabd:"seitliches Gesäss (Abduktoren)",
  eccpull:"Latissimus, Bizeps, oberer Rücken",scappull:"unterer Trapez, Latissimus, Schulterblatt",deadhang:"Griffkraft, Unterarme, Schulter",invrow:"oberer Rücken, Latissimus, Bizeps",
  latpull:"Latissimus, Bizeps, oberer Rücken",rowstand:"oberer Rücken, hintere Schulter, Latissimus",shmach:"vordere und seitliche Schulter, Trizeps",kbpress:"Schulter, Trizeps, Rumpf",butterfly:"Brust, vordere Schulter",cablecurl:"Bizeps, Unterarme",
@@ -1047,7 +1048,9 @@ function load(){
   try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.sessions)&&s.sessions.length)return s}}catch(e){}
   const first={id:uid(),t:"Neue Einheit",a:"",h:"",items:[]};return {sessions:[first],active:first.id,custom:[]};
 }
-function syncNames(st){(st.sessions||[]).forEach(se=>(se.items||[]).forEach(it=>{if(EXBY[it.id])it.n=EXBY[it.id].n}))}
+/* Lower Abs Routine: früher 1 Satz, jetzt 3 (wie im Video) – bestehende Einheiten nachziehen */
+function fixItem(it){if(it&&it.id==="lowerabs"&&String(it.s||"")==="1"&&(!it.w||it.w==="wie im Video")){it.s="3";it.w="1 Runde";if(!it.p)it.p="60 s"}return it}
+function syncNames(st){(st.sessions||[]).forEach(se=>(se.items||[]).forEach(it=>{if(EXBY[it.id])it.n=EXBY[it.id].n;fixItem(it)}))}
 function save(){state.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave();sbQueue()}
 /* Nur in Claude: Einheiten, Verlauf und Bilder zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
    Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles wie bisher im Browser. */
@@ -2049,7 +2052,7 @@ async function pushAssignUpdates(){if(!isCoach||!coachAssign.length)return;const
 async function pullAssignments(){if(!sb||!sbUser)return;let rows;try{const {data,error}=await sb.from("assignments").select("id,sid,title,session,updated_at,coach_id").eq("player_id",sbUser.id);if(error)return;rows=data||[]}catch(e){return}
   const dis=new Set(state.dismissed||[]);let changed=false,news=[],ups=[];const ids=new Set(rows.map(r=>r.id));
   rows.forEach(r=>{if(dis.has(r.id))return;const loc=state.sessions.find(x=>x.assign===r.id);const src=r.session||{};
-    const mk=()=>({t:r.title||src.t||"Einheit",a:src.a||"",h:src.h||"",items:(src.items||[]).map(it=>Object.assign({},it,{u:uid(),log:[],xs:0}))});
+    const mk=()=>({t:r.title||src.t||"Einheit",a:src.a||"",h:src.h||"",items:(src.items||[]).map(it=>fixItem(Object.assign({},it,{u:uid(),log:[],xs:0})))});
     if(!loc){state.sessions.push(Object.assign({id:uid(),assign:r.id,coachUpd:r.updated_at},mk()));news.push(r.title);changed=true}
     else if(loc.coachUpd!==r.updated_at&&!loc.items.some(it=>(it.log||[]).length)){Object.assign(loc,mk(),{coachUpd:r.updated_at});ups.push(r.title);changed=true}});
   state.sessions.filter(x=>x.assign&&!ids.has(x.assign)).forEach(x=>{if(!x.items.some(it=>(it.log||[]).length)){state.sessions=state.sessions.filter(z=>z!==x);(state.delS=state.delS||[]).push(x.id);changed=true}else delete x.assign});
