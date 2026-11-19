@@ -884,7 +884,8 @@ const EX=[
  ["curls","Alternating Dumbbell Biceps Curls (Bizeps-Curls mit Kurzhanteln, abwechselnd)","ober","3","8–12 / Seite","60–90 s","1–2","Abwechselnd links und rechts: eine Wiederholung links, dann rechts usw. Ellbogen eng am Körper und fix, nur der Unterarm bewegt sich. Hoch bis die Kurzhantel auf Schulterhöhe ist, oben kurz anspannen, langsam ablassen bis die Arme fast gestreckt sind. Kein Schwung aus dem Oberkörper.",[YS("FHY_2t7R714")]],
  ["dbcurl","Dumbbell Biceps Curls (Bizeps-Curls mit Kurzhanteln, beidarmig)","ober","3","8–12","60–90 s","1–2","Beide Arme gleichzeitig. Ellbogen eng am Körper und fix, nur der Unterarm bewegt sich. Hoch bis die Kurzhanteln auf Schulterhöhe sind, oben kurz anspannen, langsam ablassen bis die Arme fast gestreckt sind. Kein Schwung aus dem Rücken.",[YS("MKWBV29S6c0")]],
  ["inclcurl","Incline Dumbbell Biceps Curls (Bizeps-Curls auf der Schrägbank)","ober","3","8–12","60–90 s","1–2","Auf eine Schrägbank (ca. 45–60°) sitzen, Rücken und Kopf an der Lehne. Arme hängen gestreckt nach unten, leicht hinter dem Körper. Ellbogen bleiben ruhig, Kurzhanteln bis auf Schulterhöhe curlen, oben kurz anspannen, langsam ganz ablassen. Dehnt den Bizeps stärker als stehend, darum eher leichteres Gewicht.",[YS("uH3eBjuvhvI")]],
- ["pushdown","Cable Triceps Pushdowns (Trizepsdrücken am Kabelzug)","ober","3","10–15","60 s","1–2","Mit Seil oder Stange am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind, unten kurz anspannen (beim Seil die Enden leicht auseinanderziehen), kontrolliert zurück bis etwa 90° im Ellbogen.",[]],
+ ["pushdown","Cable Triceps Pushdowns with Bar (Trizepsdrücken am Kabelzug mit Stange)","ober","3","10–15","60 s","1–2","Mit der Stange am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind, unten kurz anspannen, kontrolliert zurück bis etwa 90° im Ellbogen.",[]],
+ ["ropepushdown","Rope Triceps Pushdowns (Trizepsdrücken am Kabelzug mit Seil)","ober","3","10–15","60 s","1–2","Mit dem Seil am oberen Kabelzug. Ellbogen eng am Körper und fix, nur die Unterarme bewegen sich. Nach unten drücken bis die Arme gestreckt sind und unten die Seilenden leicht auseinanderziehen, kurz anspannen, kontrolliert zurück bis etwa 90° im Ellbogen.",[YS("1FoWlRS2Edc")]],
  ["latraise","Lateral Raises (Seitheben)","ober","2–3","10–15","60 s","1–2","",[Y("pOmbQuGeHf8")]],
  ["facepull","Face Pulls or Band Pull-Aparts (Face Pulls oder Band auseinanderziehen)","ober","3","12–15","60 s","2","",[YS("1s-0WtJMsu8")]],
  ["eccpull","Eccentric Pull-ups (negative Klimmzüge: hochspringen, langsam runterlassen)","ober","3","3–5","2 Min.","","Von einer Box oder Bank hochspringen, sodass das Kinn über der Stange ist. Oben kurz halten, dann so langsam wie möglich runterlassen (Ziel 3–5 Sekunden, später 5–8). Unten ganz ins Hängen kommen. Gehen 3 × 5 mit 8 Sekunden: ersten richtigen Klimmzug probieren.",[]],
@@ -938,7 +939,7 @@ const ALT={inclcurl:"dbcurl curls cablecurl",dbcurl:"curls inclcurl cablecurl",a
 bike:"airbike rowerg ride",treadmill:"run stair bike",airbike:"bike rowerg skierg",rowerg:"skierg airbike bike",skierg:"rowerg airbike",stair:"treadmill bike",run:"treadmill bike",ride:"bike",skater:"latbounds",latbounds:"skater",boxjump:"boxvar sprints",boxvar:"boxjump",depth:"boxjump",explsplit:"bsqjump splitsq",bsqjump:"explsplit",hillsprint:"sprints",sprints:"hillsprint",mbchest:"pushup",
  squat:"trapbar splitsq",deadlift:"trapbar rdl",trapbar:"deadlift squat",rdl:"deadlift hamiso nordic",splitsq:"explsplit squat",hipthrust:"hamiso rdl",latlunge:"splitsq",hamiso:"nordic rdl",nordic:"hamiso rdl",
  bench:"incline pushup dips",incline:"bench pushup",pullup:"eccpull invrow pullupw row1 cablerow",pullupw:"pullup",pushup:"bench dips",shpress:"lmpress lmpressst",lmpress:"lmpressst shpress",lmpressst:"lmpress shpress",
- row1:"cablerow rowchest",cablerow:"row1 rowchest",rowchest:"row1 cablerow",dips:"dipsw pushup",dipsw:"dips",flies:"incline pushup",pushdown:"dips",latraise:"shpress",facepull:"bandshoulder",
+ row1:"cablerow rowchest",cablerow:"row1 rowchest",rowchest:"row1 cablerow",dips:"dipsw pushup",dipsw:"dips",flies:"incline pushup",pushdown:"ropepushdown dips",ropepushdown:"pushdown dips",latraise:"shpress",facepull:"bandshoulder",
  pallof:"chop sprow",chop:"pallof lmrot",birddog:"plank",lmrot:"chop mbrot",sprow:"plank pallof",mbrot:"lmrot",rollout:"plank spiderman",plank:"rollout spiderman",copenhagen:"plank",
  flutter:"scissor dslr",dslr:"flutter",scissor:"flutter",bottomup:"dslr",bicycle:"flutter",spiderman:"plank"};
 function altsOf(id){return String(ALT[id]||"").split(" ").filter(x=>x&&EXBY[x])}
@@ -974,7 +975,7 @@ bike:["kw",["Indoor-Bike"]],treadmill:["kw",["Laufband"]],airbike:["kw",["Air Bi
  pullup:["kw band",["Klimmzugstange","?Resistance Band"]],pullupw:["gew",["Klimmzugstange","Gewichtsgürtel|Kurzhanteln"]],
  pushup:["kw",[]],lmpress:["gew",["Landmine","Langhantel"]],shpress:["gew",["Kurzhanteln","Schrägbank"]],lmpressst:["gew",["Landmine","Langhantel"]],
  row1:["gew",["Kurzhanteln","Bank"]],rowchest:["gew",["Rudermaschine|Langhantel"]],cablerow:["gew",["Kabelzug"]],dips:["kw",["Dipstation"]],dipsw:["gew",["Dipstation","Gewichtsgürtel|Kurzhanteln"]],
- flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],curls:["gew",["Kurzhanteln"]],pushdown:["gew",["Kabelzug"]],facepull:["band gew",["Kabelzug|Resistance Band"]],
+ flies:["gew",["Kurzhanteln","Bank"]],latraise:["gew",["Kurzhanteln"]],curls:["gew",["Kurzhanteln"]],pushdown:["gew",["Kabelzug","Stange"]],ropepushdown:["gew",["Kabelzug","Seil"]],facepull:["band gew",["Kabelzug|Resistance Band"]],
  pallof:["band gew",["Kabelzug|Resistance Band"]],chop:["gew band",["Kabelzug|Resistance Band"]],birddog:["kw",["Matte"]],
  lmrot:["gew",["Landmine","Langhantel"]],sprow:["band gew",["Kabelzug|Resistance Band","Matte"]],mbrot:["gew",["Medizinball","Wand"]],
  rollout:["kw",["Gymnastikball"]],plank:["kw",["Matte"]],copenhagen:["kw",["Bank"]],
@@ -1003,7 +1004,7 @@ bike:"Herz-Kreislauf, Beine",treadmill:"Herz-Kreislauf, Beine",airbike:"Herz-Kre
  pullup:"Latissimus, Bizeps, oberer Rücken",pullupw:"Latissimus, Bizeps, oberer Rücken",pushup:"Brust, Trizeps, vordere Schulter",
  lmpress:"Schulter, Trizeps, obere Brust",shpress:"vordere und seitliche Schulter, Trizeps",lmpressst:"Schulter, Trizeps, obere Brust",
  row1:"Latissimus, oberer Rücken, Bizeps",rowchest:"oberer Rücken, Latissimus, Bizeps",cablerow:"Latissimus, oberer Rücken, Bizeps",dips:"Trizeps, Brust, vordere Schulter",dipsw:"Trizeps, Brust, vordere Schulter",
- flies:"Brust, vordere Schulter",latraise:"seitliche Schulter",curls:"Bizeps, Unterarme",pushdown:"Trizeps",facepull:"hintere Schulter, oberer Rücken, Rotatorenmanschette",
+ flies:"Brust, vordere Schulter",latraise:"seitliche Schulter",curls:"Bizeps, Unterarme",pushdown:"Trizeps",ropepushdown:"Trizeps",facepull:"hintere Schulter, oberer Rücken, Rotatorenmanschette",
  pallof:"Rumpf, schräge Bauchmuskeln",chop:"schräge Bauchmuskeln, Rumpf, Schulter",birddog:"Rumpf, unterer Rücken, Gesäss",
  lmrot:"schräge Bauchmuskeln, Rumpf, Gesäss, Schulter",sprow:"seitlicher Rumpf, schräge Bauchmuskeln, oberer Rücken",
  mbrot:"schräge Bauchmuskeln, Rumpf, Gesäss",rollout:"gerade Bauchmuskeln, Rumpf, Schulter",plank:"gerade Bauchmuskeln, Rumpf",
@@ -1044,7 +1045,7 @@ const GORDER=["max","vol","pow","ausd","rk","ra"];
 /* welche Ziele bei welcher Übung Sinn machen (Sprünge, Sprints, Würfe, Aufwärmen: keine – dort zählt immer Qualität bei voller Erholung) */
 const GSET={squat:"max vol pow ausd",deadlift:"max vol",trapbar:"max vol pow",rdl:"max vol",splitsq:"max vol pow ausd",hipthrust:"max vol pow ausd",latlunge:"max vol pow ausd",nordic:"max vol",
   bench:"max vol pow ausd",incline:"max vol ausd",pullup:"vol pow ausd",pullupw:"max vol",pushup:"vol pow ausd",shpress:"max vol ausd",lmpress:"max vol pow ausd",lmpressst:"max vol pow",
-  row1:"max vol ausd",cablerow:"max vol ausd",rowchest:"max vol pow",dips:"vol ausd",dipsw:"max vol",flies:"vol ausd",curls:"vol ausd",dbcurl:"vol ausd",inclcurl:"vol ausd",pushdown:"vol ausd",latraise:"vol ausd",facepull:"vol ausd",
+  row1:"max vol ausd",cablerow:"max vol ausd",rowchest:"max vol pow",dips:"vol ausd",dipsw:"max vol",flies:"vol ausd",curls:"vol ausd",dbcurl:"vol ausd",inclcurl:"vol ausd",pushdown:"vol ausd",ropepushdown:"vol ausd",latraise:"vol ausd",facepull:"vol ausd",
   pallof:"rk ra",chop:"rk ra",birddog:"rk ra",lmrot:"rk ra",sprow:"rk ra",rollout:"rk ra",plank:"rk ra",copenhagen:"rk ra",calf:"rk ra",hamiso:"rk ra",
   flutter:"rk ra",dslr:"rk ra",scissor:"rk ra",bottomup:"rk ra",bicycle:"rk ra",spiderman:"rk ra"};
 /* abweichende Werte für einzelne Übungen */
