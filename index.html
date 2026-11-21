@@ -323,6 +323,8 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .scores{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px}
 .scores .sc{font-size:.7rem;font-weight:600;line-height:1.25;padding:1px 6px;border-radius:999px;background:var(--surface);color:var(--muted);border:1px solid var(--line);font-variant-numeric:tabular-nums}
 .scores .sc b{color:var(--ink)}
+.scores button.sc{font:inherit;font-size:.7rem;font-weight:600;cursor:pointer;line-height:1.25}
+.scores .sc.neutral{background:var(--bg);color:var(--ink)}
 .scores .sc.g{background:hsl(var(--gh) 70% 94%);border-color:hsl(var(--gh) 55% 72%);color:hsl(var(--gh) 60% 28%)}
 .scores .sc.g b{color:hsl(var(--gh) 70% 24%)}
 .wscore .g{color:hsl(var(--gh) 60% 32%)}
@@ -580,7 +582,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). Die Farben: 5 = grün, 4 = hellgrün, 3 = gelb, 2 = orange, 1 = rot. Bei Fett ist es umgekehrt, weil wenig Fett besser ist: 1 = grün, 5 = rot. P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). Dazu kommen Vitamine, Ballaststoffe, Zucker, Verdaulichkeit und Energie. Die Farben: 5 = grün, 4 = hellgrün, 3 = gelb, 2 = orange, 1 = rot. Bei Fett und Zucker ist es umgekehrt (wenig ist besser), Energie hat keine Farbe. Tippe auf eine Bewertung, um zu sehen, was sie bedeutet. P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -645,6 +647,15 @@ details.info[open] summary{margin-bottom:4px;display:block}
     <p class="hint">1. In WhatsApp lange auf den Link vom Coach drücken → «Kopieren».<br>2. Hier ins Feld tippen → «Einsetzen» → «Plan öffnen».</p>
     <input type="url" id="pasteInput" placeholder="https://…#plan=…" aria-label="Link">
     <button type="button" class="primary" id="pasteGo">Plan öffnen</button>
+  </div>
+</div>
+
+<div id="critModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="critTitle">
+    <button type="button" class="modalclose" id="critClose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="critTitle"></h3>
+    <p id="critText"></p>
+    <p class="hint" id="critScale"></p>
   </div>
 </div>
 
@@ -814,11 +825,18 @@ function healthOf(n){const r=SC[n];if(r)return (r[3]+1)/2;const x=NUT[n];return 
 function scoreOf(n){return SC[n]||null}
 const HTXT=["","eher selten","ab und zu","gut","sehr gut","top"];
 /* Farbe: wie günstig der Wert für Sportler ist (5 = grün, 1 = rot) */
-function goodOf(n){const r=SC[n];if(!r)return null;return [r[0],r[1],6-r[2],r[3]]}/* Carbs, Protein, Gesund: 5 = grün; Fett: 5 = rot */
+const SX={"Protein-Birchermüesli": [4, 4, 3, 2, 4], "Vollkornbrot mit Avocado und Eiern": [4, 4, 1, 2, 4], "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake": [3, 3, 4, 3, 5], "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken": [2, 3, 1, 3, 3], "Pfannen-Oats mit Beeren und Skyr": [4, 4, 2, 3, 4], "Zopf mit Konfi oder Honig": [1, 1, 4, 5, 3], "Protein-Birchermüesli (kleine Portion)": [3, 3, 3, 3, 2], "Frucht und eine Handvoll Nüsse": [4, 3, 2, 2, 3], "Skyr mit Frucht": [3, 1, 2, 4, 2], "Darvida": [1, 3, 1, 4, 1], "Studentenfutter": [3, 3, 4, 2, 3], "Banane": [3, 2, 3, 5, 2], "Apfel": [3, 3, 3, 4, 1], "Orange": [5, 2, 3, 4, 1], "Mandarine/Clementine": [4, 2, 3, 5, 1], "Kaki": [4, 3, 4, 4, 2], "Nektarine/Pfirsich": [3, 2, 3, 4, 1], "Birne": [2, 4, 3, 3, 1], "Proteinshake": [3, 2, 3, 4, 4], "Sandwich mit Fleisch und/oder Käse": [1, 2, 1, 3, 3], "Getreidewaffeln (Mais, Reis, Amaranth usw.)": [1, 2, 1, 5, 1], "Riegel": [1, 2, 5, 4, 2], "Dörrfrüchte": [3, 3, 5, 4, 2], "Schokoladenmilch": [2, 1, 4, 4, 2], "Brötli": [1, 1, 1, 5, 2], "Schokoladenmilch und Sandwich": [2, 2, 4, 3, 4], "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus": [3, 2, 2, 3, 5], "Reis mit Poulet und Gemüse": [4, 3, 1, 4, 4], "Vegi-Bolognese mit Linsen oder Sojahack": [4, 5, 2, 2, 4], "Reis mit Tofu und Gemüse": [4, 3, 1, 4, 4], "Reis mit Ei und Gemüse": [4, 3, 1, 4, 3], "Pasta mit Tomatensauce": [3, 2, 2, 5, 4], "Gemüsecurry mit Reis": [5, 4, 2, 3, 4], "Quinoa mit Gemüse oder Quinoa-Salat": [5, 4, 1, 3, 3], "Couscous mit Gemüse": [4, 3, 1, 4, 3], "Linsendal mit Reis": [4, 5, 1, 2, 4], "Pasta mit Thon-Tomatensauce": [3, 2, 2, 4, 4], "Pasta mit Poulet und Pesto": [2, 2, 1, 3, 5], "Hörnli mit Hüttenkäse und Gemüse": [3, 2, 1, 4, 4], "Lasagne mit Linsen oder Hackfleisch": [2, 2, 2, 1, 5], "Poulet-Reis-Pfanne mit Ei (Fried Rice)": [3, 2, 1, 3, 4], "Chili sin Carne mit Reis": [4, 5, 2, 2, 4], "Risotto mit Poulet und Erbsen": [2, 2, 1, 4, 4], "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch": [4, 5, 1, 2, 5], "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen": [5, 4, 1, 3, 4], "Poulet-Wraps mit Bohnen und Salat": [4, 4, 1, 3, 4], "Couscous-Salat mit Feta und Kichererbsen": [4, 4, 1, 3, 3], "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse": [4, 3, 2, 3, 4]};/* [Vitamine, Ballaststoffe, Zucker, Verdaulichkeit, Energie] 1–5 */
+const CRIT=[["carbs", "Carbs", "Carbs (Kohlenhydrate)", "Kohlenhydrate sind der wichtigste Treibstoff für Training und Spiel. Sie füllen die Energiespeicher in den Muskeln. 5 = viele Carbs. Vor und nach intensiven Einheiten sind sie besonders wichtig. Langsame Carbs (Vollkorn, Hafer, Hülsenfrüchte) halten lange an, schnelle Carbs (Weissbrot, Früchte, Zucker) geben rasch Energie, z. B. kurz vor oder zwischen Spielen.", "up"], ["prot", "Protein", "Protein (Eiweiss)", "Protein baut Muskeln auf und repariert sie nach dem Training. Es macht auch satt. 5 = viel Protein. Ideal ist eine proteinreiche Portion bei jeder Hauptmahlzeit und nach dem Training (ca. 20–30 g).", "up"], ["fat", "Fett", "Fett", "Fett liefert Energie und hilft, Vitamine aufzunehmen, wird aber langsam verdaut. Vor Training und Match darum wenig Fett. 5 = viel Fett, darum rot. Gesunde Fette (Nüsse, Avocado, Oliven- und Rapsöl, Fisch) sind besser als gesättigte Fette (Butter, Rahm, fetter Käse, Wurst).", "down"], ["health", "Gesund", "Gesundheit", "Gesamteindruck, wie gesund ein Gericht ist: wie viel Gemüse, Vollkorn und hochwertiges Protein drin ist und wie stark es verarbeitet ist. 5 = top, 1 = eher selten essen.", "up"], ["vit", "Vitamine", "Vitamine & Mineralstoffe", "Vitamine und Mineralstoffe (z. B. Vitamin C, Eisen, Calcium, Magnesium) stärken das Immunsystem, die Knochen und das Blut und helfen bei der Erholung. Viel Gemüse, Früchte, Hülsenfrüchte, Nüsse und Vollkorn geben einen hohen Wert. Im Wachstum besonders wichtig: Calcium für die Knochen und Eisen für die Ausdauer.", "up"], ["fib", "Ballaststoffe", "Ballaststoffe", "Ballaststoffe sind Pflanzenfasern, die der Körper nicht verdaut, z. B. in Vollkorn, Gemüse, Früchten, Hülsenfrüchten und Nüssen. Reich an Ballaststoffen heisst: macht lange satt, hält den Blutzucker stabil (keine Energie-Tiefs) und ist gut für Darm und Verdauung. Aber: Ballaststoffreiches braucht Zeit im Magen und kann beim Training drücken. Darum ballaststoffreich mit Abstand zum Training essen, kurz davor eher wenig.", "up"], ["sug", "Zucker", "Zucker", "Zucker gibt sehr schnell Energie, die aber auch schnell wieder weg ist. Kurz vor oder zwischen Spielen kann das helfen, sonst lieber wenig: Viel Zucker führt zu Energie-Tiefs, macht nicht lange satt und schadet den Zähnen. 5 = viel Zucker, darum rot.", "down"], ["dig", "Verdaulichkeit", "Verdaulichkeit", "Wie leicht ein Gericht im Magen liegt. 5 = leicht verdaulich: gut kurz vor Training und Match. 1 = liegt schwer (viel Fett, Ballaststoffe oder grosse Portion): mindestens 3 Stunden Abstand zum Training halten, besser am Abend oder am Restday.", "up"], ["kcal", "Energie", "Energie (Kalorien)", "Wie viel Energie eine Portion liefert. Das ist weder gut noch schlecht: An intensiven Trainingstagen und am Matchday braucht ihr mehr Energie, an Restdays weniger. 5 = sehr viel Energie.", "none"]];
+function allScores(n){const r=SC[n];if(!r)return null;const x=SX[n]||[];return [r[0],r[1],r[2],r[3],x[0],x[1],x[2],x[3],x[4]]}
+function goodOf(n){const a=allScores(n);if(!a)return null;return a.map((v,i)=>v==null?null:CRIT[i][4]==="down"?6-v:CRIT[i][4]==="none"?0:v)}
 const GHUE=[0,0,30,52,95,135];/* 1 rot · 2 orange · 3 gelb · 4 hellgrün · 5 grün */
-function gcol(g){return `--gh:${GHUE[g]}`}
-function scoreHTML(n,cls){const r=SC[n];if(!r)return "";const g=goodOf(n);const L=["Carbs","Protein","Fett","Gesund"];
-  return `<span class="scores${cls?" "+cls:""}" aria-label="Kohlenhydrate ${r[0]} von 5, Protein ${r[1]} von 5, Fett ${r[2]} von 5, Gesundheit ${r[3]} von 5">${L.map((l,i)=>`<span class="sc g" style="${gcol(g[i])}">${l} <b>${r[i]}</b>/5</span>`).join("")}</span>`}
+function gcol(g){return g?`--gh:${GHUE[g]}`:""}
+function scoreHTML(n,cls){const a=allScores(n);if(!a)return "";const g=goodOf(n);
+  return `<span class="scores${cls?" "+cls:""}">${CRIT.map((c,i)=>a[i]==null?"":`<button type="button" class="sc ${g[i]?"g":"neutral"}" style="${gcol(g[i])}" data-crit="${c[0]}" aria-label="${esc(c[2])} ${a[i]} von 5, Erklärung anzeigen" title="Was heisst das?">${c[1]} <b>${a[i]}</b>/5</button>`).join("")}</span>`}
+function openCrit(id){const c=CRIT.find(x=>x[0]===id);if(!c)return;document.getElementById("critTitle").textContent=c[2];
+  document.getElementById("critText").textContent=c[3];
+  document.getElementById("critScale").textContent=c[4]==="none"?"Keine Farbe: mehr oder weniger ist je nach Tag richtig.":c[4]==="down"?"Farbe: 1 = grün (wenig, gut) … 5 = rot (viel, ungünstig).":"Farbe: 5 = grün (viel, gut) … 1 = rot (wenig, ungünstig).";
+  critModal.hidden=false;document.getElementById("critClose").focus()}
 function isProtRich(n,sk){const x=NUT[n];return !!x&&x.p>=(MAINS.includes(sk)||sk==="fruehstueck"?22:12)}
 /* Eignung: aus Verdaulichkeit (DP) und Profil abgeleitet */
 function suitOf(n){const p=DP[n]||{},x=NUT[n]||{},r=[];
@@ -1086,7 +1104,7 @@ function renderWeekTable(){
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
       return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
-        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5). Grün = günstig, rot = ungünstig">${(()=>{const g=goodOf(val),r=SC[val];return ["Carbs","P","F","Gesund"].map((l,i)=>`<span class="g" style="${gcol(g[i])}">${l} ${r[i]}${i===3?"/5":""}</span>`).join(" · ")})()}</div>`:""}${extraChips(k,sk,"w")}
+        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5). Grün = günstig, rot = ungünstig">${(()=>{const g=goodOf(val),r=SC[val];const a=allScores(val);return [["Carbs",0],["P",1],["F",2],["Vit",4],["Ball",5],["Zucker",6],["Gesund",3]].filter(([,i])=>a[i]!=null).map(([l,i])=>`<span class="g" style="${gcol(g[i])}">${l} ${a[i]}${l==="Gesund"?"/5":""}</span>`).join(" · ")})()}</div>`:""}${extraChips(k,sk,"w")}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:""}
         <div class="wacts"><button type="button" class="minibtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"w")}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>
       </div></div>`;
@@ -1690,6 +1708,10 @@ function openDish(k,sk,from){dishCtx={k,sk,from};
   document.getElementById("dishInput").value="";dishModal.hidden=false;document.getElementById("dishInput").focus()}
 function closeDish(){dishModal.hidden=true;const f=dishCtx&&dishCtx.from&&document.getElementById(dishCtx.from);if(f)f.focus()}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-adddish]");if(!b)return;const [k,sk]=b.dataset.adddish.split("|");openDish(k,sk,b.id)});
+const critModal=document.getElementById("critModal");
+critModal.addEventListener("click",e=>{if(e.target===critModal||e.target.closest("[data-close]"))critModal.hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!critModal.hidden)critModal.hidden=true});
+document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-crit]");if(c){e.preventDefault();e.stopPropagation();openCrit(c.dataset.crit)}},true);
 dishModal.addEventListener("click",e=>{if(e.target===dishModal||e.target.closest("[data-close]"))closeDish()});
 document.getElementById("dishForm").addEventListener("submit",e=>{e.preventDefault();if(!dishCtx)return;
   const v=document.getElementById("dishInput").value.trim();if(!v){flash("Bitte einen Namen eingeben.");return}
