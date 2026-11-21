@@ -320,6 +320,16 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .dishpick.big .dishname{font-size:1.02rem}
 .dishpick.big{padding:9px 28px 9px 11px}
 .dishpick.empty .dishname{color:var(--muted);font-weight:500}
+.scores{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px}
+.scores .sc{font-size:.7rem;font-weight:600;line-height:1.25;padding:1px 6px;border-radius:999px;background:var(--surface);color:var(--muted);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.scores .sc b{color:var(--ink)}
+.scores .sc.h{border-color:var(--muted)}
+.scores .sc.h4,.scores .sc.h5{color:var(--t-leicht);border-color:var(--t-leicht)}.scores .sc.h4 b,.scores .sc.h5 b{color:var(--t-leicht)}
+.scores .sc.h1,.scores .sc.h2{color:var(--t-mittel);border-color:var(--t-mittel)}.scores .sc.h1 b,.scores .sc.h2 b{color:var(--t-mittel)}
+.scores.inline{margin-top:6px}
+.wscore{font-size:.7rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.3}
+.wscore .h4,.wscore .h5{color:var(--t-leicht)}.wscore .h1,.wscore .h2{color:var(--t-mittel)}
+.xscore{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-top:4px}
 .protpill{align-self:flex-start;font-size:.75rem;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
 .protpill.ok{color:var(--t-leicht);border-color:var(--t-leicht)}
 .chipname{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px}
@@ -566,7 +576,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> P = Protein pro Portion (ca.). KH schnell = Weissmehl, Zucker, Früchte; KH langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: KH = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). P … g = Protein pro Portion (ca.). KH schnell = Weissmehl, Zucker, Früchte; KH langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -795,7 +805,11 @@ const KTXT={s:"schnelle Kohlenhydrate",l:"langsame Kohlenhydrate (Vollkorn, Hafe
 const FTXT={g:"gesunde Fette",u:"eher gesättigte Fette (Butter, Käse, Fleisch)"};
 function nutOf(n){return NUT[n]||null}
 function protOf(n){const x=NUT[n];return x?x.p:0}
-function healthOf(n){const x=NUT[n];return x?x.h:2}
+const SC={"Protein-Birchermüesli": [4, 4, 3, 5], "Vollkornbrot mit Avocado und Eiern": [3, 3, 4, 5], "Vollkornbrot mit Butter und Konfi, Frucht + Proteinshake": [5, 4, 3, 3], "Vollkornbrot mit Bündnerfleisch, Philadelphia und Gurken": [3, 4, 3, 3], "Pfannen-Oats mit Beeren und Skyr": [4, 4, 2, 5], "Zopf mit Konfi oder Honig": [5, 1, 3, 1], "Protein-Birchermüesli (kleine Portion)": [3, 3, 2, 5], "Frucht und eine Handvoll Nüsse": [2, 2, 4, 5], "Skyr mit Frucht": [2, 4, 1, 5], "Darvida": [3, 1, 1, 3], "Studentenfutter": [3, 2, 4, 3], "Banane": [3, 1, 1, 5], "Apfel": [2, 1, 1, 5], "Orange": [2, 1, 1, 5], "Mandarine/Clementine": [2, 1, 1, 5], "Kaki": [3, 1, 1, 5], "Nektarine/Pfirsich": [2, 1, 1, 5], "Birne": [2, 1, 1, 5], "Proteinshake": [3, 5, 3, 4], "Sandwich mit Fleisch und/oder Käse": [3, 3, 3, 3], "Getreidewaffeln (Mais, Reis, Amaranth usw.)": [3, 1, 1, 3], "Riegel": [4, 1, 3, 2], "Dörrfrüchte": [4, 1, 1, 3], "Schokoladenmilch": [3, 3, 2, 3], "Brötli": [3, 1, 1, 2], "Schokoladenmilch und Sandwich": [4, 4, 3, 3], "Spaghetti Bolognese oder Hörnli mit Ghackets, evtl. Apfelmus": [4, 4, 3, 3], "Reis mit Poulet und Gemüse": [4, 5, 1, 5], "Vegi-Bolognese mit Linsen oder Sojahack": [4, 4, 1, 5], "Reis mit Tofu und Gemüse": [4, 3, 2, 5], "Reis mit Ei und Gemüse": [4, 3, 2, 4], "Pasta mit Tomatensauce": [5, 2, 1, 3], "Gemüsecurry mit Reis": [4, 2, 3, 4], "Quinoa mit Gemüse oder Quinoa-Salat": [3, 2, 2, 5], "Couscous mit Gemüse": [4, 2, 2, 4], "Linsendal mit Reis": [4, 3, 1, 5], "Pasta mit Thon-Tomatensauce": [4, 5, 1, 4], "Pasta mit Poulet und Pesto": [4, 5, 4, 3], "Hörnli mit Hüttenkäse und Gemüse": [4, 4, 1, 4], "Lasagne mit Linsen oder Hackfleisch": [4, 4, 4, 2], "Poulet-Reis-Pfanne mit Ei (Fried Rice)": [4, 4, 3, 3], "Chili sin Carne mit Reis": [4, 3, 1, 5], "Risotto mit Poulet und Erbsen": [4, 4, 3, 3], "Burrito-Bowl mit Reis, Bohnen und Poulet oder Hackfleisch": [4, 5, 2, 5], "Kartoffel-Gemüse-Blech mit Poulet oder Kichererbsen": [4, 4, 2, 5], "Poulet-Wraps mit Bohnen und Salat": [4, 5, 2, 4], "Couscous-Salat mit Feta und Kichererbsen": [3, 3, 3, 4], "Nudel-Pfanne mit Rindfleisch oder Tofu und Gemüse": [4, 4, 2, 4]};/* Bewertung 1–5: [Kohlenhydrate, Protein, Fett, Gesundheit] */
+function healthOf(n){const r=SC[n];if(r)return (r[3]+1)/2;const x=NUT[n];return x?x.h:2}
+function scoreOf(n){return SC[n]||null}
+const HTXT=["","eher selten","ab und zu","gut","sehr gut","top"];
+function scoreHTML(n,cls){const r=SC[n];if(!r)return "";return `<span class="scores${cls?" "+cls:""}" aria-label="Kohlenhydrate ${r[0]} von 5, Protein ${r[1]} von 5, Fett ${r[2]} von 5, Gesundheit ${r[3]} von 5"><span class="sc">KH <b>${r[0]}</b>/5</span><span class="sc">Protein <b>${r[1]}</b>/5</span><span class="sc">Fett <b>${r[2]}</b>/5</span><span class="sc h h${r[3]}">Gesund <b>${r[3]}</b>/5</span></span>`}
 function isProtRich(n,sk){const x=NUT[n];return !!x&&x.p>=(MAINS.includes(sk)||sk==="fruehstueck"?22:12)}
 /* Eignung: aus Verdaulichkeit (DP) und Profil abgeleitet */
 function suitOf(n){const p=DP[n]||{},x=NUT[n]||{},r=[];
@@ -806,13 +820,13 @@ function suitOf(n){const p=DP[n]||{},x=NUT[n]||{},r=[];
   if(p.fib||x.k==="l")r.push(["frei","mit Abstand zum Training / Restday"]);
   return r}
 const SUIT_SHORT={kurz:"bis 1 h vorher",vor:"2–3 h vorher",match:"Matchday",nach:"nach Training",frei:"Restday"};
-function nutBadges(n,sk){const x=NUT[n];if(!x)return "";const b=[];
+function nutBadges(n,sk){const x=NUT[n];if(!x)return scoreHTML(n);const b=[];
   b.push(`<span class="nb p${isProtRich(n,sk)?" hi":""}" title="Protein ca. ${x.p} g">P ${x.p} g</span>`);
   if(x.k)b.push(`<span class="nb k${x.k}" title="${KTXT[x.k]}">${x.k==="s"?"KH schnell":x.k==="l"?"KH langsam":"KH gemischt"}</span>`);
   if(x.f)b.push(`<span class="nb f${x.f}" title="${FTXT[x.f]}">${x.f==="g"?"gesunde Fette":"gesättigte Fette"}</span>`);
   suitOf(n).forEach(([c,t])=>b.push(`<span class="nb s-${c}" title="Geeignet: ${t}">${SUIT_SHORT[c]}</span>`));
-  return `<span class="nbs">${b.join("")}</span>`}
-function nutLine(n,sk){const x=NUT[n];if(!x)return "";const t=[`Protein ca. ${x.p} g${isProtRich(n,sk)?" (proteinreich)":""}`];
+  return scoreHTML(n)+`<span class="nbs">${b.join("")}</span>`}
+function nutLine(n,sk){const x=NUT[n];if(!x)return "";const r=SC[n];const t=[(r?`Bewertung: Kohlenhydrate ${r[0]}/5, Protein ${r[1]}/5, Fett ${r[2]}/5, Gesundheit ${r[3]}/5 (${HTXT[r[3]]})`:""),`Protein ca. ${x.p} g${isProtRich(n,sk)?" (proteinreich)":""}`].filter(Boolean);
   if(x.k)t.push(KTXT[x.k]);if(x.f)t.push(FTXT[x.f]);const su=suitOf(n).map(a=>a[1]);if(su.length)t.push("geeignet: "+su.join(", "));
   return t.join(" · ")+"."}
 /* Proteinbedarf: ca. 1,3–1,6 g pro kg Körpergewicht, je nach Belastung */
@@ -1063,7 +1077,7 @@ function renderWeekTable(){
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
       return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
-        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${extraChips(k,sk,"w")}
+        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5)">KH ${SC[val][0]} · P ${SC[val][1]} · F ${SC[val][2]} · <span class="h${SC[val][3]}">Gesund ${SC[val][3]}/5</span></div>`:""}${extraChips(k,sk,"w")}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:""}
         <div class="wacts"><button type="button" class="minibtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"w")}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>
       </div></div>`;
@@ -2005,6 +2019,7 @@ function renderToday(){
     return `<li class="tl meal${done?" done":""}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="hmt-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${esc(slotName(sk))} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">
       <div class="tlhead"><span class="tlgrip"><button type="button" class="draghandle" id="hdh-${sk}" data-drag="${k}|${sk}" aria-label="${esc(slotName(sk))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><span class="eyebrow">${esc(L[sk]||slotName(sk))}</span></span>${v?`<label class="tick"><input type="checkbox" id="tick-${sk}" data-tick="${sk}"${done?" checked":""}${canTick?"":" disabled"}><span>${done?"Gegessen":"Abhaken"}</span></label>`:""}</div>
       ${dishPick(`hsel-${sk}`,k,sk,v,slotName(sk),true)}${extraChips(k,sk,"h")}
+      ${v?scoreHTML(v,"inline"):""}${v?extrasOf(k,sk).map(n=>scoreHTML(n,"inline x")?`<span class="xscore">+ ${esc(n)}</span>${scoreHTML(n,"inline x")}`:"").join(""):""}
       ${warn}${hint}
       <div class="tlactions"><button type="button" class="minibtn" id="hrr-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${esc(slotName(sk))}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"h")}${v?`<button type="button" class="minibtn favbtn" id="hfav-${sk}" data-fav="${esc(v)}" aria-pressed="${isFav(v)}" aria-label="${esc(v)} als Favorit" title="Favorit">${isFav(v)?"♥":"♡"}</button>`:""}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}${info?`<details class="info"><summary>Info</summary>${esc(info)}</details>`:""}</div>
     </div></li>`;
