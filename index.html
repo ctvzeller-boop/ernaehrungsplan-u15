@@ -62,7 +62,7 @@ header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content
 .themeline{display:flex;justify-content:flex-end;align-items:center;margin:-6px 0 6px}
 /* Gemeinsame Navigation über alle drei Apps */
 .appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
-.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
 .appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
 .appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
 
@@ -482,7 +482,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<nav class="appnav" aria-label="Apps"><div><a href="planner/">Planner</a><a href="training/">Workout</a><a href="./" aria-current="page">Nutrition</a></div></nav>
+<nav class="appnav" aria-label="Apps"><div><a href="start/">Start</a><a href="planner/">Planner</a><a href="training/">Workout</a><a href="./" aria-current="page">Nutrition</a></div></nav>
 <div class="wrap">
   <div class="themeline"><button type="button" class="themebtn" id="themeBtn"></button></div>
   <header>
@@ -696,6 +696,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
@@ -2231,6 +2232,38 @@ document.getElementById("installClose").addEventListener("click",()=>{document.g
 if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
 showInstall();cloudInit();
+/* ---------- Konto (gleiches Konto wie Planner und Workout): Plan vom Coach übernehmen ---------- */
+const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl",AKEY="cz-training-auth";
+let sb=null,sbUser=null;
+async function encodeObj(o){const data=new TextEncoder().encode(JSON.stringify(o));
+  if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}return "b"+b64url(data)}
+async function pullCoachPlan(){if(!sb||!sbUser)return;
+  try{const {data,error}=await sb.from("nutrition_state").select("data,updated_at").eq("user_id",sbUser.id).maybeSingle();if(error||!data||!data.data||!data.data.p)return;
+    if(state.coachUpd===data.updated_at&&state.plans.some(p=>p.id===state.coachPlan))return;
+    const o=data.data,ok=await importCode(await encodeObj({n:o.n||"",v:!!o.v,p:o.p,kg:o.kg||null}));
+    if(ok){state.coachUpd=data.updated_at;state.coachPlan=state.active;save()}}catch(e){}}
+async function sbInit(){try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null;return}
+  try{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null}catch(e){}
+  if(sbUser)pullCoachPlan();
+  sb.auth.onAuthStateChange((ev,s2)=>{const was=sbUser;sbUser=s2?s2.user:null;if(sbUser&&!was)pullCoachPlan()});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&sbUser)pullCoachPlan()})}
+{let has=false;try{has=!!localStorage.getItem(AKEY)}catch(e){}
+ if(has&&!/claude/.test(location.hostname)){let tries=0;const go=()=>{if(window.supabase&&window.supabase.createClient){sbInit();return}if(++tries<150)setTimeout(go,100)};go()}}
+/* ---------- Spieler-Paket (start/): Plan und daraus abgeleitete Planner-Woche ---------- */
+function plannerTpl(){ensureSleep();const tpl={},GYM=/gym|kraft|athletik|krafttraining|fitness/i;
+  DAYS.forEach(([k],i)=>{const d=state.plan[k],sw=state.sleepWeek,wake=sw[DAYS[(i+6)%7][0]].wake||(k==="sa"||k==="so"?"08:00":"06:30"),bed=sw[k].bed||(k==="fr"||k==="sa"?"22:30":"21:30");
+    const {T,S}=planTimes(k,toMin(wake));const b=[],id=uid;
+    actsOf(d).forEach(a=>{const kind=a.k==="schule"?"schule":a.k==="anderes"?"termin":"rec";const o={id:id(),k:kind,s:fmtTime(a.s),e:fmtTime(a.e)};if(kind!=="schule"&&a.label)o.t=a.label;b.push(o)});
+    S.forEach(x=>{const nm=x.named?x.label:"";let kind=x.rec?"rec":d.t==="spiel"?"match":GYM.test(nm)?"sport":"unihockey";
+      const o={id:id(),k:kind,s:fmtTime(x.s),e:fmtTime(x.e)};if(nm)o.t=nm;else if(x.rec)o.t="Active Recovery";b.push(o)});
+    SLOTS.forEach(([sk])=>{const v=fullDish(k,sk);if(!v)return;b.push({id:id(),k:"essen",meal:sk,s:fmtTime(Math.round(T[sk]/5)*5),t:v})});
+    tpl[k]={b,wake,bed}});
+  return tpl}
+window.czPlans=()=>{save();return state.plans.map(p=>({id:p.id,name:p.name||"",active:p.id===state.active}))};
+window.czExport=id=>{const prev=state.active;if(id&&id!==prev)switchPlan(id);
+  const obj={n:state.name||"",v:!!state.veg,p:JSON.parse(JSON.stringify(state.plan))};if(state.kg)obj.kg=state.kg;
+  const tpl=plannerTpl(),school=Object.values(state.plan).some(d=>(d.act||[]).some(a=>a.k==="schule"));
+  if(id&&id!==prev)switchPlan(prev);return {obj,tpl,school}};
 {const c=codeFrom(location.hash);if(c)importCode(c)}
 /* Design: Automatisch (wie Handy) · Dunkel · Hell */
 (function(){const b=document.getElementById("themeBtn");if(!b)return;const L={"":"Automatisch",dark:"Dunkel",light:"Hell"};

@@ -50,7 +50,7 @@
 [hidden]{display:none!important}
 /* Gemeinsame Navigation über alle drei Apps */
 .appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
-.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
 .appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
 .appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
 .lib{top:calc(62px + env(safe-area-inset-top,0px))!important;max-height:calc(100vh - 74px)!important}
@@ -558,7 +558,7 @@ textarea#planText{min-height:140px;font-size:.85rem;background:var(--bg)}
 </style>
 </head>
 <body data-mode="edit">
-<nav class="appnav" aria-label="Apps"><div><a href="../planner/">Planner</a><a href="../training/" aria-current="page">Workout</a><a href="../">Nutrition</a></div></nav>
+<nav class="appnav" aria-label="Apps"><div><a href="../start/">Start</a><a href="../planner/">Planner</a><a href="../training/" aria-current="page">Workout</a><a href="../">Nutrition</a></div></nav>
 <div class="wrap">
   <div class="acctline" id="acctLine"><button type="button" class="themebtn" id="themeBtn"></button><button type="button" id="acctWho" aria-haspopup="dialog" hidden></button></div>
   <header>
@@ -2329,11 +2329,15 @@ if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude/.test(lo
 renderCustom();renderAll();showInstall();cloudInit();
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
 
-{const c=codeFrom(location.hash);if(c)importCode(c)}
+window.czSessions=()=>state.sessions.map(s=>({id:s.id,t:s.t||"",a:s.a||"",n:(s.items||[]).length}));
+window.czExportSess=id=>{const c=state.sessions.find(s=>s.id===id);if(!c)return null;const o={t:c.t,i:c.items.map(packItem)};if(c.a)o.a=c.a;if(c.h)o.h=c.h;return o};
+const inboxReady=(async()=>{const c=codeFrom(location.hash);if(c)await importCode(c)})();
 /* Link in einen schon offenen Tab eingefügt: nur der #-Teil ändert sich, die Seite lädt nicht neu */
 addEventListener("hashchange",()=>{const c=codeFrom(location.hash);if(c)importCode(c)});
 /* Aus dem Wochenplaner: #open=<Einheit> öffnet diese Einheit direkt im Trainingsmodus */
-function openFromHash(){const m=/#open=([^&]+)/.exec(location.hash);if(!m)return;const sid=decodeURIComponent(m[1]);
+async function openFromHash(){const m=/#open=([^&]+)/.exec(location.hash);if(!m)return;let sid=decodeURIComponent(m[1]);
+  try{await inboxReady}catch(e){}if(sid.startsWith("t:")&&typeof pullAssignments==="function")try{await pullAssignments()}catch(e){}
+  if(sid.startsWith("t:")){const t=sid.slice(2).trim().toLowerCase();const f=state.sessions.find(s=>String(s.t||"").trim().toLowerCase()===t);sid=f?f.id:""}
   if(state.sessions.some(s=>s.id===sid)){state.active=sid;setMode("train");renderAll();scrollTo(0,0)}else flash("Diese Einheit gibt es auf diesem Gerät nicht mehr.");
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}
 openFromHash();addEventListener("hashchange",openFromHash);

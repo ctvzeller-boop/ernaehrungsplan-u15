@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<script>try{var t=localStorage.getItem("cz-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CZ Start</title>
+<meta name="theme-color" content="#14232C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CZ Start">
+<link rel="icon" type="image/png" sizes="32x32" href="../training/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../training/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
+<style>
+/* CZ Start: Konto für Spieler, Coach schickt Wochenplan, Ernährungsplan und Trainings */
+:root{
+  --bg:#F2F5F7; --surface:#FFFFFF; --ink:#14232C; --muted:#5A6A73; --line:#D8E0E5;
+  --accent:#1D63C9; --accent-soft:#E3ECFA; --warn:#C2412D; --ok:#2E8B57; --ok-soft:#E2F2E8;
+  --c-plan:#1D63C9; --c-plan-bg:#E3ECFA; --c-nut:#0E7C6B; --c-nut-bg:#DDF3EE; --c-tr:#C2412D; --c-tr-bg:#FBE4DF;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
+  --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77; --ok:#4CC383; --ok-soft:#173326;
+  --c-plan:#6EA4F2; --c-plan-bg:#1B2D46; --c-nut:#5FD1BC; --c-nut-bg:#14332E; --c-tr:#F08A77; --c-tr-bg:#3D211C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F171C; --surface:#172229; --ink:#E6EDF1; --muted:#97A7B0; --line:#2A3943;
+  --accent:#6EA4F2; --accent-soft:#1B2D46; --warn:#F08A77; --ok:#4CC383; --ok-soft:#173326;
+  --c-plan:#6EA4F2; --c-plan-bg:#1B2D46; --c-nut:#5FD1BC; --c-nut-bg:#14332E; --c-tr:#F08A77; --c-tr-bg:#3D211C; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body)}
+.appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) 16px 6px}
+.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
+main{max-width:720px;margin:0 auto;padding:18px 16px 60px}
+h1{font:700 2.1rem/1.05 var(--display);margin:6px 0 4px;letter-spacing:.01em}
+h2{font:700 1.35rem/1.1 var(--display);margin:0 0 6px}
+h3{font:700 1.1rem/1.1 var(--display);margin:0;letter-spacing:.02em}
+p{margin:0 0 10px}
+.lead{color:var(--muted);margin-bottom:16px}
+.hint{color:var(--muted);font-size:.9rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.f{display:grid;gap:4px;margin:0 0 10px}
+label{font-weight:600;font-size:.92rem}
+input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent);flex:none;margin:0}
+input[type=time]{width:auto}
+.btn{font:600 1rem var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 14px;min-height:44px;cursor:pointer}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:.92rem}
+.btn:disabled{opacity:.5;cursor:default}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.err{color:var(--warn);font-size:.92rem;min-height:1.2em;margin:8px 0 0}
+.apps{display:grid;gap:10px}
+.app{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;padding:14px}
+.app .ic{width:40px;height:40px;border-radius:10px;background:var(--cbg);color:var(--c);display:grid;place-items:center;font-size:1.25rem}
+.app b{display:block;font:700 1.2rem/1.1 var(--display);letter-spacing:.02em}
+.app .st{color:var(--muted);font-size:.92rem}
+.app .st.ok{color:var(--ok)}
+.app .go{color:var(--muted);font-size:1.3rem}
+.c-plan{--c:var(--c-plan);--cbg:var(--c-plan-bg)}.c-nut{--c:var(--c-nut);--cbg:var(--c-nut-bg)}.c-tr{--c:var(--c-tr);--cbg:var(--c-tr-bg)}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.who .hint b{color:var(--ink)}
+/* Coach */
+.players{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.players button{width:100%;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;min-height:48px}
+.players button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.players .nm{font-weight:600}
+.players .em{display:block;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.dots{display:flex;gap:4px}
+.dot{font-size:.78rem;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.dot.on{background:var(--cbg);color:var(--c);border-color:transparent}
+.sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.sec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.sechead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sechead .ic{width:30px;height:30px;border-radius:8px;background:var(--cbg);color:var(--c);display:grid;place-items:center}
+.now{font-size:.9rem;color:var(--muted);margin:0 0 8px}
+.now.ok{color:var(--ok)}
+.tlist{display:grid;gap:6px;margin:0 0 8px;padding:0;list-style:none}
+.tlist li{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.tlist .tt{font-weight:600}
+.tlist .tt small{display:block;font-weight:400;color:var(--muted)}
+.tlist .place{grid-column:2;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.tlist .place select{width:auto;min-height:36px;padding:4px 8px}
+.tlist .place input{min-height:36px;padding:4px 8px}
+.check{display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:4px 0}
+.sendall{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:18px 0 calc(10px + env(safe-area-inset-bottom,0px));margin-top:4px}
+.sendall .btn{width:100%}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.8rem;max-height:260px;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-weight:600;max-width:calc(100% - 32px);z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+details summary{cursor:pointer;font-weight:600}
+.loading{color:var(--muted);padding:20px 0}
+</style>
+</head>
+<body>
+<nav class="appnav" aria-label="Apps"><div><a href="../start/" aria-current="page">Start</a><a href="../planner/">Planner</a><a href="../training/">Workout</a><a href="../">Nutrition</a></div></nav>
+<main id="app"><p class="loading">Lädt …</p></main>
+<div class="toast" id="toast" role="status" hidden></div>
+<iframe id="nutFrame" title="" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px"></iframe>
+<script>
+const SB_URL="https://momvxwtwrciwrkepkeig.supabase.co",SB_KEY="sb_publishable_m4X4Gblz8gWM0XAngsjiiQ_K1WbhBVl",UKEY="cz-training-user",AKEY="cz-training-auth";
+const NKEY="u15-ernaehrungswoche-v2",TKEY="u15-trainingseinheit-v1",HUB="cz-coach-hub";
+const DAYS=[["mo","Mo"],["di","Di"],["mi","Mi"],["do","Do"],["fr","Fr"],["sa","Sa"],["so","So"]];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const readJSON=k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}};
+const toM=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||"");return m?(+m[1])*60+(+m[2]):null};
+const fmt=m=>{m=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+const fdate=d=>{if(!d)return "";const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("de-CH",{day:"numeric",month:"numeric"})+", "+x.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})};
+function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
+function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m))return "E-Mail oder Passwort stimmt nicht.";if(/already registered|already exists/i.test(m))return "Für diese E-Mail gibt es schon ein Konto – bitte «Anmelden».";
+  if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
+const missing=e=>{const m=String(e&&((e.code||"")+" "+(e.message||"")));return /42P01|PGRST205/.test(m)||/nutrition_state/.test(m)&&/exist|find|schema/i.test(m)};
+function cacheUser(u){try{u?localStorage.setItem(UKEY,JSON.stringify({id:u.id,email:u.email,user_metadata:u.user_metadata||{}})):localStorage.removeItem(UKEY)}catch(e){}}
+let sb=null,user=null,isCoach=false,players=[],sel=null,info={},noNut=false;
+const uname=()=>user?((user.user_metadata||{}).name||String(user.email||"").split("@")[0]):"";
+
+/* ---------- Ansichten ---------- */
+const ICON={plan:"🗓",nut:"🍽",tr:"🏋"};
+function appCards(st){st=st||{};const c=(cls,href,ic,name,txt,ok)=>`<a class="app ${cls}" href="${href}"><span class="ic" aria-hidden="true">${ic}</span><span><b>${name}</b><span class="st${ok?" ok":""}">${txt}</span></span><span class="go" aria-hidden="true">›</span></a>`;
+  return `<div class="apps">${c("c-plan","../planner/",ICON.plan,"Planner",st.plan||"Deine Woche: Schule, Training, Schlaf, Essen",st.planOk)}
+  ${c("c-tr","../training/",ICON.tr,"Workout",st.tr||"Deine Trainingseinheiten, Sätze und Gewichte",st.trOk)}
+  ${c("c-nut","../",ICON.nut,"Nutrition",st.nut||"Dein Ernährungsplan für die Woche",st.nutOk)}</div>`}
+function viewLogin(msg){$("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">Planner, Workout und Nutrition in einem Konto. Melde dich einmal an – dein Coach schickt dir Wochenplan, Trainings und Ernährungsplan direkt hierhin, auf jedem Gerät.</p>
+  <div class="card"><h2>Anmelden oder Konto erstellen</h2>
+  <form id="acForm" autocomplete="on">
+    <div class="f"><label for="acMail">E-Mail</label><input type="email" id="acMail" autocomplete="email" required inputmode="email" autocapitalize="off"></div>
+    <div class="f"><label for="acPw">Passwort (mind. 6 Zeichen)</label><input type="password" id="acPw" autocomplete="current-password" required minlength="6"></div>
+    <div class="f"><label for="acName">Vor- und Nachname (nur für neues Konto)</label><input type="text" id="acName" autocomplete="name" placeholder="z. B. Finn Doswald"></div>
+    <div class="acts"><button type="submit" class="btn pri">Anmelden</button><button type="button" class="btn" id="acUp">Neues Konto erstellen</button></div>
+  </form><p class="err" id="acErr">${esc(msg||"")}</p></div>
+  <p class="hint" style="margin:0 0 8px">Ohne Konto funktionieren die Apps auch, dann bleibt alles nur auf diesem Gerät.</p>${appCards()}`}
+async function viewPlayer(){$("app").innerHTML=`<div class="who"><h1>Hallo ${esc(uname())}</h1><button type="button" class="btn sm" id="acOut">Abmelden</button></div><p class="lead">Das hat dein Coach für dich bereit:</p><div id="pc">${appCards({plan:"Lädt …",tr:"Lädt …",nut:"Lädt …"})}</div>
+  <div class="card"><p class="hint" style="margin:0"><b>Tipp:</b> Leg dir die drei Apps auf den Homescreen (Teilen › «Zum Home-Bildschirm»). Auf dem iPhone musst du dich in der Homescreen-App einmal anmelden – danach kommt alles vom Coach automatisch.</p></div>`;
+  const st={};
+  const [p,n,a]=await Promise.all([sb.from("planner_state").select("data,updated_at").eq("user_id",user.id).maybeSingle(),sb.from("nutrition_state").select("data,updated_at").eq("user_id",user.id).maybeSingle(),sb.from("assignments").select("title,updated_at").eq("player_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
+  const pd=p.data&&p.data.data,nb=pd&&pd.tpl?Object.values(pd.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
+  st.plan=nb?`Wochenplan mit ${nb} Einträgen`:"Noch kein Wochenplan";st.planOk=!!nb;
+  const nd=n.data&&n.data.data;st.nut=nd&&nd.p?`«${nd.n||"Ernährungsplan"}» vom Coach`:"Noch kein Ernährungsplan vom Coach";st.nutOk=!!(nd&&nd.p);
+  const tl=(a.data||[]).map(x=>x.title).filter(Boolean);st.tr=tl.length?`${tl.length} Einheit${tl.length===1?"":"en"}: ${tl.join(", ")}`:"Noch keine Einheiten vom Coach";st.trOk=!!tl.length;
+  if($("pc"))$("pc").innerHTML=appCards(st)}
+
+/* ---------- Coach ---------- */
+function hub(){return readJSON(HUB)||{}}
+function setHub(h){try{localStorage.setItem(HUB,JSON.stringify(h))}catch(e){}}
+function nutPlans(){const n=readJSON(NKEY);if(!n)return [];if(Array.isArray(n.plans))return n.plans.filter(p=>p.plan);return n.plan?[{id:"main",name:n.name||"Plan",plan:n.plan,veg:n.veg,kg:n.kg}]:[]}
+function trSessions(){const t=readJSON(TKEY);return ((t&&t.sessions)||[]).filter(s=>!s.free&&!s.assign&&(s.items||[]).length)}
+function sessPayload(x){return {id:x.id,t:x.t||"",a:x.a||"",h:x.h||"",items:(x.items||[]).map(it=>{const {log,xs,skip,temp,added,...r}=it;return r})}}
+const norm=s=>String(s||"").trim().toLowerCase();
+function pname(p){return p.name||p.email||"Spieler"}
+async function loadCoach(){const r=await sb.rpc("my_players");players=(r.data||[]).slice().sort((a,b)=>pname(a).localeCompare(pname(b),"de"));const ids=players.map(p=>p.player_id);info={};
+  ids.forEach(id=>info[id]={plan:null,nut:null,tr:[]});if(!ids.length)return;
+  const [p,n,a]=await Promise.all([sb.from("planner_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("assignments").select("id,player_id,sid,title,updated_at").eq("coach_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
+  (p.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].plan=x});
+  noNut=!!(n.error&&missing(n.error));(n.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].nut=x});
+  (a.data||[]).forEach(x=>{if(info[x.player_id])info[x.player_id].tr.push(x)})}
+function dots(id){const i=info[id]||{},nb=i.plan&&i.plan.data&&i.plan.data.tpl?Object.values(i.plan.data.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
+  return `<span class="dots"><span class="dot c-plan${nb?" on":""}" title="Wochenplan">${ICON.plan}${nb?" ✓":""}</span><span class="dot c-nut${i.nut?" on":""}" title="Ernährungsplan">${ICON.nut}${i.nut?" ✓":""}</span><span class="dot c-tr${i.tr&&i.tr.length?" on":""}" title="Trainings">${ICON.tr} ${i.tr?i.tr.length:0}</span></span>`}
+function viewCoach(){const plans=nutPlans(),S=trSessions();
+  let h=`<div class="who"><div><h1>Spieler</h1><p class="hint" style="margin:0">Coach: <b>${esc(uname())}</b></p></div><button type="button" class="btn sm" id="acOut">Abmelden</button></div>
+  <p class="lead">Wähle einen Spieler und schick ihm Wochenplan, Ernährungsplan und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
+  if(noNut)h+=sqlCard();
+  if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
+  else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><ul class="players" id="plist">${playerList("")}</ul>
+    <div class="acts" style="margin-top:10px"><button type="button" class="btn sm" id="copyStart">Anmelde-Link für neue Spieler kopieren</button></div></div>`;
+    if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S)}
+  $("app").innerHTML=h}
+function playerList(q){q=norm(q);return players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q)).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
+function guessPlan(p,plans){const h=hub()[sel]||{};if(h.plan&&plans.some(x=>x.id===h.plan))return h.plan;const n=norm(pname(p)),first=n.split(" ")[0];
+  const i=info[sel];if(i&&i.nut&&i.nut.data){const m=plans.find(x=>norm(x.name)===norm(i.nut.data.n));if(m)return m.id}
+  const m=plans.find(x=>norm(x.name)===n)||plans.find(x=>first&&norm(x.name).includes(first)&&norm(x.name).split(" ").every(w=>n.includes(w)));return m?m.id:""}
+function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[sel]||{},hb=hub()[sel]||{},place=hb.place||{};
+  const as=new Set((i.tr||[]).map(a=>a.sid)),nm=norm(pname(p));
+  const nb=i.plan&&i.plan.data&&i.plan.data.tpl?Object.values(i.plan.data.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
+  const pid=guessPlan(p,plans);
+  /* Einheiten: zugewiesene zuerst, dann solche mit dem Namen des Spielers */
+  const rank=x=>as.has(x.id)?0:norm(x.a)&&nm.includes(norm(x.a).split(" ")[0])?1:2;const SS=S.slice().sort((a,b)=>rank(a)-rank(b));
+  const dayOpts=v=>`<option value="">nicht im Wochenplan</option>`+DAYS.map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
+  return `<div class="card" id="panel"><h2>${esc(pname(p))}</h2>${p.email?`<p class="hint">${esc(p.email)}</p>`:""}
+  <div class="sec c-nut"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.nut}</span><h3>Ernährungsplan</h3></div>
+    <p class="now${i.nut?" ok":""}">${i.nut?`Hat jetzt: «${esc(i.nut.data.n||"Plan")}», geschickt ${fdate(i.nut.updated_at)}`:noNut?"Zuerst das SQL oben in Supabase ausführen.":"Noch kein Ernährungsplan geschickt."}</p>
+    ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Ernährungsplan. <a href="../">In Nutrition erstellen</a></p>`}
+  </div>
+  <div class="sec c-tr"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.tr}</span><h3>Trainings</h3></div>
+    <p class="now${(i.tr||[]).length?" ok":""}">${(i.tr||[]).length?`Hat jetzt: ${i.tr.map(a=>esc(a.title)).join(", ")}`:"Noch keine Einheiten zugewiesen."}</p>
+    ${SS.length?`<ul class="tlist">${SS.map(x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}</small></label>
+      <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Wochenplan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`}).join("")}</ul>`:`<p class="hint">Auf diesem Gerät gibt es noch keine Trainingseinheit. <a href="../training/">In Workout erstellen</a></p>`}
+  </div>
+  <div class="sec c-plan"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.plan}</span><h3>Wochenplan (Planner)</h3></div>
+    <p class="now${nb?" ok":""}">${nb?`Hat jetzt einen Wochenplan mit ${nb} Einträgen${i.plan.updated_at?`, zuletzt geändert ${fdate(i.plan.updated_at)}`:""}.`:"Noch kein Wochenplan."}</p>
+    <label class="check"><input type="checkbox" id="mkWeek"${hb.week===false?"":" checked"}> <span>Wochenplan neu erstellen: Schule, Trainings, Recovery, Schlaf und alle Mahlzeiten aus dem Ernährungsplan, dazu die Gym-Einheiten am gewählten Tag${nb?" <span class=\"hint\">(ersetzt seine Standardwoche)</span>":""}</span></label>
+    <div class="acts"><a class="btn sm" href="../planner/#who=${encodeURIComponent(sel)}" style="text-decoration:none;display:inline-flex;align-items:center">Im Planner ansehen und bearbeiten ›</a></div>
+  </div>
+  <div class="sendall"><button type="button" class="btn pri" id="sendAll">An ${esc(pname(p).split(" ")[0])} schicken</button><p class="err" id="sendErr"></p></div></div>`}
+function sqlCard(){return `<div class="card"><h2>Einmalig: Supabase ergänzen</h2><p>Damit du Ernährungspläne in die Konten der Spieler schicken kannst, braucht Supabase eine neue Tabelle. Öffne in Supabase den <b>SQL Editor</b>, füge dieses Skript ein und klicke <b>Run</b>:</p>
+  <pre id="sqlTxt">${esc(SQL)}</pre><div class="acts"><button type="button" class="btn" id="copySql">SQL kopieren</button><button type="button" class="btn" id="reload">Erledigt – neu laden</button></div></div>`}
+const SQL=`-- Teil 8: Ernährungsplan vom Coach in das Konto des Spielers
+create table if not exists public.nutrition_state (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  coach_id uuid references auth.users(id) on delete set null,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.nutrition_state enable row level security;
+drop policy if exists "nutrition_own_read" on public.nutrition_state;
+drop policy if exists "nutrition_coach_read" on public.nutrition_state;
+drop policy if exists "nutrition_coach_insert" on public.nutrition_state;
+drop policy if exists "nutrition_coach_update" on public.nutrition_state;
+drop policy if exists "nutrition_coach_delete" on public.nutrition_state;
+create policy "nutrition_own_read" on public.nutrition_state for select using (auth.uid() = user_id);
+create policy "nutrition_coach_read" on public.nutrition_state for select using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
+create policy "nutrition_coach_insert" on public.nutrition_state for insert with check (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
+create policy "nutrition_coach_update" on public.nutrition_state for update using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id)) with check (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
+create policy "nutrition_coach_delete" on public.nutrition_state for delete using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
+grant select, insert, update, delete on public.nutrition_state to authenticated;`;
+
+/* Ernährungsplan → Planner-Woche: die Nutrition-App rechnet die Essenszeiten selbst (verstecktes iframe) */
+let nutReady=null;
+function nutApi(){if(nutReady)return nutReady;nutReady=new Promise((res,rej)=>{const f=$("nutFrame");let n=0;const chk=()=>{try{const w=f.contentWindow;if(w&&typeof w.czExport==="function"){res(w);return}}catch(e){}if(++n>150){nutReady=null;rej(new Error("Nutrition lädt nicht"));return}setTimeout(chk,100)};f.src="../";f.onload=chk});return nutReady}
+async function sendAll(){const btn=$("sendAll"),errEl=$("sendErr");btn.disabled=true;errEl.textContent="";const p=players.find(x=>x.player_id===sel),first=pname(p).split(" ")[0];
+  const pid=$("nutSel")?$("nutSel").value:"",mk=$("mkWeek").checked;const S=trSessions();
+  const want=[...document.querySelectorAll("[data-sid]")].filter(c=>c.checked).map(c=>c.dataset.sid);
+  const place={};document.querySelectorAll("[data-pd]").forEach(s=>{const id=s.dataset.pd,t=document.querySelector(`[data-pt="${CSS.escape(id)}"]`);place[id]={d:s.value,t:t?t.value:""}});
+  const h=hub();h[sel]={plan:pid,place,week:mk};setHub(h);
+  const done=[],errs=[];const now=new Date().toISOString();
+  try{
+    /* 1. Ernährungsplan */
+    let exp=null;
+    if(pid||mk){btn.textContent="Ernährungsplan wird vorbereitet …";try{const w=await nutApi();exp=pid?w.czExport(pid):null}catch(e){if(pid)errs.push("Ernährungsplan: "+e.message)}}
+    if(pid&&exp){const r=await sb.from("nutrition_state").upsert({user_id:sel,coach_id:user.id,data:exp.obj,updated_at:now});if(r.error)errs.push(missing(r.error)?"Ernährungsplan: zuerst das SQL in Supabase ausführen (siehe oben).":"Ernährungsplan: "+sbMsg(r.error));else done.push("Ernährungsplan")}
+    /* 2. Trainings */
+    btn.textContent="Trainings werden zugewiesen …";
+    const cur=(info[sel]||{}).tr||[],rows=want.map(sid=>S.find(x=>x.id===sid)).filter(Boolean).map(x=>({coach_id:user.id,player_id:sel,sid:x.id,title:x.t||"Einheit",session:sessPayload(x),updated_at:now}));
+    let trErr=null;if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)trErr=r.error}
+    for(const a of cur.filter(a=>!want.includes(a.sid)&&S.some(x=>x.id===a.sid))){const r=await sb.from("assignments").delete().eq("id",a.id);if(r.error)trErr=r.error}
+    if(trErr)errs.push("Trainings: "+sbMsg(trErr));else if(rows.length||cur.length)done.push(`${rows.length} Training${rows.length===1?"":"s"}`);
+    /* 3. Wochenplan */
+    if(mk){btn.textContent="Wochenplan wird erstellt …";
+      let tpl=null,school=false;
+      if(exp){tpl=exp.tpl;school=exp.school}
+      else{const plans=nutPlans();const any=(info[sel]&&info[sel].nut&&plans.find(x=>norm(x.name)===norm(info[sel].nut.data.n)))||null;if(any){try{const w=await nutApi();const e2=w.czExport(any.id);tpl=e2.tpl;school=e2.school}catch(e){}}}
+      const prev=(info[sel]&&info[sel].plan&&info[sel].plan.data)||null;
+      if(!tpl)tpl=prev&&prev.tpl?JSON.parse(JSON.stringify(prev.tpl)):Object.fromEntries(DAYS.map(([k])=>[k,{b:[],wake:k==="sa"||k==="so"?"08:00":"06:30",bed:k==="fr"||k==="sa"?"22:30":"21:30"}]));
+      DAYS.forEach(([k])=>{tpl[k]=tpl[k]||{b:[]};tpl[k].b=(tpl[k].b||[]).filter(b=>b.k!=="gym")});
+      want.forEach(sid=>{const x=S.find(z=>z.id===sid),pl=place[sid];if(!x||!pl||!pl.d||toM(pl.t)==null)return;const s=toM(pl.t);tpl[pl.d].b.push({id:uid(),k:"gym",s:fmt(s),e:fmt(s+60),t:x.t||"Gym"})});
+      const data=Object.assign({},prev||{},{tpl,ov:{},upd:Date.now()});if(!prev||!prev.prof)data.prof=school?"jung":(prev&&prev.prof)||"jung";if(data.food==null)data.food=true;if(data.goal==null)data.goal=9;delete data.view;
+      const r=await sb.from("planner_state").upsert({user_id:sel,data,updated_at:now});if(r.error)errs.push(/row-level|policy|permission/i.test(String(r.error.message))?"Wochenplan: Speichern nicht erlaubt – in Supabase fehlt das SQL-Skript Teil 7 (Coach bearbeitet Wochenplan).":"Wochenplan: "+sbMsg(r.error));else done.push("Wochenplan")}
+  }catch(e){errs.push(sbMsg(e))}
+  await loadCoach();viewCoach();
+  if(done.length)toast(`An ${first} geschickt: ${done.join(", ")}`);
+  if(errs.length){const el=$("sendErr");if(el)el.textContent=errs.join(" · ")}}
+
+/* ---------- Ablauf ---------- */
+async function route(){if(!user){viewLogin();return}
+  try{const r=await sb.rpc("is_coach");isCoach=!r.error&&r.data===true}catch(e){isCoach=false}
+  if(isCoach){$("app").innerHTML=`<p class="loading">Spieler werden geladen …</p>`;try{await loadCoach()}catch(e){}viewCoach()}else viewPlayer()}
+document.addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();
+  const {data,error}=await sb.auth.signInWithPassword({email:$("acMail").value.trim(),password:$("acPw").value});if(error){$("acErr").textContent=sbMsg(error);return}user=data.user;cacheUser(user);route()});
+document.addEventListener("input",e=>{if(e.target.id==="pq")$("plist").innerHTML=playerList(e.target.value)});
+document.addEventListener("click",async e=>{const t=e.target;
+  if(t.closest("#acUp")){const f=$("acForm");if(!f.reportValidity())return;const name=$("acName").value.trim();if(!name){$("acErr").textContent="Bitte deinen Namen eintragen, damit dich der Coach findet.";$("acName").focus();return}
+    const {data,error}=await sb.auth.signUp({email:$("acMail").value.trim(),password:$("acPw").value,options:{data:{name}}});if(error){$("acErr").textContent=sbMsg(error);return}
+    if(!data.session){$("acErr").textContent="Konto erstellt – bitte die E-Mail bestätigen und dann hier anmelden.";return}
+    try{await sb.from("profiles").update({name}).eq("id",data.user.id)}catch(_){}user=data.user;cacheUser(user);route();return}
+  if(t.closest("#acOut")){await sb.auth.signOut();user=null;cacheUser(null);isCoach=false;sel=null;viewLogin();return}
+  const pl=t.closest("[data-pl]");if(pl){sel=pl.dataset.pl===sel?null:pl.dataset.pl;viewCoach();const pn=$("panel");if(pn)pn.scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(t.closest("#sendAll")){sendAll();return}
+  if(t.closest("#copyStart")){const l=location.origin+location.pathname;try{await navigator.clipboard.writeText(l);toast("Link kopiert – jetzt den Spielern schicken")}catch(_){prompt("Link kopieren:",l)}return}
+  if(t.closest("#copySql")){try{await navigator.clipboard.writeText(SQL);toast("SQL kopiert")}catch(_){const r=document.createRange();r.selectNodeContents($("sqlTxt"));getSelection().removeAllRanges();getSelection().addRange(r)}return}
+  if(t.closest("#reload")){location.reload();return}});
+/* Gym-Tag gewählt → Häkchen setzen */
+document.addEventListener("change",e=>{const d=e.target.dataset&&e.target.dataset.pd;if(d&&e.target.value){const c=document.querySelector(`[data-sid="${CSS.escape(d)}"]`);if(c)c.checked=true}});
+async function init(){try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null}
+  if(!sb){$("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">Die Anmeldung braucht Internet. Bitte später nochmals versuchen.</p>${appCards()}`;return}
+  try{const {data}=await sb.auth.getSession();user=data&&data.session?data.session.user:null}catch(e){}
+  if(user)cacheUser(user);route()}
+{let n=0;const go=()=>{if(window.supabase&&window.supabase.createClient){init();return}if(++n<150)setTimeout(go,100);else $("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">Keine Verbindung – die Apps funktionieren trotzdem auf diesem Gerät.</p>${appCards()}`};go()}
+</script>
+</body>
+</html>

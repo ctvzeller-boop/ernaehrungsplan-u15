@@ -146,14 +146,14 @@ button{cursor:pointer}
 @media (max-width:420px){.nav a,.nav span{padding:6px 7px;font-size:.8rem}.brand{font-size:1.35rem}.days{gap:3px}.day{padding:5px 2px}.day b{font-size:.78rem}}
 /* Gemeinsame Navigation über alle drei Apps */
 .appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
-.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
 .appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
 .appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
 .wrap{padding-top:12px!important}
 </style>
 </head>
 <body>
-<nav class="appnav" aria-label="Apps"><div><a href="../planner/" aria-current="page">Planner</a><a href="../training/">Workout</a><a href="../">Nutrition</a></div></nav>
+<nav class="appnav" aria-label="Apps"><div><a href="../start/">Start</a><a href="../planner/" aria-current="page">Planner</a><a href="../training/">Workout</a><a href="../">Nutrition</a></div></nav>
 <div class="wrap">
   <div class="top">
     <div class="brand"><small>CZ Training</small>Wochenplan</div>
@@ -295,13 +295,13 @@ function renderDay(){
     if(b.k==="essen")s=esc(b.note||"");
     else if(b.note)s+=" · "+esc(b.note);
     const done=b.k==="gym"&&!tpl&&b.sid&&gymDone(b.sid,dt);
-    const go=b.k==="gym"&&!viewing?`<span class="go">${b.sid?"Training starten ›":"Einheit wählen"}</span>`:"";
-    h+=`<div class="row${quiet?" quiet":""}"><div class="tm">${esc(b.s)}</div><div><button type="button" class="blk c-${g}${done?" done":""}${big?" big":""}" data-id="${b.id}" ${b.k==="gym"&&b.sid&&!viewing?`data-gym="${esc(b.sid)}"`:""}><span class="t">${esc(title(b))}</span>${s?`<span class="s">${s}</span>`:""}${go}</button>`
+    const gref=b.k==="gym"?(b.sid||(b.t?"t:"+b.t:"")):"";const go=b.k==="gym"&&!viewing?`<span class="go">${gref?"Training starten ›":"Einheit wählen"}</span>`:"";
+    h+=`<div class="row${quiet?" quiet":""}"><div class="tm">${esc(b.s)}</div><div><button type="button" class="blk c-${g}${done?" done":""}${big?" big":""}" data-id="${b.id}" ${gref&&!viewing?`data-gym="${esc(gref)}"`:""}><span class="t">${esc(title(b))}</span>${s?`<span class="s">${s}</span>`:""}${go}</button>`
       +(b.k==="gym"&&!viewing?`<button type="button" class="edit" data-edit="${b.id}" aria-label="Bearbeiten">✎</button>`:"")
       +subs.map(f=>`<button type="button" class="sub" data-id="${f.id}">${esc(f.s)} ${esc(title(f))}${b.k==="weg"?" · unterwegs":""}</button>`).join("")+`</div></div>`});
   if(!nowDone&&isToday&&nowM<toM(dd.bed))h+=`<div class="now" aria-label="Jetzt"></div>`;
   h+=`<div class="row${short>10?"":" quiet"}"><div class="tm">${esc(dd.bed)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Schlafen</span><span class="s">${durTxt(sleepM)} Schlaf</span>${short>10?`<span class="warnline">${durTxt(short)} weniger als dein Ziel von ${state.goal} h</span>`:""}</button></div>`;
-  $("timeline").innerHTML=(main.length?"":`<p class="empty">${tpl?(adult()?"Trag hier ein, was jede Woche gleich ist: Arbeit, Weg dorthin, feste Trainings.":"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings."):"Noch nichts geplant. Tippe auf «+ Eintrag» oder richte deine Standardwoche ein."}</p>`)+h;
+  $("timeline").innerHTML=(main.length||dd.b.length?"":`<p class="empty">${tpl?(adult()?"Trag hier ein, was jede Woche gleich ist: Arbeit, Weg dorthin, feste Trainings.":"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings."):"Noch nichts geplant. Tippe auf «+ Eintrag» oder richte deine Standardwoche ein."}</p>`)+h;
   $("emptyActs").hidden=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length>0;$("vTpl2").hidden=tpl;
   /* Als Nächstes (nur heute) */
   const nb=$("nextBox");nb.hidden=true;
@@ -525,7 +525,9 @@ async function afterLogin(u){sbUser=u;cacheUser(u);closeModal();acctUI();await s
 async function checkCoach(){isCoach=false;players=[];if(!sb||!sbUser){coachUI();return}
   try{const {data}=await sb.from("profiles").select("is_coach").eq("id",sbUser.id).maybeSingle();isCoach=!!(data&&data.is_coach)}catch(e){}
   if(isCoach)try{const {data,error}=await sb.rpc("my_players");if(!error)players=data||[]}catch(e){}
-  coachUI()}
+  coachUI();
+  /* von der Spieler-Seite: #who=<Spieler-ID> öffnet direkt dessen Wochenplan */
+  const w=/[#&]who=([^&]+)/.exec(location.hash);if(w){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}if(isCoach)setWho(decodeURIComponent(w[1]))}}
 function coachUI(){const bar=$("coachBar");bar.hidden=!isCoach;$("viewing").hidden=!viewing;
   if(viewing)$("viewingTxt").innerHTML=`Du siehst und bearbeitest den Plan von <b>${esc(viewing.name)}</b>.${viewing.err?` <span class="warnline">${esc(viewing.err)}</span>`:""}`;
   if(!isCoach)return;const sel2=$("whoSel");const v=viewing?viewing.id:"";
