@@ -323,7 +323,11 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .scores{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px}
 .scores .sc{font-size:.7rem;font-weight:600;line-height:1.25;padding:1px 6px;border-radius:999px;background:var(--surface);color:var(--muted);border:1px solid var(--line);font-variant-numeric:tabular-nums}
 .scores .sc b{color:var(--ink)}
-.scores .sc.h{border-color:var(--muted)}
+.scores .sc.g{background:hsl(var(--gh) 70% 94%);border-color:hsl(var(--gh) 55% 72%);color:hsl(var(--gh) 60% 28%)}
+.scores .sc.g b{color:hsl(var(--gh) 70% 24%)}
+.wscore .g{color:hsl(var(--gh) 60% 32%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scores .sc.g{background:hsl(var(--gh) 40% 18%);border-color:hsl(var(--gh) 40% 38%);color:hsl(var(--gh) 60% 78%)}:root:not([data-theme="light"]) .scores .sc.g b{color:hsl(var(--gh) 70% 85%)}:root:not([data-theme="light"]) .wscore .g{color:hsl(var(--gh) 55% 70%)}}
+:root[data-theme="dark"] .scores .sc.g{background:hsl(var(--gh) 40% 18%);border-color:hsl(var(--gh) 40% 38%);color:hsl(var(--gh) 60% 78%)}:root[data-theme="dark"] .scores .sc.g b{color:hsl(var(--gh) 70% 85%)}:root[data-theme="dark"] .wscore .g{color:hsl(var(--gh) 55% 70%)}
 .scores .sc.h4,.scores .sc.h5{color:var(--t-leicht);border-color:var(--t-leicht)}.scores .sc.h4 b,.scores .sc.h5 b{color:var(--t-leicht)}
 .scores .sc.h1,.scores .sc.h2{color:var(--t-mittel);border-color:var(--t-mittel)}.scores .sc.h1 b,.scores .sc.h2 b{color:var(--t-mittel)}
 .scores.inline{margin-top:6px}
@@ -576,7 +580,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). Die Farbe zeigt, wie günstig der Wert für Sportler ist: grün = gut, gelb = okay, rot = ungünstig. Viel Protein ist grün; bei Carbs zählt die Art (Vollkorn grün, Zucker und Weissmehl eher orange); bei Fett ist wenig oder gesundes Fett grün, viel gesättigtes Fett rot. P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -809,7 +813,15 @@ const SC={"Protein-Birchermüesli": [4, 4, 3, 5], "Vollkornbrot mit Avocado und 
 function healthOf(n){const r=SC[n];if(r)return (r[3]+1)/2;const x=NUT[n];return x?x.h:2}
 function scoreOf(n){return SC[n]||null}
 const HTXT=["","eher selten","ab und zu","gut","sehr gut","top"];
-function scoreHTML(n,cls){const r=SC[n];if(!r)return "";return `<span class="scores${cls?" "+cls:""}" aria-label="Kohlenhydrate ${r[0]} von 5, Protein ${r[1]} von 5, Fett ${r[2]} von 5, Gesundheit ${r[3]} von 5"><span class="sc">Carbs <b>${r[0]}</b>/5</span><span class="sc">Protein <b>${r[1]}</b>/5</span><span class="sc">Fett <b>${r[2]}</b>/5</span><span class="sc h h${r[3]}">Gesund <b>${r[3]}</b>/5</span></span>`}
+/* Farbe: wie günstig der Wert für Sportler ist (5 = grün, 1 = rot) */
+function goodOf(n){const r=SC[n];if(!r)return null;const x=NUT[n]||{};
+  let c=x.k==="l"?5:x.k==="s"?3:4;if(x.k==="s"&&r[0]>=5)c=2;if(r[0]<=1)c=3;
+  let f=6-r[2];if(x.f==="g")f=Math.min(5,f+2);if(r[2]<=1)f=5;
+  return [c,r[1],f,r[3]]}
+const GHUE=[0,0,28,48,90,135];
+function gcol(g){return `--gh:${GHUE[g]}`}
+function scoreHTML(n,cls){const r=SC[n];if(!r)return "";const g=goodOf(n);const L=["Carbs","Protein","Fett","Gesund"];
+  return `<span class="scores${cls?" "+cls:""}" aria-label="Kohlenhydrate ${r[0]} von 5, Protein ${r[1]} von 5, Fett ${r[2]} von 5, Gesundheit ${r[3]} von 5">${L.map((l,i)=>`<span class="sc g" style="${gcol(g[i])}">${l} <b>${r[i]}</b>/5</span>`).join("")}</span>`}
 function isProtRich(n,sk){const x=NUT[n];return !!x&&x.p>=(MAINS.includes(sk)||sk==="fruehstueck"?22:12)}
 /* Eignung: aus Verdaulichkeit (DP) und Profil abgeleitet */
 function suitOf(n){const p=DP[n]||{},x=NUT[n]||{},r=[];
@@ -1077,7 +1089,7 @@ function renderWeekTable(){
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
       return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
-        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5)">Carbs ${SC[val][0]} · P ${SC[val][1]} · F ${SC[val][2]} · <span class="h${SC[val][3]}">Gesund ${SC[val][3]}/5</span></div>`:""}${extraChips(k,sk,"w")}
+        ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5). Grün = günstig, rot = ungünstig">${(()=>{const g=goodOf(val),r=SC[val];return ["Carbs","P","F","Gesund"].map((l,i)=>`<span class="g" style="${gcol(g[i])}">${l} ${r[i]}${i===3?"/5":""}</span>`).join(" · ")})()}</div>`:""}${extraChips(k,sk,"w")}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:""}
         <div class="wacts"><button type="button" class="minibtn" id="rr-${k}-${sk}" data-reroll="${k}|${sk}" aria-label="Anderer Vorschlag: ${sn} ${n}" title="Anderer Vorschlag">↻</button>${extraAdd(k,sk,"w")}${rec?`<button type="button" class="minibtn" data-recipe="${esc(rec)}">Rezept</button>`:""}</div>
       </div></div>`;
