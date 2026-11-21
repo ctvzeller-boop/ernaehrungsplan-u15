@@ -580,7 +580,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
         <h2>Alle Gerichte</h2>
         <label class="vegtoggle" for="vegToggle"><input type="checkbox" id="vegToggle"> Vegetarisch</label>
       </div>
-      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). Die Farbe zeigt, wie günstig der Wert für Sportler ist: grün = gut, gelb = okay, rot = ungünstig. Viel Protein ist grün; bei Carbs zählt die Art (Vollkorn grün, Zucker und Weissmehl eher orange); bei Fett ist wenig oder gesundes Fett grün, viel gesättigtes Fett rot. P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
+      <p class="empty">Tippe auf ♡, um ein Gericht zu deinen Favoriten zu machen. Favoriten kommen beim automatischen Füllen und bei ↻ öfter vor. Mit × blendest du ein Gericht aus, das du nicht magst.<br><b>So liest du die Etiketten:</b> Jedes Gericht hat Punkte von 1 bis 5: Carbs = wie viel Kohlenhydrate, Protein = wie viel Protein, Fett = wie viel Fett, Gesund = wie gesund es insgesamt ist (5 = top, 1 = eher selten). Die Farben: 5 = grün, 4 = hellgrün, 3 = gelb, 2 = orange, 1 = rot. Bei Fett ist es umgekehrt, weil wenig Fett besser ist: 1 = grün, 5 = rot. P … g = Protein pro Portion (ca.). Carbs schnell = Weissmehl, Zucker, Früchte; Carbs langsam = Vollkorn, Dinkel, Hafer, Hülsenfrüchte. Grün = eher gesund, orange = ab und zu. Darunter steht, wofür sich das Gericht eignet. Gesündere Gerichte stehen weiter oben.</p>
       <div id="likeGroups" class="likegroups"></div>
     </div>
     <div class="card">
@@ -814,11 +814,8 @@ function healthOf(n){const r=SC[n];if(r)return (r[3]+1)/2;const x=NUT[n];return 
 function scoreOf(n){return SC[n]||null}
 const HTXT=["","eher selten","ab und zu","gut","sehr gut","top"];
 /* Farbe: wie günstig der Wert für Sportler ist (5 = grün, 1 = rot) */
-function goodOf(n){const r=SC[n];if(!r)return null;const x=NUT[n]||{};
-  let c=x.k==="l"?5:x.k==="s"?3:4;if(x.k==="s"&&r[0]>=5)c=2;if(r[0]<=1)c=3;
-  let f=6-r[2];if(x.f==="g")f=Math.min(5,f+2);if(r[2]<=1)f=5;
-  return [c,r[1],f,r[3]]}
-const GHUE=[0,0,28,48,90,135];
+function goodOf(n){const r=SC[n];if(!r)return null;return [r[0],r[1],6-r[2],r[3]]}/* Carbs, Protein, Gesund: 5 = grün; Fett: 5 = rot */
+const GHUE=[0,0,30,52,95,135];/* 1 rot · 2 orange · 3 gelb · 4 hellgrün · 5 grün */
 function gcol(g){return `--gh:${GHUE[g]}`}
 function scoreHTML(n,cls){const r=SC[n];if(!r)return "";const g=goodOf(n);const L=["Carbs","Protein","Fett","Gesund"];
   return `<span class="scores${cls?" "+cls:""}" aria-label="Kohlenhydrate ${r[0]} von 5, Protein ${r[1]} von 5, Fett ${r[2]} von 5, Gesundheit ${r[3]} von 5">${L.map((l,i)=>`<span class="sc g" style="${gcol(g[i])}">${l} <b>${r[i]}</b>/5</span>`).join("")}</span>`}
