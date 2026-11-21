@@ -532,6 +532,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
     <div class="toolbar">
       <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
       <button id="vegBtn" type="button" aria-pressed="false" title="Nur vegetarische Gerichte vorschlagen">🌱 Vegetarisch</button>
+      <button id="plBtn" type="button" hidden title="Schule, Arbeit und Trainings dieser Woche aus dem Planner übernehmen">📅 Aus Planner</button>
       <button id="mpBtn" type="button" aria-pressed="false" title="Zmittag ist immer der Rest vom Znacht am Vorabend">🍱 Mealprep</button>
       <button id="shareBtn" type="button">Plan als Link teilen</button>
       <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
@@ -1025,7 +1026,7 @@ function renderTabs(){
     `<button type="button" data-tab="${k}" aria-pressed="${k===activeDay}">${s}</button>`).join("");
 }
 
-function renderTable(){syncMP();renderMPBtn();renderVegBtn();renderWeekTable();if(typeof renderToday==="function")renderToday()}
+function renderTable(){syncMP();renderMPBtn();renderVegBtn();if(typeof renderPlBtn==="function")renderPlBtn();renderWeekTable();if(typeof renderToday==="function")renderToday()}
 function dinnerSeg(k,d,id){
   return `<div class="seg" role="group" aria-label="Nachtessen"><button type="button" id="${id}-vor" data-dinner="${k}|vor" aria-pressed="${d.dinner==="vor"}">vor Training</button><button type="button" id="${id}-nach" data-dinner="${k}|nach" aria-pressed="${d.dinner!=="vor"}">nach Training</button></div>`;
 }
@@ -1895,6 +1896,31 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-xdel]");if
 document.getElementById("vegBtn").addEventListener("click",()=>{state.veg=!state.veg;save();renderTable();renderText();renderLikes();
   const n=state.veg?DAYS.reduce((a,[k])=>a+SLOTS.filter(([sk])=>isMeat(sk,state.plan[k].s[sk])).length,0):0;
   flash(state.veg?(n?`Vegetarisch an · ${n} Gerichte mit Fleisch markiert, mit ↻ ersetzen`:"Vegetarisch an"):"Vegetarisch aus");});
+/* ---------- Planner: Schule/Arbeit und Trainings dieser Woche übernehmen ---------- */
+const PL_KEY="cz-planner-v1",PL_TRAIN=new Set(["unihockey","gym","match","sport","lauf","velo"]),PL_NAMES={unihockey:"Unihockeytraining",gym:"Gym",match:"Match",sport:"Sport",lauf:"Laufen",velo:"Velo"};
+function plState(){try{const x=JSON.parse(localStorage.getItem("cz-planner-v1")||"null");return x&&x.tpl&&Object.values(x.tpl).some(d=>(d.b||[]).length)?x:null}catch(e){return null}}
+function plWeek(st){const now=new Date(),mon=new Date(now.getFullYear(),now.getMonth(),now.getDate());mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  const key=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  let tsess=[];try{tsess=(JSON.parse(localStorage.getItem("u15-trainingseinheit-v1")||"null")||{}).sessions||[]}catch(e){}
+  const out={};DAYS.forEach(([k],i)=>{const dt=new Date(mon);dt.setDate(mon.getDate()+i);const t=st.tpl[k]||{b:[]},o=(st.ov||{})[key(dt)];
+    let b=(t.b||[]).filter(x=>!(o&&(o.del||[]).includes(x.id))).map(x=>(o&&o.mod&&o.mod[x.id])||x);if(o&&o.add)b=b.concat(o.add);
+    const nm=x=>x.k==="gym"?((tsess.find(z=>z.id===x.sid)||{}).t||x.t||"Gym"):(x.t||PL_NAMES[x.k]);
+    out[k]={train:b.filter(x=>PL_TRAIN.has(x.k)&&x.s).map(x=>({s:x.s,e:x.e||"",n:nm(x),k:x.k})).sort((a,c)=>a.s.localeCompare(c.s)),
+      school:b.filter(x=>(x.k==="schule"||x.k==="arbeit")&&x.s).flatMap(x=>{const a=toMin(x.s),e=toMin(x.e);
+        /* durchgehender Schul-/Arbeitstag: Mittagspause 12:00–13:00 einplanen, damit das Zmittag dort Platz hat */
+        return a!=null&&e!=null&&a<=11*60+30&&e>=13*60+30?[{s:x.s,e:"12:00"},{s:"13:00",e:x.e}]:[{s:x.s,e:x.e||""}]}),
+      rec:b.filter(x=>x.k==="rec"&&x.s).map(x=>({s:x.s,e:x.e||"",n:x.t||""}))}});return out}
+function plDayType(tr){if(!tr.length)return "leicht";if(tr.some(x=>x.k==="match"))return "spiel";
+  const mins=tr.reduce((a,x)=>{const s=toMin(x.s),e=toMin(x.e);return a+(e!=null&&e>s?e-s:60)},0);
+  if(mins>=300)return "ganztag";if(tr.length>=2||mins>=150)return "intensiv";return "mittel"}
+function renderPlBtn(){const b=document.getElementById("plBtn");if(b)b.hidden=!plState()}
+function importPlanner(){const st=plState();if(!st){flash("Im Planner ist noch nichts eingetragen.");return}const w=plWeek(st);let n=0;
+  DAYS.forEach(([k])=>{const d=state.plan[k],x=w[k];d.ses=x.train.map(t=>({s:t.s,e:t.e,n:t.n}));n+=d.ses.length;
+    d.act=(d.act||[]).filter(a=>a.k!=="schule"&&!a.pl).concat(x.school.map(c=>({k:"schule",s:c.s,e:c.e})),x.rec.map(c=>Object.assign({k:"recovery",s:c.s,e:c.e,pl:1},c.n?{n:c.n}:{})));
+    d.t=plDayType(x.train);d.mt={}});
+  save();renderTable();renderText();flash(`Aus dem Planner übernommen: ${n} Trainings, Schule/Arbeit und Tagestypen dieser Woche. Die Essenszeiten passen sich an.`)}
+document.getElementById("plBtn").addEventListener("click",importPlanner);
+addEventListener("pageshow",renderPlBtn);
 document.getElementById("mpBtn").addEventListener("click",()=>{const on=!mpAll();
   DAYS.forEach(([k])=>{state.plan[k].mp=on});save();renderTable();renderText();
   flash(on?"Mealprep an: Zmittag = Reste vom Znacht am Vorabend":"Mealprep aus");});

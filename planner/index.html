@@ -196,14 +196,18 @@ const KEY="cz-planner-v1",TKEY="u15-trainingseinheit-v1",NKEY="u15-ernaehrungswo
 const DAYS=[["mo","Montag","Mo"],["di","Dienstag","Di"],["mi","Mittwoch","Mi"],["do","Donnerstag","Do"],["fr","Freitag","Fr"],["sa","Samstag","Sa"],["so","Sonntag","So"]];
 /* Bausteine: Schlüssel, Name, Farbgruppe, Standarddauer (Min.) */
 const KINDS=[["schule","Schule","schule",480],["arbeit","Arbeit","schule",480],["weg","Weg (Zug, Bus, Velo …)","weg",30],
- ["unihockey","Unihockeytraining","train",90],["gym","Gym (Trainingsapp)","train",60],["match","Match","train",120],["sport","Anderer Sport","train",60],
+ ["unihockey","Unihockeytraining","train",90],["lauf","Laufen","train",45],["velo","Velo","train",90],["gym","Gym (Trainingsapp)","train",60],["match","Match","train",120],["sport","Anderer Sport","train",60],
  ["lernen","Lernen","lernen",45],["frei","Freizeit","frei",60],["rec","Recovery / Physio / Sauna","rec",45],["essen","Essen","essen",20],["termin","Termin / Anderes","weg",60]];
 const KBY=Object.fromEntries(KINDS.map(k=>[k[0],k]));
 const MODES=[["zug","Zug"],["bus","Bus"],["tram","Tram"],["velo","Velo"],["auto","Auto"],["fuss","zu Fuss"]];
 const MEALS=[["fruehstueck","Frühstück"],["znueni","Znüni"],["mittag","Mittagessen"],["vor","Zvieri / vor dem Training"],["abend","Nachtessen"],["nach","Nach-Training-Snack"]];
-const TRAINK=new Set(["unihockey","gym","match","sport"]);
+const TRAINK=new Set(["unihockey","gym","match","sport","lauf","velo"]);
 /* Übersicht: Wichtiges gross, Nebensächliches (Weg, Freizeit, Regeneration) schlicht */
-const BIG=new Set(["unihockey","gym","match","sport"]),QUIET=new Set(["weg","frei","rec","essen"]),STRIP=new Set(["schule","arbeit","unihockey","gym","match","sport","lernen"]);
+const BIG=new Set(["unihockey","gym","match","sport","lauf","velo"]),QUIET=new Set(["weg","frei","rec","essen"]),STRIP=new Set(["schule","arbeit","unihockey","gym","match","sport","lauf","velo","lernen"]);
+/* Profil: Jugendliche (Schule, Unihockey) oder Erwachsene (Arbeit, Laufen, Velo) */
+const TEEN_ONLY=new Set(["schule","unihockey","match"]);
+function adult(){return state.prof==="erw"}
+function kindsFor(cur){return KINDS.filter(k=>!adult()||!TEEN_ONLY.has(k[0])||k[0]===cur)}
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -250,6 +254,7 @@ function nutMeal(i,slot){const n=readJSON(NKEY);if(!n)return "";let plan=n.plan;
 /* ---------- Texte ---------- */
 function title(b){if(b.k==="weg"){const m=(MODES.find(x=>x[0]===b.mode)||MODES[0])[1];return b.t||(m+(b.from||b.to?" "+[b.from,b.to].filter(Boolean).join(" – "):""))}
   if(b.k==="gym")return (sessTitle(b.sid)||b.t||"Gym-Training")+" · Gym";
+  if((b.k==="lauf"||b.k==="velo")&&b.km)return (b.t||KBY[b.k][1])+" · "+String(b.km).replace(".",",")+" km";
   if(b.k==="essen")return (MEALS.find(m=>m[0]===b.meal)||[0,"Essen"])[1]+(b.t?": "+b.t:"");
   return b.t||KBY[b.k][1]}
 function dayType(b){const tr=b.filter(x=>TRAINK.has(x.k));if(b.some(x=>x.k==="match"))return ["Matchday",""];
@@ -296,7 +301,7 @@ function renderDay(){
       +subs.map(f=>`<button type="button" class="sub" data-id="${f.id}">${esc(f.s)} ${esc(title(f))}${b.k==="weg"?" · unterwegs":""}</button>`).join("")+`</div></div>`});
   if(!nowDone&&isToday&&nowM<toM(dd.bed))h+=`<div class="now" aria-label="Jetzt"></div>`;
   h+=`<div class="row${short>10?"":" quiet"}"><div class="tm">${esc(dd.bed)}</div><button type="button" class="blk c-schlaf" data-sleep="1"><span class="t">Schlafen</span><span class="s">${durTxt(sleepM)} Schlaf</span>${short>10?`<span class="warnline">${durTxt(short)} weniger als dein Ziel von ${state.goal} h</span>`:""}</button></div>`;
-  $("timeline").innerHTML=(main.length?"":`<p class="empty">${tpl?"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings.":"Noch nichts geplant. Tippe auf «+ Eintrag» oder richte deine Standardwoche ein."}</p>`)+h;
+  $("timeline").innerHTML=(main.length?"":`<p class="empty">${tpl?(adult()?"Trag hier ein, was jede Woche gleich ist: Arbeit, Weg dorthin, feste Trainings.":"Trag hier ein, was jede Woche gleich ist: Schule oder Arbeit, Weg dorthin, Teamtrainings."):"Noch nichts geplant. Tippe auf «+ Eintrag» oder richte deine Standardwoche ein."}</p>`)+h;
   $("emptyActs").hidden=Object.values(state.tpl).some(d=>d.b.length)||Object.keys(state.ov).length>0;$("vTpl2").hidden=tpl;
   /* Als Nächstes (nur heute) */
   const nb=$("nextBox");nb.hidden=true;
@@ -311,10 +316,10 @@ function openModal(html){$("sheet").innerHTML=html;$("modal").hidden=false}
 function closeModal(){$("modal").hidden=true;edit=null}
 function findBlock(id){const dd=dayData(sel);return dd.b.find(b=>b.id===id)}
 function openEditor(b){
-  const isNew=!b;b=b?JSON.parse(JSON.stringify(b)):{id:uid(),k:"schule",s:"08:00"};edit={b,isNew};
+  const isNew=!b;b=b?JSON.parse(JSON.stringify(b)):{id:uid(),k:adult()?"arbeit":"schule",s:"08:00"};edit={b,isNew};
   const st=tstate();const sess=(st.sessions||[]).filter(s=>!s.free);
   const tpl=state.view==="tpl";
-  const kindBtns=KINDS.map(([k,n,g])=>`<button type="button" class="c-${g}" data-kind="${k}" aria-pressed="${b.k===k}">${esc(n)}</button>`).join("");
+  const kindBtns=kindsFor(b.k).map(([k,n,g])=>`<button type="button" class="c-${g}" data-kind="${k}" aria-pressed="${b.k===k}">${esc(n)}</button>`).join("");
   const dayChips=DAYS.map(([d,,s],i)=>`<button type="button" data-dchip="${i}" aria-pressed="${i===sel}">${s}</button>`).join("");
   openModal(`<h3>${isNew?"Neuer Eintrag":"Eintrag bearbeiten"}</h3>
     <div class="kinds" id="kinds">${kindBtns}</div>
@@ -334,12 +339,13 @@ function fx(){const b=edit.b;const f=$("fx");let h="";
     :`<p class="hint">In der Trainingsapp ist noch keine Einheit gespeichert. Leg zuerst eine Einheit an, z. B. «Oberkörper Volumen».</p><div class="f"><label for="e_t">Name</label><input type="text" id="e_t" value="${esc(b.t||"")}" placeholder="Oberkörper Volumen"></div>`;
   else if(b.k==="essen")h=`<div class="f"><span class="flbl">Mahlzeit</span><div class="chips" id="meals">${MEALS.map(([m,n])=>`<button type="button" data-meal="${m}" aria-pressed="${(b.meal||"fruehstueck")===m}">${n}</button>`).join("")}</div></div>
     <div class="f"><label for="e_t">Was gibt es? (freiwillig)</label><input type="text" id="e_t" value="${esc(b.t||"")}" placeholder="z. B. Sandwich und Apfel"></div>`;
+  else if(b.k==="lauf"||b.k==="velo")h=`<div class="two"><div class="f"><label for="e_t">Titel (freiwillig)</label><input type="text" id="e_t" value="${esc(b.t||"")}" placeholder="${b.k==="lauf"?"z. B. Easy Run, Intervalle":"z. B. Grundlage, Bergfahrt"}"></div><div class="f"><label for="e_km">Distanz in km (freiwillig)</label><input type="number" id="e_km" inputmode="decimal" min="0" step="0.5" value="${esc(b.km||"")}"></div></div>`;
   else h=`<div class="f"><label for="e_t">Titel (freiwillig)</label><input type="text" id="e_t" value="${esc(b.t||"")}" placeholder="${esc(KBY[b.k][1])}"></div>`;
   f.innerHTML=h}
 function readEditor(){const b=edit.b;const v=id=>{const x=$(id);return x?x.value.trim():undefined};
   b.s=v("e_s")||b.s;b.e=v("e_e")||"";b.note=v("e_note")||"";
   if(v("e_t")!==undefined)b.t=v("e_t");if(b.k==="weg"){b.from=v("e_from");b.to=v("e_to");b.mode=b.mode||"zug"}
-  if(b.k==="gym"&&$("e_sid"))b.sid=$("e_sid").value;if(b.k==="essen")b.meal=b.meal||"fruehstueck";
+  if(b.k==="gym"&&$("e_sid"))b.sid=$("e_sid").value;if(b.k==="lauf"||b.k==="velo"){const km=parseFloat((v("e_km")||"").replace(",","."));if(km>0)b.km=km;else delete b.km}else delete b.km;if(b.k==="essen")b.meal=b.meal||"fruehstueck";
   ["src"].forEach(k=>delete b[k]);Object.keys(b).forEach(k=>{if(b[k]===""&&k!=="e")delete b[k]});return b}
 function scope(){const s=document.querySelector("#scope [aria-pressed=true]");return state.view==="tpl"?"tpl":(s?s.dataset.scope:"week")}
 function putBlock(i,b,sc,orig){const d=DAYS[i][0];
@@ -367,7 +373,7 @@ function openSleep(){const i=sel,dd=dayData(i),nx=DAYS[(i+1)%7];const tpl=state.
   <div class="two"><div class="f"><label for="s_wake">Aufstehen</label><input type="time" id="s_wake" value="${esc(dd.wake)}"></div>
   <div class="f"><label for="s_bed">Schlafen gehen</label><input type="time" id="s_bed" value="${esc(dd.bed)}"></div></div>
   <div class="f"><label for="s_goal">Schlafziel pro Nacht (h)</label><input type="number" id="s_goal" min="6" max="11" step="0.5" value="${state.goal}"></div>
-  <p class="hint">Für Jugendliche (13–18 Jahre) werden 8–10 Stunden empfohlen. Am ${nx[1]} stehst du um ${esc(dayData((i+1)%7).wake)} auf.</p>
+  <p class="hint">${adult()?"Für Erwachsene werden 7–9 Stunden empfohlen":"Für Jugendliche (13–18 Jahre) werden 8–10 Stunden empfohlen"}. Am ${nx[1]} stehst du um ${esc(dayData((i+1)%7).wake)} auf.</p>
   ${!tpl?`<div class="f"><span class="flbl">Gilt für</span><div class="chips" id="scope"><button type="button" data-scope="week" aria-pressed="true">Nur diese Woche</button><button type="button" data-scope="tpl" aria-pressed="false">Jede Woche</button></div></div>`:""}
   <div class="acts"><button type="button" class="btn pri" id="sSave">Speichern</button><button type="button" class="btn" id="sCalc">Schlafenszeit aus Ziel berechnen</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>`)}
 function saveSleep(){const w=$("s_wake").value,b=$("s_bed").value,g=parseFloat($("s_goal").value);if(g>=5&&g<=12)state.goal=g;
@@ -379,12 +385,26 @@ function planMeals(){const i=sel,dd=dayData(i);const main=sorted(dd.b.filter(b=>
   const have=new Set(dd.b.filter(b=>b.k==="essen").map(b=>b.meal));const add=[];
   const wake=toM(dd.wake),bed=toM(dd.bed)+(toM(dd.bed)<wake?1440:0);
   const trains=main.filter(b=>TRAINK.has(b.k));const busy=main.some(b=>b.k==="schule"||b.k==="arbeit");
-  const mk=(meal,m)=>{if(have.has(meal)||m<wake||m>bed-30)return;add.push({id:uid(),k:"essen",meal,s:fmt(Math.round(m/5)*5),t:nutMeal(i,meal)||undefined})};
-  mk("fruehstueck",wake+15);if(busy)mk("znueni",10*60);
-  const first=trains[0];const lunch=first&&toM(first.s)<14*60?Math.min(12*60,toM(first.s)-150):12*60;mk("mittag",lunch);
-  if(first&&toM(first.s)>=14*60)mk("vor",toM(first.s)-90);
-  const last=trains[trains.length-1];
-  if(last){const e=endM(last);mk("nach",e+20);mk("abend",Math.max(e+60,18*60+30))}else mk("abend",18*60+30);
+  const free=m=>!trains.some(t=>m>=toM(t.s)-30&&m<endM(t)+15);/* nicht kurz vor oder während einem Training */
+  const mk=(meal,m)=>{if(have.has(meal)||m==null||m<wake||m>bed-30)return;have.add(meal);add.push({id:uid(),k:"essen",meal,s:fmt(Math.round(m/5)*5),t:nutMeal(i,meal)||undefined})};
+  const morning=trains.filter(t=>toM(t.s)<11*60),noon=trains.filter(t=>toM(t.s)>=11*60&&toM(t.s)<14*60),late=trains.filter(t=>toM(t.s)>=14*60);
+  /* Frühstück: vor einem frühen Training reicht ein kleines Frühstück vorher */
+  const early=morning.length&&toM(morning[0].s)<wake+75,me=morning.length?Math.max(...morning.map(endM)):null;
+  if(early){mk("fruehstueck",me+20);if(busy&&10*60-me>=120)mk("znueni",10*60)}
+  else{mk("fruehstueck",wake+15);
+  /* Znüni: nach einem Morgentraining als Erholungssnack, sonst 10 Uhr an Schul-/Arbeitstagen */
+  if(morning.length)mk("znueni",me+20);else if(busy)mk("znueni",10*60)}
+  /* Mittagessen: 2–3 h vor einem Mittagstraining, sonst nach dem Training, sonst 12 Uhr */
+  let lunch=12*60;if(noon.length){const t=noon[0],st=toM(t.s);lunch=st-150>=Math.max(wake+150,11*60)?st-150:endM(t)+30}
+  else if(morning.length&&Math.max(...morning.map(endM))>11*60)lunch=Math.max(...morning.map(endM))+45;
+  if(!free(lunch))lunch=Math.max(...trains.filter(t=>lunch>=toM(t.s)-30&&lunch<endM(t)+15).map(endM))+30;mk("mittag",lunch);
+  /* Zvieri: ca. 90 Min. vor dem ersten Nachmittags-/Abendtraining */
+  if(late.length){const v=toM(late[0].s)-90;if(v>=lunch+120)mk("vor",v);else if(toM(late[0].s)-lunch>=150)mk("vor",lunch+120)}
+  else if(lunch<=13*60&&bed-lunch>8*60)mk("vor",16*60);
+  /* Nach dem letzten Training: Snack und Nachtessen */
+  const last=late[late.length-1]||noon[noon.length-1];
+  if(late.length){const e=endM(last);mk("nach",e+20);mk("abend",Math.max(e+60,18*60+30))}
+  else mk("abend",18*60+30);
   if(!add.length){toast("Alle Mahlzeiten sind schon eingeplant.");return}
   const sc=state.view==="tpl"?"tpl":"week";add.forEach(b=>{Object.keys(b).forEach(k=>b[k]===undefined&&delete b[k]);putBlock(i,b,sc,null)});
   if(!state.food)state.food=true;save();render();toast(`${add.length} Mahlzeiten eingeplant – antippen zum Anpassen`)}
@@ -395,10 +415,18 @@ function openCopy(){openModal(`<h3>${DAYS[sel][1]} kopieren auf …</h3><div cla
   <div class="acts"><button type="button" class="btn pri" id="cSave">Kopieren</button><button type="button" class="btn" id="eCancel">Abbrechen</button></div>`)}
 function doCopy(){const ds=[...document.querySelectorAll("#dchips [aria-pressed=true]")].map(x=>+x.dataset.dchip);if(!ds.length){toast("Bitte Tage wählen.");return}
   const src=dayData(sel).b;const sc=state.view==="tpl"?"tpl":"week";
-  ds.forEach(i=>src.forEach(b=>{const c=JSON.parse(JSON.stringify(b));delete c.src;c.id=uid();putBlock(i,c,sc,null)}));save();closeModal();render();toast("Kopiert")}
+  const same=(a,b)=>a.k===b.k&&a.s===b.s&&(a.e||"")===(b.e||"")&&(a.t||"")===(b.t||"")&&(a.meal||"")===(b.meal||"")&&(a.sid||"")===(b.sid||"");
+  let n=0,skip=0;ds.forEach(i=>{const have=dayData(i).b;src.forEach(b=>{if(have.some(x=>same(x,b))){skip++;return}const c=JSON.parse(JSON.stringify(b));delete c.src;c.id=uid();putBlock(i,c,sc,null);n++})});
+  save();closeModal();render();toast(n?`${n} Einträge kopiert`+(skip?` · ${skip} waren schon da`:""):"Alles war schon da – nichts kopiert")}
 
 /* ---------- Beispielwoche ---------- */
 function loadExample(){const mk=(k,s,e,x)=>Object.assign({id:uid(),k,s,e},x||{});
+  if(adult()){const g=(tstate().sessions||[]).filter(x=>!x.free);
+    ["mo","di","mi","do","fr"].forEach(d=>state.tpl[d].b.push(mk("weg","07:30","07:55",{mode:"zug",from:"Zuhause",to:"Arbeit"}),mk("arbeit","08:00","17:00"),mk("weg","17:05","17:30",{mode:"zug",from:"Arbeit",to:"Zuhause"})));
+    state.tpl.di.b.push(mk("lauf","18:00","18:45",{t:"Easy Run"}));state.tpl.do.b.push(mk("lauf","18:00","18:40",{t:"Intervalle"}));
+    state.tpl.sa.b.push(mk("velo","09:30","11:30",{t:"Velotour"}));state.tpl.so.b.push(mk("frei","14:00","18:00"));
+    [["mo",g[0]],["fr",g[1]||g[0]]].forEach(([d,x])=>state.tpl[d].b.push(mk("gym","18:00","19:15",x?{sid:x.id}:{t:"Gym-Training"})));
+    save();render();toast("Beispielwoche geladen – alles lässt sich anpassen oder löschen");return}
   ["mo","di","mi","do","fr"].forEach(d=>{const t=state.tpl[d].b;
     t.push(mk("weg","07:15","07:40",{mode:"zug",from:"Zuhause",to:"Schule"}),mk("schule","07:45",d==="mi"?"11:45":"16:00"),mk("weg",d==="mi"?"11:50":"16:05",d==="mi"?"12:15":"16:30",{mode:"zug",from:"Schule",to:"Zuhause"}));
     if(d!=="mi")t.push(mk("lernen",d==="di"||d==="do"?"20:30":"19:30",d==="di"||d==="do"?"21:00":"20:15"))});
@@ -413,6 +441,8 @@ function openMore(){const tpl=state.view==="tpl";
   openModal(`<h3>${DAYS[sel][1]}</h3><div class="menu">
     <button type="button" class="btn" id="mealsBtn">Essen automatisch einplanen<small>Frühstück, Znüni, Zvieri vor und Snack nach dem Training – passend zu deinem Tag</small></button>
     <button type="button" class="btn" id="copyDayBtn">Tag kopieren auf …<small>z. B. Montag auf Dienstag bis Freitag</small></button>
+    <div class="f"><span class="flbl">Profil</span><div class="chips" id="profChips"><button type="button" data-prof="jung" aria-pressed="${!adult()}">Jugendlich</button><button type="button" data-prof="erw" aria-pressed="${adult()}">Erwachsen</button></div>
+    <p class="hint">${adult()?"Arbeit, Laufen, Velo · Schlafziel für Erwachsene (7–9 h)":"Schule, Unihockey, Match · Schlafziel für Jugendliche (8–10 h)"}</p></div>
     ${tpl?"":`<button type="button" class="btn" id="vTpl">Standardwoche bearbeiten<small>Was jede Woche gleich ist: Schule, Arbeit, Teamtrainings</small></button>`}
     <button type="button" class="btn" id="eCancel">Schliessen</button></div>`)}
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
@@ -445,6 +475,7 @@ document.addEventListener("click",e=>{const t=e.target;
   if(t.closest("#sSave")){saveSleep();return}
   if(t.closest("#sCalc")){const nx=toM(dayData((sel+1)%7).wake);const g=parseFloat($("s_goal").value)||state.goal;$("s_bed").value=fmt(nx-g*60-15);return}
   if(t.closest("#cSave")){doCopy();return}
+  const pf=t.closest("[data-prof]");if(pf){const was=state.prof||"jung";state.prof=pf.dataset.prof;if(was!==state.prof){if(state.prof==="erw"&&state.goal>=9)state.goal=8;if(state.prof==="jung"&&state.goal<9)state.goal=9}save();openMore();render();toast(adult()?"Profil: Erwachsen":"Profil: Jugendlich");return}
   if(t===$("modal")){closeModal();return}
 });
 $("foodSw").addEventListener("change",e=>{state.food=e.target.checked;save();render()});
