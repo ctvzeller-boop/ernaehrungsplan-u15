@@ -237,7 +237,7 @@ function groupsCard(S){const g=gsel&&groups.find(x=>x.id===gsel);
     <div class="acts"><button type="button" class="btn pri" id="gSave">Gruppe speichern</button><button type="button" class="btn" id="gDel">Gruppe löschen</button></div><p class="err" id="gErr"></p></div>`}
   return h+`</div>`}
 const rlsErr=e=>/row-level|policy|permission|42501/i.test(String(e&&((e.code||"")+" "+(e.message||e))));
-function gErrMsg(e){if(rlsErr(e)){needG=true;return "Speichern nicht erlaubt – zuerst das SQL «Teil 10» oben in Supabase ausführen."}return sbMsg(e)}
+function gErrMsg(e){const raw=String(e&&((e.code?e.code+": ":"")+(e.message||""))||e||"");if(rlsErr(e)){return "Speichern nicht erlaubt"+(needG?" – zuerst das SQL «Teil 10» oben in Supabase ausführen":"")+". Meldung von Supabase: "+raw}return sbMsg(e)+(raw&&raw!==sbMsg(e)?" ("+raw+")":"")}
 function sidsOfPlayer(pid,exceptG){const set=new Set();groups.forEach(g=>{if(g.id!==exceptG&&g.members.includes(pid))g.sids.forEach(x=>set.add(x))});return set}
 async function grantSids(pids,sids){const S=trSessions(),now=new Date().toISOString(),rows=[];pids.forEach(pid=>sids.forEach(sid=>{const x=S.find(z=>z.id===sid);if(x)rows.push({coach_id:user.id,player_id:pid,sid,title:x.t||"Einheit",session:sessPayload(x),updated_at:now})}));
   if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)throw r.error}}
@@ -393,8 +393,8 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#gSave")){const g=groups.find(x=>x.id===gsel);if(!g)return;const b=t.closest("#gSave");b.disabled=true;$("gErr").textContent="";
     const nm=$("gRen").value.trim(),wm=new Set([...document.querySelectorAll("[data-gm]")].filter(c=>c.checked).map(c=>c.dataset.gm)),ws=new Set([...document.querySelectorAll("[data-gs]")].filter(c=>c.checked).map(c=>c.dataset.gs));
     try{if(nm&&nm!==g.name){const r=await sb.from("groups").update({name:nm}).eq("id",g.id);if(r.error)throw r.error}
-      await setSids(g,new Set([...ws].concat(g.sids.filter(x=>!trSessions().some(s=>s.id===x)))));await setMembers(g,wm);await refresh(true);toast(`«${nm||g.name}»: ${wm.size} Spieler, ${ws.size} Einheit${ws.size===1?"":"en"}`)}
-    catch(e){const m=gErrMsg(e);await refresh(true);const el=$("gErr");if(el)el.textContent=m}return}
+      let step="Einheiten";try{await setSids(g,new Set([...ws].concat(g.sids.filter(x=>!trSessions().some(s=>s.id===x)))));step="Mitglieder";await setMembers(g,wm)}catch(e2){e2.step=step;throw e2}await refresh(true);toast(`«${nm||g.name}»: ${wm.size} Spieler, ${ws.size} Einheit${ws.size===1?"":"en"}`)}
+    catch(e){const m=(e&&e.step?e.step+": ":"")+gErrMsg(e);await refresh(true);const el=$("gErr");if(el)el.textContent=m}return}
   if(t.closest("#gDel")){const g=groups.find(x=>x.id===gsel);if(!g||!confirm(`Gruppe «${g.name}» löschen? Die Mitglieder verlieren die Einheiten der Gruppe (ausser sie haben sie auch einzeln oder über eine andere Gruppe).`))return;
     try{await revokeSids(g.members,g.sids,g.id);const r=await sb.from("groups").delete().eq("id",g.id);if(r.error)throw r.error;gsel=null;if(gfilter===g.id)gfilter="";await refresh(true);toast(`Gruppe «${g.name}» gelöscht`)}catch(e){toast(gErrMsg(e))}return}
   const gt=t.closest("[data-gtog]");if(gt){const g=groups.find(x=>x.id===gt.dataset.gtog);if(!g)return;gt.disabled=true;const want=new Set(g.members);want.has(sel)?want.delete(sel):want.add(sel);
