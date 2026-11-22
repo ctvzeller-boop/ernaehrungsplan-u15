@@ -243,7 +243,7 @@ async function grantSids(pids,sids){const S=trSessions(),now=new Date().toISOStr
   if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)throw r.error}}
 async function revokeSids(pids,sids,gid){for(const pid of pids){const keep=sidsOfPlayer(pid,gid);for(const sid of sids){if(keep.has(sid))continue;const r=await sb.from("assignments").delete().eq("coach_id",user.id).eq("player_id",pid).eq("sid",sid);if(r.error)throw r.error}}}
 async function setMembers(g,want){const add=[...want].filter(x=>!g.members.includes(x)),rem=g.members.filter(x=>!want.has(x));
-  if(add.length){const r=await sb.from("group_members").upsert(add.map(pid=>({group_id:g.id,player_id:pid})));if(r.error)throw r.error;await grantSids(add,g.sids)}
+  if(add.length){const r=await sb.from("group_members").insert(add.map(pid=>({group_id:g.id,player_id:pid})));if(r.error)throw r.error;await grantSids(add,g.sids)}
   for(const pid of rem){const r=await sb.from("group_members").delete().eq("group_id",g.id).eq("player_id",pid);if(r.error)throw r.error}
   g.members=[...want];if(rem.length)await revokeSids(rem,g.sids,g.id);return {add,rem}}
 async function setSids(g,want){const add=[...want].filter(x=>!g.sids.includes(x)),rem=g.sids.filter(x=>!want.has(x));if(!add.length&&!rem.length)return;
@@ -262,6 +262,8 @@ create policy "gm_coach_all_read" on public.group_members for select using (exis
 create policy "gm_coach_all_insert" on public.group_members for insert with check (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()) and public.is_registered_player(player_id));
 create policy "gm_coach_all_update" on public.group_members for update using (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid())) with check (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()) and public.is_registered_player(player_id));
 create policy "gm_coach_all_delete" on public.group_members for delete using (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()));
+grant select, insert, update, delete on public.group_members to authenticated;
+grant select, insert, update, delete on public.groups to authenticated;
 -- Erkennungszeichen für die Start-Seite
 create or replace function public.cz_sql_version() returns int language sql stable as $fn$ select 10 $fn$;
 grant execute on function public.cz_sql_version() to authenticated;`;
