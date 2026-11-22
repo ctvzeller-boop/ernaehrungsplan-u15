@@ -1844,7 +1844,7 @@ function unpackItem(x){const o=typeof x==="string"?{i:x}:x;const e=EXBY[o.i]||{}
   const f=k=>o[k]!==undefined?o[k]:(e[k]||"");
   return [o.i,o.n||e.n||o.i,o.k||e.k||"eigen",f("s"),f("w"),f("p"),f("r"),o.b||"",o.v||e.v||[],o.x?1:0,o.g||"",o.z||"",o.o?1:0]}
 async function encodeSess(){const c=cur();
-  const obj={t:c.t,i:c.items.map(packItem)};if(c.a)obj.a=c.a;if(c.h)obj.h=c.h;
+  const obj={t:c.t,i:c.items.map(packItem)};if(c.a)obj.a=c.a;if(c.h)obj.h=c.h;if(c.folder)obj.f=c.folder;
   const data=new TextEncoder().encode(JSON.stringify(obj));
   if(typeof CompressionStream!=="undefined"){try{return "y"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "c"+b64url(data)}
@@ -1864,7 +1864,7 @@ async function importCode(code,fromPaste){
   const known=state.imported[code];
   if(known&&state.sessions.some(s=>s.id===known)){state.active=known;state.mode="train";save();renderAll();flash("Einheit geöffnet");scrollTo(0,0);return true}
   try{const d=await decodeSess(code);if(!d||!Array.isArray(d.i))throw 0;
-    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal,opt])=>({u:uid(),id,opt:!!opt,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
+    const s={id:uid(),t:d.t||"Geteilte Einheit",a:d.a||"",h:d.h||"",folder:typeof d.f==="string"&&d.f.trim()?d.f.trim().slice(0,40):"",items:d.i.map(([id,n,k,s,w,p,r,b,v,ss,kg,goal,opt])=>({u:uid(),id,opt:!!opt,goal:GOALS[goal]?goal:"",n:EXBY[id]?EXBY[id].n:n,k,s,w,p,r,b,kg:kg||"",v:Array.isArray(v)?v.filter(u=>/^https?:\/\//.test(u)):[],ss:!!ss,log:[]}))};
     /* Gleiche Einheit schon vorhanden (gleicher Name und Athlet)? Dann aktualisieren statt doppelt anlegen. */
     const norm=x=>String(x||"").trim().toLowerCase();const importedIds=Object.values(state.imported);
     const old=state.sessions.find(o=>norm(o.t)===norm(s.t)&&norm(o.a)===norm(s.a)&&(norm(s.a)||importedIds.includes(o.id)));
@@ -1874,7 +1874,7 @@ async function importCode(code,fromPaste){
       /* laufende, noch nicht abgeschlossene Sätze behalten */
       const pool={};old.items.forEach(it=>{if((it.log||[]).length)(pool[it.id]=pool[it.id]||[]).push(it.log)});
       s.items.forEach(it=>{const l=pool[it.id];if(l&&l.length)it.log=l.shift()});
-      old.h=s.h;old.items=s.items;old.a=s.a||old.a;
+      old.h=s.h;old.items=s.items;old.a=s.a||old.a;if(s.folder)old.folder=s.folder;
       state.active=old.id;state.imported[code]=old.id;importedId=null;state.mode="train";save();renderAll();
       txt.textContent=`«${old.t}» wurde vom Coach aktualisiert. Deine bisherigen Werte im Verlauf bleiben erhalten.`;undo.textContent="Alte Version zurückholen";
     }else{

@@ -73,6 +73,9 @@ input[type=time]{width:auto}
 .players .nm{font-weight:600}
 .players .em{display:block;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
 .dots{display:flex;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.chip{font:600 .88rem var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 12px;min-height:36px;cursor:pointer}.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--surface)}.chip span{opacity:.65;font-weight:500}
+.glist{display:grid;gap:6px;margin:0 0 10px;padding:0;list-style:none}.glist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.glist b{display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;margin:0 0 8px;padding:0;list-style:none}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:.75rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
 .dot{font-size:.78rem;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
 .dot.on{background:var(--cbg);color:var(--c);border-color:transparent}
@@ -119,7 +122,7 @@ function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
 const missing=e=>{const m=String(e&&((e.code||"")+" "+(e.message||"")));return /42P01|PGRST205/.test(m)||/nutrition_state/.test(m)&&/exist|find|schema/i.test(m)};
 function cacheUser(u){try{u?localStorage.setItem(UKEY,JSON.stringify({id:u.id,email:u.email,user_metadata:u.user_metadata||{}})):localStorage.removeItem(UKEY)}catch(e){}}
-let sb=null,user=null,isCoach=false,players=[],sel=null,info={},noNut=false,oldList=false;
+let sb=null,user=null,isCoach=false,players=[],sel=null,info={},noNut=false,oldList=false,groups=[],gfilter="",gsel=null,needG=false,gNew=false;
 const uname=()=>user?((user.user_metadata||{}).name||String(user.email||"").split("@")[0]):"";
 
 /* ---------- Ansichten ---------- */
@@ -157,7 +160,12 @@ const norm=s=>String(s||"").trim().toLowerCase();
 function pname(p){return p.name||p.email||"Spieler"}
 async function coachPlayersRPC(){try{const r=await sb.rpc("coach_players");if(!r.error)return {list:r.data||[],old:false}}catch(e){}
   try{const r=await sb.rpc("my_players");return {list:(r.data||[]).map(p=>Object.assign({shares:true,confirmed:true},p)),old:true}}catch(e){return {list:[],old:true}}}
-async function loadCoach(){const r=await coachPlayersRPC();oldList=r.old;players=r.list.slice().sort((a,b)=>pname(a).localeCompare(pname(b),"de"));const ids=players.map(p=>p.player_id);info={};
+async function loadGroups(){groups=[];try{const g=await sb.from("groups").select("id,name,social,sids").eq("coach_id",user.id);if(g.error)return;
+  const ids=(g.data||[]).map(x=>x.id);let mem=[];if(ids.length){const m=await sb.from("group_members").select("group_id,player_id").in("group_id",ids);if(!m.error)mem=m.data||[]}
+  groups=(g.data||[]).map(x=>Object.assign({},x,{sids:x.sids||[],members:mem.filter(m=>m.group_id===x.id).map(m=>m.player_id)})).sort((a,b)=>a.name.localeCompare(b.name,"de"))}catch(e){}
+  try{const v=await sb.rpc("cz_sql_version");needG=!!(v.error||!(v.data>=10))}catch(e){needG=true}}
+const gOf=pid=>groups.filter(g=>g.members.includes(pid));
+async function loadCoach(){await loadGroups();const r=await coachPlayersRPC();oldList=r.old;players=r.list.slice().sort((a,b)=>pname(a).localeCompare(pname(b),"de"));const ids=players.map(p=>p.player_id);info={};
   ids.forEach(id=>info[id]={plan:null,nut:null,tr:[]});if(!ids.length)return;
   const [p,n,a]=await Promise.all([sb.from("planner_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("assignments").select("id,player_id,sid,title,updated_at").eq("coach_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
   (p.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].plan=x});
@@ -168,14 +176,18 @@ function dots(id){const i=info[id]||{},nb=i.plan&&i.plan.data&&i.plan.data.tpl?O
 function viewCoach(){const plans=nutPlans(),S=trSessions();
   let h=`<div class="who"><div><h1>Spieler</h1><p class="hint" style="margin:0">Coach: <b>${esc(uname())}</b></p></div><button type="button" class="btn sm" id="acOut">Abmelden</button></div>
   <p class="lead">Wähle einen Spieler und schick ihm Wochenplan, Ernährungsplan und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
-  if(noNut||oldList)h+=sqlCard();
+  if(noNut||oldList)h+=sqlCard();else if(needG)h+=sqlCardG();
   if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
-  else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><ul class="players" id="plist">${playerList("")}</ul>
+  else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div>${filterChips()}<ul class="players" id="plist">${playerList("")}</ul>
     <div class="acts" style="margin-top:10px"><button type="button" class="btn sm" id="copyStart">Anmelde-Link für neue Spieler kopieren</button></div></div>`;
-    if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S)}
+    if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S);
+    h+=groupsCard(S)}
   $("app").innerHTML=h}
-function playerList(q){q=norm(q);return players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q)).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
-function tags(p){const t=[];if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
+function filterChips(){if(!groups.length)return "";const n=id=>id==="-"?players.filter(p=>!gOf(p.player_id).length).length:id?(groups.find(g=>g.id===id)||{members:[]}).members.length:players.length;
+  return `<div class="chips" role="group" aria-label="Nach Gruppe filtern">${[["","Alle"]].concat(groups.map(g=>[g.id,g.name]),[["-","Ohne Gruppe"]]).map(([id,l])=>`<button type="button" class="chip" data-gf="${esc(id)}" aria-pressed="${gfilter===id}">${esc(l)} <span>${n(id)}</span></button>`).join("")}</div>`}
+function inFilter(p){if(!gfilter)return true;const G=gOf(p.player_id);return gfilter==="-"?!G.length:G.some(g=>g.id===gfilter)}
+function playerList(q){q=norm(q);return players.filter(p=>inFilter(p)&&(!q||norm(p.name).includes(q)||norm(p.email).includes(q))).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
+function tags(p){const t=gOf(p.player_id).map(g=>"👥 "+g.name);if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
 function guessPlan(p,plans){const h=hub()[sel]||{};if(h.plan&&plans.some(x=>x.id===h.plan))return h.plan;const n=norm(pname(p)),first=n.split(" ")[0];
   const i=info[sel];if(i&&i.nut&&i.nut.data){const m=plans.find(x=>norm(x.name)===norm(i.nut.data.n));if(m)return m.id}
   const m=plans.find(x=>norm(x.name)===n)||plans.find(x=>first&&norm(x.name).includes(first)&&norm(x.name).split(" ").every(w=>n.includes(w)));return m?m.id:""}
@@ -187,6 +199,7 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
   const rank=x=>as.has(x.id)?0:norm(x.a)&&nm.includes(norm(x.a).split(" ")[0])?1:2;const SS=S.slice().sort((a,b)=>rank(a)-rank(b));
   const dayOpts=v=>`<option value="">nicht im Wochenplan</option>`+DAYS.map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
   return `<div class="card" id="panel"><h2>${esc(pname(p))}</h2>${p.email?`<p class="hint">${esc(p.email)}</p>`:""}${p.shares===false?`<p class="hint">Er teilt seine Resultate nicht mit dir. Pläne und Trainings kannst du ihm trotzdem schicken.</p>`:""}${p.confirmed===false?`<p class="hint">Seine E-Mail ist noch nicht bestätigt. Was du schickst, sieht er nach dem Bestätigen.</p>`:""}
+  ${groups.length?`<div class="chips" role="group" aria-label="Gruppen von ${esc(pname(p))}"><span class="hint" style="align-self:center">Gruppen:</span>${groups.map(g=>`<button type="button" class="chip" data-gtog="${esc(g.id)}" aria-pressed="${g.members.includes(sel)}">${g.members.includes(sel)?"✓ ":""}${esc(g.name)}</button>`).join("")}</div>`:""}
   <div class="sec c-nut"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.nut}</span><h3>Ernährungsplan</h3></div>
     <p class="now${i.nut?" ok":""}">${i.nut?`Hat jetzt: «${esc(i.nut.data.n||"Plan")}», geschickt ${fdate(i.nut.updated_at)}`:noNut?"Zuerst das SQL oben in Supabase ausführen.":"Noch kein Ernährungsplan geschickt."}</p>
     ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Ernährungsplan. <a href="../">In Nutrition erstellen</a></p>`}
@@ -202,6 +215,45 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
     <div class="acts"><a class="btn sm" href="../planner/#who=${encodeURIComponent(sel)}" style="text-decoration:none;display:inline-flex;align-items:center">Im Planner ansehen und bearbeiten ›</a></div>
   </div>
   <div class="sendall"><button type="button" class="btn pri" id="sendAll">An ${esc(pname(p).split(" ")[0])} schicken</button><p class="err" id="sendErr"></p></div></div>`}
+function groupsCard(S){const g=gsel&&groups.find(x=>x.id===gsel);
+  let h=`<div class="card" id="gcard"><div class="who" style="margin-bottom:8px"><h2 style="margin:0">Gruppen</h2><button type="button" class="btn sm" id="gAdd">＋ Neue Gruppe</button></div>`;
+  if(gNew)h+=`<div class="acts" style="margin:0 0 10px"><input type="text" id="gName" placeholder="z. B. U15, Goalies, Fitness" aria-label="Name der neuen Gruppe" style="flex:1;min-width:180px"><button type="button" class="btn pri sm" id="gCreate">Erstellen</button></div>`;
+  h+=groups.length?`<ul class="glist">${groups.map(x=>`<li><span><b>${esc(x.name)}</b><span class="hint">${x.members.length} Spieler · ${x.sids.length} Einheit${x.sids.length===1?"":"en"}</span></span><button type="button" class="btn sm" data-gopen="${esc(x.id)}" aria-pressed="${x.id===gsel}">${x.id===gsel?"Schliessen":"Bearbeiten"}</button></li>`).join("")}</ul>`:`<p class="hint">Noch keine Gruppen. Lege z. B. «U15» oder «Goalies» an. Einheiten einer Gruppe bekommen alle Mitglieder automatisch, auch Spieler, die später dazukommen.</p>`;
+  if(g){const SS=S.filter(x=>!x.free);h+=`<div class="sec" id="gpanel" style="border-top:1px solid var(--line);padding-top:14px">
+    <div class="f"><label for="gRen">Name</label><input type="text" id="gRen" value="${esc(g.name)}"></div>
+    <h3 style="margin:10px 0 6px">Mitglieder</h3><ul class="mlist">${players.map(p=>`<li><label class="check"><input type="checkbox" data-gm="${esc(p.player_id)}"${g.members.includes(p.player_id)?" checked":""}> <span>${esc(pname(p))}${p.shares===false?' <span class="hint">(teilt nicht)</span>':""}</span></label></li>`).join("")}</ul>
+    <h3 style="margin:10px 0 6px">Einheiten für alle Mitglieder</h3>${SS.length?`<ul class="mlist">${SS.map(x=>`<li><label class="check"><input type="checkbox" data-gs="${esc(x.id)}"${g.sids.includes(x.id)?" checked":""}> <span>${esc(x.t||"Ohne Titel")}</span></label></li>`).join("")}</ul>`:`<p class="hint">Auf diesem Gerät gibt es noch keine Einheit. <a href="../training/">In Workout erstellen</a></p>`}
+    <div class="acts"><button type="button" class="btn pri" id="gSave">Gruppe speichern</button><button type="button" class="btn" id="gDel">Gruppe löschen</button></div><p class="err" id="gErr"></p></div>`}
+  return h+`</div>`}
+const rlsErr=e=>/row-level|policy|permission|42501/i.test(String(e&&((e.code||"")+" "+(e.message||e))));
+function gErrMsg(e){if(rlsErr(e)){needG=true;return "Speichern nicht erlaubt – zuerst das SQL «Teil 10» oben in Supabase ausführen."}return sbMsg(e)}
+function sidsOfPlayer(pid,exceptG){const set=new Set();groups.forEach(g=>{if(g.id!==exceptG&&g.members.includes(pid))g.sids.forEach(x=>set.add(x))});return set}
+async function grantSids(pids,sids){const S=trSessions(),now=new Date().toISOString(),rows=[];pids.forEach(pid=>sids.forEach(sid=>{const x=S.find(z=>z.id===sid);if(x)rows.push({coach_id:user.id,player_id:pid,sid,title:x.t||"Einheit",session:sessPayload(x),updated_at:now})}));
+  if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)throw r.error}}
+async function revokeSids(pids,sids,gid){for(const pid of pids){const keep=sidsOfPlayer(pid,gid);for(const sid of sids){if(keep.has(sid))continue;const r=await sb.from("assignments").delete().eq("coach_id",user.id).eq("player_id",pid).eq("sid",sid);if(r.error)throw r.error}}}
+async function setMembers(g,want){const add=[...want].filter(x=>!g.members.includes(x)),rem=g.members.filter(x=>!want.has(x));
+  if(add.length){const r=await sb.from("group_members").upsert(add.map(pid=>({group_id:g.id,player_id:pid})));if(r.error)throw r.error;await grantSids(add,g.sids)}
+  for(const pid of rem){const r=await sb.from("group_members").delete().eq("group_id",g.id).eq("player_id",pid);if(r.error)throw r.error}
+  g.members=[...want];if(rem.length)await revokeSids(rem,g.sids,g.id);return {add,rem}}
+async function setSids(g,want){const add=[...want].filter(x=>!g.sids.includes(x)),rem=g.sids.filter(x=>!want.has(x));if(!add.length&&!rem.length)return;
+  const r=await sb.from("groups").update({sids:[...want]}).eq("id",g.id);if(r.error)throw r.error;await grantSids(g.members,add);g.sids=[...want];await revokeSids(g.members,rem,g.id)}
+async function refresh(keepScroll){const y=scrollY;await loadCoach();viewCoach();if(keepScroll)scrollTo(0,y)}
+function sqlCardG(){return `<div class="card"><h2>Einmalig: Supabase für Gruppen ergänzen</h2><p>Damit du <b>alle registrierten Spieler</b> in Gruppen einteilen kannst (auch solche, die ihre Resultate nicht teilen, z. B. Diego), braucht Supabase noch eine kleine Ergänzung. Öffne in Supabase den <b>SQL Editor</b>, füge dieses Skript ein und klicke <b>Run</b>:</p>
+  <pre id="sqlTxt">${esc(SQL10)}</pre><div class="acts"><button type="button" class="btn" id="copySql" data-sql="10">SQL kopieren</button><button type="button" class="btn" id="reload">Erledigt – neu laden</button></div></div>`}
+const SQL10=`-- Teil 10: Gruppen für alle registrierten Spieler (auch ohne «Resultate teilen»).
+-- Was ein Spieler trainiert, sehen Coach und Gruppe weiterhin nur, wenn er teilt.
+-- Das Skript kann mehrmals ausgeführt werden. Es setzt Teil 8 + 9 voraus.
+drop policy if exists "gm_coach_all_read" on public.group_members;
+drop policy if exists "gm_coach_all_insert" on public.group_members;
+drop policy if exists "gm_coach_all_update" on public.group_members;
+drop policy if exists "gm_coach_all_delete" on public.group_members;
+create policy "gm_coach_all_read" on public.group_members for select using (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()));
+create policy "gm_coach_all_insert" on public.group_members for insert with check (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()) and public.is_registered_player(player_id));
+create policy "gm_coach_all_update" on public.group_members for update using (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid())) with check (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()) and public.is_registered_player(player_id));
+create policy "gm_coach_all_delete" on public.group_members for delete using (exists (select 1 from public.groups g where g.id = group_members.group_id and g.coach_id = auth.uid()));
+-- Erkennungszeichen für die Start-Seite
+create or replace function public.cz_sql_version() returns int language sql stable as $fn$ select 10 $fn$;
+grant execute on function public.cz_sql_version() to authenticated;`;
 function sqlCard(){return `<div class="card"><h2>Einmalig: Supabase ergänzen</h2><p>Damit du <b>alle registrierten Spieler</b> siehst und ihnen Wochenplan, Ernährungsplan und Trainings schicken kannst, braucht Supabase eine Ergänzung. Resultate siehst du weiterhin nur von Spielern, die mit dir teilen. Öffne in Supabase den <b>SQL Editor</b>, füge dieses Skript ein und klicke <b>Run</b>:</p>
   <pre id="sqlTxt">${esc(SQL)}</pre><div class="acts"><button type="button" class="btn" id="copySql">SQL kopieren</button><button type="button" class="btn" id="reload">Erledigt – neu laden</button></div></div>`}
 const SQL=`-- Teil 8 + 9: Coach sieht alle registrierten Spieler und kann allen Pläne schicken.
@@ -267,7 +319,9 @@ drop policy if exists "planner_coach_all_insert" on public.planner_state;
 drop policy if exists "planner_coach_all_update" on public.planner_state;
 create policy "planner_coach_all_read" on public.planner_state for select using (public.is_coach() and public.is_registered_player(user_id));
 create policy "planner_coach_all_insert" on public.planner_state for insert with check (public.is_coach() and public.is_registered_player(user_id));
-create policy "planner_coach_all_update" on public.planner_state for update using (public.is_coach() and public.is_registered_player(user_id)) with check (public.is_coach() and public.is_registered_player(user_id));`;
+create policy "planner_coach_all_update" on public.planner_state for update using (public.is_coach() and public.is_registered_player(user_id)) with check (public.is_coach() and public.is_registered_player(user_id));
+
+`+SQL10.split("\n").slice(3).join("\n")+``;
 
 /* Ernährungsplan → Planner-Woche: die Nutrition-App rechnet die Essenszeiten selbst (verstecktes iframe) */
 let nutReady=null;
@@ -320,8 +374,21 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#acOut")){await sb.auth.signOut();user=null;cacheUser(null);isCoach=false;sel=null;viewLogin();return}
   const pl=t.closest("[data-pl]");if(pl){sel=pl.dataset.pl===sel?null:pl.dataset.pl;viewCoach();const pn=$("panel");if(pn)pn.scrollIntoView({behavior:"smooth",block:"start"});return}
   if(t.closest("#sendAll")){sendAll();return}
+  const gf=t.closest("[data-gf]");if(gf){gfilter=gf.dataset.gf;viewCoach();return}
+  if(t.closest("#gAdd")){gNew=!gNew;viewCoach();if(gNew&&$("gName"))$("gName").focus();return}
+  if(t.closest("#gCreate")){const n=$("gName").value.trim();if(!n){$("gName").focus();return}const r=await sb.from("groups").insert({coach_id:user.id,name:n});if(r.error){toast(gErrMsg(r.error));return}gNew=false;await loadGroups();const g=groups.find(x=>x.name===n);gsel=g?g.id:null;viewCoach();const gp=$("gpanel");if(gp)gp.scrollIntoView({behavior:"smooth",block:"start"});toast(`Gruppe «${n}» erstellt – jetzt Mitglieder wählen`);return}
+  const go=t.closest("[data-gopen]");if(go){gsel=gsel===go.dataset.gopen?null:go.dataset.gopen;viewCoach();const gp=$("gpanel");if(gp)gp.scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(t.closest("#gSave")){const g=groups.find(x=>x.id===gsel);if(!g)return;const b=t.closest("#gSave");b.disabled=true;$("gErr").textContent="";
+    const nm=$("gRen").value.trim(),wm=new Set([...document.querySelectorAll("[data-gm]")].filter(c=>c.checked).map(c=>c.dataset.gm)),ws=new Set([...document.querySelectorAll("[data-gs]")].filter(c=>c.checked).map(c=>c.dataset.gs));
+    try{if(nm&&nm!==g.name){const r=await sb.from("groups").update({name:nm}).eq("id",g.id);if(r.error)throw r.error}
+      await setSids(g,new Set([...ws].concat(g.sids.filter(x=>!trSessions().some(s=>s.id===x)))));await setMembers(g,wm);await refresh(true);toast(`«${nm||g.name}»: ${wm.size} Spieler, ${ws.size} Einheit${ws.size===1?"":"en"}`)}
+    catch(e){const m=gErrMsg(e);await refresh(true);const el=$("gErr");if(el)el.textContent=m}return}
+  if(t.closest("#gDel")){const g=groups.find(x=>x.id===gsel);if(!g||!confirm(`Gruppe «${g.name}» löschen? Die Mitglieder verlieren die Einheiten der Gruppe (ausser sie haben sie auch einzeln oder über eine andere Gruppe).`))return;
+    try{await revokeSids(g.members,g.sids,g.id);const r=await sb.from("groups").delete().eq("id",g.id);if(r.error)throw r.error;gsel=null;if(gfilter===g.id)gfilter="";await refresh(true);toast(`Gruppe «${g.name}» gelöscht`)}catch(e){toast(gErrMsg(e))}return}
+  const gt=t.closest("[data-gtog]");if(gt){const g=groups.find(x=>x.id===gt.dataset.gtog);if(!g)return;gt.disabled=true;const want=new Set(g.members);want.has(sel)?want.delete(sel):want.add(sel);
+    try{const r=await setMembers(g,want);await refresh(true);toast(r.add.length?`In «${g.name}» aufgenommen${g.sids.length?` – ${g.sids.length} Einheit${g.sids.length===1?"":"en"} zugewiesen`:""}`:`Aus «${g.name}» entfernt`)}catch(e){toast(gErrMsg(e));await refresh(true)}return}
   if(t.closest("#copyStart")){const l=location.origin+location.pathname;try{await navigator.clipboard.writeText(l);toast("Link kopiert – jetzt den Spielern schicken")}catch(_){prompt("Link kopieren:",l)}return}
-  if(t.closest("#copySql")){try{await navigator.clipboard.writeText(SQL);toast("SQL kopiert")}catch(_){const r=document.createRange();r.selectNodeContents($("sqlTxt"));getSelection().removeAllRanges();getSelection().addRange(r)}return}
+  if(t.closest("#copySql")){const txt=t.closest("#copySql").dataset.sql==="10"?SQL10:SQL;try{await navigator.clipboard.writeText(txt);toast("SQL kopiert")}catch(_){const r=document.createRange();r.selectNodeContents($("sqlTxt"));getSelection().removeAllRanges();getSelection().addRange(r)}return}
   if(t.closest("#reload")){location.reload();return}});
 /* Gym-Tag gewählt → Häkchen setzen */
 document.addEventListener("change",e=>{const d=e.target.dataset&&e.target.dataset.pd;if(d&&e.target.value){const c=document.querySelector(`[data-sid="${CSS.escape(d)}"]`);if(c)c.checked=true}});
