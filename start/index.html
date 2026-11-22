@@ -73,6 +73,7 @@ input[type=time]{width:auto}
 .players .nm{font-weight:600}
 .players .em{display:block;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
 .dots{display:flex;gap:4px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:.75rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
 .dot{font-size:.78rem;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
 .dot.on{background:var(--cbg);color:var(--c);border-color:transparent}
 .sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
@@ -118,7 +119,7 @@ function sbMsg(e){const m=String(e&&e.message||e||"");if(/Invalid login/i.test(m
   if(/Password should be/i.test(m))return "Das Passwort ist zu kurz (mind. 6 Zeichen).";if(/valid email|invalid.*email/i.test(m))return "Bitte eine gültige E-Mail-Adresse eingeben.";if(/fetch|network/i.test(m))return "Keine Verbindung – bitte Internet prüfen.";return m}
 const missing=e=>{const m=String(e&&((e.code||"")+" "+(e.message||"")));return /42P01|PGRST205/.test(m)||/nutrition_state/.test(m)&&/exist|find|schema/i.test(m)};
 function cacheUser(u){try{u?localStorage.setItem(UKEY,JSON.stringify({id:u.id,email:u.email,user_metadata:u.user_metadata||{}})):localStorage.removeItem(UKEY)}catch(e){}}
-let sb=null,user=null,isCoach=false,players=[],sel=null,info={},noNut=false;
+let sb=null,user=null,isCoach=false,players=[],sel=null,info={},noNut=false,oldList=false;
 const uname=()=>user?((user.user_metadata||{}).name||String(user.email||"").split("@")[0]):"";
 
 /* ---------- Ansichten ---------- */
@@ -154,7 +155,9 @@ function trSessions(){const t=readJSON(TKEY);return ((t&&t.sessions)||[]).filter
 function sessPayload(x){return {id:x.id,t:x.t||"",a:x.a||"",h:x.h||"",items:(x.items||[]).map(it=>{const {log,xs,skip,temp,added,...r}=it;return r})}}
 const norm=s=>String(s||"").trim().toLowerCase();
 function pname(p){return p.name||p.email||"Spieler"}
-async function loadCoach(){const r=await sb.rpc("my_players");players=(r.data||[]).slice().sort((a,b)=>pname(a).localeCompare(pname(b),"de"));const ids=players.map(p=>p.player_id);info={};
+async function coachPlayersRPC(){try{const r=await sb.rpc("coach_players");if(!r.error)return {list:r.data||[],old:false}}catch(e){}
+  try{const r=await sb.rpc("my_players");return {list:(r.data||[]).map(p=>Object.assign({shares:true,confirmed:true},p)),old:true}}catch(e){return {list:[],old:true}}}
+async function loadCoach(){const r=await coachPlayersRPC();oldList=r.old;players=r.list.slice().sort((a,b)=>pname(a).localeCompare(pname(b),"de"));const ids=players.map(p=>p.player_id);info={};
   ids.forEach(id=>info[id]={plan:null,nut:null,tr:[]});if(!ids.length)return;
   const [p,n,a]=await Promise.all([sb.from("planner_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("assignments").select("id,player_id,sid,title,updated_at").eq("coach_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
   (p.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].plan=x});
@@ -165,13 +168,14 @@ function dots(id){const i=info[id]||{},nb=i.plan&&i.plan.data&&i.plan.data.tpl?O
 function viewCoach(){const plans=nutPlans(),S=trSessions();
   let h=`<div class="who"><div><h1>Spieler</h1><p class="hint" style="margin:0">Coach: <b>${esc(uname())}</b></p></div><button type="button" class="btn sm" id="acOut">Abmelden</button></div>
   <p class="lead">Wähle einen Spieler und schick ihm Wochenplan, Ernährungsplan und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
-  if(noNut)h+=sqlCard();
+  if(noNut||oldList)h+=sqlCard();
   if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
   else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><ul class="players" id="plist">${playerList("")}</ul>
     <div class="acts" style="margin-top:10px"><button type="button" class="btn sm" id="copyStart">Anmelde-Link für neue Spieler kopieren</button></div></div>`;
     if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S)}
   $("app").innerHTML=h}
-function playerList(q){q=norm(q);return players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q)).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
+function playerList(q){q=norm(q);return players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q)).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
+function tags(p){const t=[];if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
 function guessPlan(p,plans){const h=hub()[sel]||{};if(h.plan&&plans.some(x=>x.id===h.plan))return h.plan;const n=norm(pname(p)),first=n.split(" ")[0];
   const i=info[sel];if(i&&i.nut&&i.nut.data){const m=plans.find(x=>norm(x.name)===norm(i.nut.data.n));if(m)return m.id}
   const m=plans.find(x=>norm(x.name)===n)||plans.find(x=>first&&norm(x.name).includes(first)&&norm(x.name).split(" ").every(w=>n.includes(w)));return m?m.id:""}
@@ -182,7 +186,7 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
   /* Einheiten: zugewiesene zuerst, dann solche mit dem Namen des Spielers */
   const rank=x=>as.has(x.id)?0:norm(x.a)&&nm.includes(norm(x.a).split(" ")[0])?1:2;const SS=S.slice().sort((a,b)=>rank(a)-rank(b));
   const dayOpts=v=>`<option value="">nicht im Wochenplan</option>`+DAYS.map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
-  return `<div class="card" id="panel"><h2>${esc(pname(p))}</h2>${p.email?`<p class="hint">${esc(p.email)}</p>`:""}
+  return `<div class="card" id="panel"><h2>${esc(pname(p))}</h2>${p.email?`<p class="hint">${esc(p.email)}</p>`:""}${p.shares===false?`<p class="hint">Er teilt seine Resultate nicht mit dir. Pläne und Trainings kannst du ihm trotzdem schicken.</p>`:""}${p.confirmed===false?`<p class="hint">Seine E-Mail ist noch nicht bestätigt. Was du schickst, sieht er nach dem Bestätigen.</p>`:""}
   <div class="sec c-nut"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.nut}</span><h3>Ernährungsplan</h3></div>
     <p class="now${i.nut?" ok":""}">${i.nut?`Hat jetzt: «${esc(i.nut.data.n||"Plan")}», geschickt ${fdate(i.nut.updated_at)}`:noNut?"Zuerst das SQL oben in Supabase ausführen.":"Noch kein Ernährungsplan geschickt."}</p>
     ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Ernährungsplan. <a href="../">In Nutrition erstellen</a></p>`}
@@ -198,9 +202,36 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
     <div class="acts"><a class="btn sm" href="../planner/#who=${encodeURIComponent(sel)}" style="text-decoration:none;display:inline-flex;align-items:center">Im Planner ansehen und bearbeiten ›</a></div>
   </div>
   <div class="sendall"><button type="button" class="btn pri" id="sendAll">An ${esc(pname(p).split(" ")[0])} schicken</button><p class="err" id="sendErr"></p></div></div>`}
-function sqlCard(){return `<div class="card"><h2>Einmalig: Supabase ergänzen</h2><p>Damit du Ernährungspläne in die Konten der Spieler schicken kannst, braucht Supabase eine neue Tabelle. Öffne in Supabase den <b>SQL Editor</b>, füge dieses Skript ein und klicke <b>Run</b>:</p>
+function sqlCard(){return `<div class="card"><h2>Einmalig: Supabase ergänzen</h2><p>Damit du <b>alle registrierten Spieler</b> siehst und ihnen Wochenplan, Ernährungsplan und Trainings schicken kannst, braucht Supabase eine Ergänzung. Resultate siehst du weiterhin nur von Spielern, die mit dir teilen. Öffne in Supabase den <b>SQL Editor</b>, füge dieses Skript ein und klicke <b>Run</b>:</p>
   <pre id="sqlTxt">${esc(SQL)}</pre><div class="acts"><button type="button" class="btn" id="copySql">SQL kopieren</button><button type="button" class="btn" id="reload">Erledigt – neu laden</button></div></div>`}
-const SQL=`-- Teil 8: Ernährungsplan vom Coach in das Konto des Spielers
+const SQL=`-- Teil 8 + 9: Coach sieht alle registrierten Spieler und kann allen Pläne schicken.
+-- Resultate (absolvierte Trainings) bleiben wie bisher nur für Spieler sichtbar, die teilen.
+-- Das Skript kann mehrmals ausgeführt werden.
+
+-- Alle registrierten Konten ausser Coaches, mit «teilt Resultate» und «E-Mail bestätigt»
+create or replace function public.coach_players()
+returns table(player_id uuid, name text, email text, shares boolean, confirmed boolean)
+language sql stable security definer set search_path = public, auth as $fn$
+  select u.id,
+         coalesce(nullif(p.name::text, ''), u.raw_user_meta_data->>'name', split_part(u.email::text, '@', 1)),
+         u.email::text,
+         not coalesce(p.share_opt_out, false),
+         u.email_confirmed_at is not null
+  from auth.users u left join public.profiles p on p.id = u.id
+  where public.is_coach() and u.id <> auth.uid() and not coalesce(p.is_coach, false)
+$fn$;
+revoke all on function public.coach_players() from public, anon;
+grant execute on function public.coach_players() to authenticated;
+
+create or replace function public.is_registered_player(pid uuid)
+returns boolean language sql stable security definer set search_path = public, auth as $fn$
+  select exists (select 1 from auth.users u left join public.profiles p on p.id = u.id
+                 where u.id = pid and not coalesce(p.is_coach, false))
+$fn$;
+revoke all on function public.is_registered_player(uuid) from public, anon;
+grant execute on function public.is_registered_player(uuid) to authenticated;
+
+-- Ernährungsplan vom Coach
 create table if not exists public.nutrition_state (
   user_id uuid primary key references auth.users(id) on delete cascade,
   coach_id uuid references auth.users(id) on delete set null,
@@ -208,17 +239,35 @@ create table if not exists public.nutrition_state (
   updated_at timestamptz not null default now()
 );
 alter table public.nutrition_state enable row level security;
+grant select, insert, update, delete on public.nutrition_state to authenticated;
 drop policy if exists "nutrition_own_read" on public.nutrition_state;
 drop policy if exists "nutrition_coach_read" on public.nutrition_state;
 drop policy if exists "nutrition_coach_insert" on public.nutrition_state;
 drop policy if exists "nutrition_coach_update" on public.nutrition_state;
 drop policy if exists "nutrition_coach_delete" on public.nutrition_state;
 create policy "nutrition_own_read" on public.nutrition_state for select using (auth.uid() = user_id);
-create policy "nutrition_coach_read" on public.nutrition_state for select using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
-create policy "nutrition_coach_insert" on public.nutrition_state for insert with check (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
-create policy "nutrition_coach_update" on public.nutrition_state for update using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id)) with check (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
-create policy "nutrition_coach_delete" on public.nutrition_state for delete using (public.is_coach() and exists (select 1 from public.my_players() p where p.player_id = nutrition_state.user_id));
-grant select, insert, update, delete on public.nutrition_state to authenticated;`;
+create policy "nutrition_coach_read" on public.nutrition_state for select using (public.is_coach() and public.is_registered_player(user_id));
+create policy "nutrition_coach_insert" on public.nutrition_state for insert with check (public.is_coach() and public.is_registered_player(user_id));
+create policy "nutrition_coach_update" on public.nutrition_state for update using (public.is_coach() and public.is_registered_player(user_id)) with check (public.is_coach() and public.is_registered_player(user_id));
+create policy "nutrition_coach_delete" on public.nutrition_state for delete using (public.is_coach() and public.is_registered_player(user_id));
+
+-- Trainings zuweisen: an alle registrierten Spieler
+drop policy if exists "assign_coach_all_read" on public.assignments;
+drop policy if exists "assign_coach_all_insert" on public.assignments;
+drop policy if exists "assign_coach_all_update" on public.assignments;
+drop policy if exists "assign_coach_all_delete" on public.assignments;
+create policy "assign_coach_all_read" on public.assignments for select using (coach_id = auth.uid() and public.is_coach());
+create policy "assign_coach_all_insert" on public.assignments for insert with check (coach_id = auth.uid() and public.is_coach() and public.is_registered_player(player_id));
+create policy "assign_coach_all_update" on public.assignments for update using (coach_id = auth.uid() and public.is_coach()) with check (coach_id = auth.uid() and public.is_coach() and public.is_registered_player(player_id));
+create policy "assign_coach_all_delete" on public.assignments for delete using (coach_id = auth.uid() and public.is_coach());
+
+-- Wochenplan (Planner) für alle registrierten Spieler erstellen und bearbeiten
+drop policy if exists "planner_coach_all_read" on public.planner_state;
+drop policy if exists "planner_coach_all_insert" on public.planner_state;
+drop policy if exists "planner_coach_all_update" on public.planner_state;
+create policy "planner_coach_all_read" on public.planner_state for select using (public.is_coach() and public.is_registered_player(user_id));
+create policy "planner_coach_all_insert" on public.planner_state for insert with check (public.is_coach() and public.is_registered_player(user_id));
+create policy "planner_coach_all_update" on public.planner_state for update using (public.is_coach() and public.is_registered_player(user_id)) with check (public.is_coach() and public.is_registered_player(user_id));`;
 
 /* Ernährungsplan → Planner-Woche: die Nutrition-App rechnet die Essenszeiten selbst (verstecktes iframe) */
 let nutReady=null;
@@ -250,7 +299,7 @@ async function sendAll(){const btn=$("sendAll"),errEl=$("sendErr");btn.disabled=
       DAYS.forEach(([k])=>{tpl[k]=tpl[k]||{b:[]};tpl[k].b=(tpl[k].b||[]).filter(b=>b.k!=="gym")});
       want.forEach(sid=>{const x=S.find(z=>z.id===sid),pl=place[sid];if(!x||!pl||!pl.d||toM(pl.t)==null)return;const s=toM(pl.t);tpl[pl.d].b.push({id:uid(),k:"gym",s:fmt(s),e:fmt(s+60),t:x.t||"Gym"})});
       const data=Object.assign({},prev||{},{tpl,ov:{},upd:Date.now()});if(!prev||!prev.prof)data.prof=school?"jung":(prev&&prev.prof)||"jung";if(data.food==null)data.food=true;if(data.goal==null)data.goal=9;delete data.view;
-      const r=await sb.from("planner_state").upsert({user_id:sel,data,updated_at:now});if(r.error)errs.push(/row-level|policy|permission/i.test(String(r.error.message))?"Wochenplan: Speichern nicht erlaubt – in Supabase fehlt das SQL-Skript Teil 7 (Coach bearbeitet Wochenplan).":"Wochenplan: "+sbMsg(r.error));else done.push("Wochenplan")}
+      const r=await sb.from("planner_state").upsert({user_id:sel,data,updated_at:now});if(r.error)errs.push(/row-level|policy|permission/i.test(String(r.error.message))?"Wochenplan: Speichern nicht erlaubt – zuerst das SQL oben in Supabase ausführen.":"Wochenplan: "+sbMsg(r.error));else done.push("Wochenplan")}
   }catch(e){errs.push(sbMsg(e))}
   await loadCoach();viewCoach();
   if(done.length)toast(`An ${first} geschickt: ${done.join(", ")}`);

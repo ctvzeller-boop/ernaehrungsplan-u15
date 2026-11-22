@@ -522,27 +522,30 @@ function openAcct(msg){
     </form><p class="accterr" id="acErr">${esc(msg||"")}</p>`)}
 async function afterLogin(u){sbUser=u;cacheUser(u);closeModal();acctUI();await sbPull(true);checkCoach()}
 /* ---------- Coach: zwischen Spielern wechseln ---------- */
+/* alle registrierten Spieler (SQL Teil 9); ohne Teil 9: nur die, die teilen */
+async function coachPlayersRPC(){try{const r=await sb.rpc("coach_players");if(!r.error)return {list:r.data||[],old:false}}catch(e){}
+  try{const r=await sb.rpc("my_players");return {list:(r.data||[]).map(p=>Object.assign({shares:true,confirmed:true},p)),old:true}}catch(e){return {list:[],old:true}}}
 async function checkCoach(){isCoach=false;players=[];if(!sb||!sbUser){coachUI();return}
   try{const {data}=await sb.from("profiles").select("is_coach").eq("id",sbUser.id).maybeSingle();isCoach=!!(data&&data.is_coach)}catch(e){}
-  if(isCoach)try{const {data,error}=await sb.rpc("my_players");if(!error)players=data||[]}catch(e){}
+  if(isCoach)try{players=(await coachPlayersRPC()).list}catch(e){}
   coachUI();
   /* von der Spieler-Seite: #who=<Spieler-ID> öffnet direkt dessen Wochenplan */
   const w=/[#&]who=([^&]+)/.exec(location.hash);if(w){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}if(isCoach)setWho(decodeURIComponent(w[1]))}}
 function coachUI(){const bar=$("coachBar");bar.hidden=!isCoach;$("viewing").hidden=!viewing;
   if(viewing)$("viewingTxt").innerHTML=`Du siehst und bearbeitest den Plan von <b>${esc(viewing.name)}</b>.${viewing.err?` <span class="warnline">${esc(viewing.err)}</span>`:""}`;
   if(!isCoach)return;const sel2=$("whoSel");const v=viewing?viewing.id:"";
-  sel2.innerHTML=`<option value="">Mein Plan</option>`+players.map(p=>`<option value="${esc(p.player_id)}">${esc(p.name||p.email||"Spieler")}</option>`).join("")+(players.length?"":`<option value="" disabled>Noch keine Spieler mit Konto</option>`);
+  sel2.innerHTML=`<option value="">Mein Plan</option>`+players.map(p=>`<option value="${esc(p.player_id)}">${esc(p.name||p.email||"Spieler")}${p.shares===false?" (teilt keine Resultate)":""}</option>`).join("")+(players.length?"":`<option value="" disabled>Noch keine Spieler mit Konto</option>`);
   sel2.value=v;wpTargetUI()}
 async function setWho(id){if(!id){if(viewing){state=own;own=null;viewing=null;playerTS=null;render();sbPull(false)}return}
   const p=players.find(x=>x.player_id===id);if(!p)return;
-  try{const [a,b]=await Promise.all([sb.from("planner_state").select("data").eq("user_id",id).maybeSingle(),sb.from("app_state").select("data").eq("user_id",id).maybeSingle()]);
+  try{const [a,b]=await Promise.all([sb.from("planner_state").select("data").eq("user_id",id).maybeSingle(),p.shares===false?Promise.resolve({data:null}):sb.from("app_state").select("data").eq("user_id",id).maybeSingle()]);
     if(a.error)throw a.error;if(!viewing)own=state;viewing={id,name:p.name||p.email||"Spieler"};
     const r=a.data&&a.data.data;state=Object.assign(blank(),r||{},{view:"week"});playerTS=(b.data&&b.data.data)||{sessions:[],hist:[]};
     wk=monday(today);sel=(today.getDay()+6)%7;render();if(!r)toast(`${viewing.name} hat noch keinen Wochenplan. Du kannst ihn hier erstellen.`)}
   catch(e){toast("Plan konnte nicht geladen werden.");coachUI()}}
 let cqT=null;function coachQueue(){clearTimeout(cqT);const v=viewing,data=sbPayload();cqT=setTimeout(async()=>{
   try{const {error}=await sb.from("planner_state").upsert({user_id:v.id,data,updated_at:new Date().toISOString()});if(error)throw error;if(viewing===v){delete v.err;coachUI()}}
-  catch(e){v.err=/row-level|policy|permission/i.test(String(e&&e.message||e))?"Speichern nicht erlaubt – in Supabase fehlt noch das SQL-Skript Teil 7.":"Gerade keine Verbindung – nicht gespeichert.";if(viewing===v)coachUI()}},800)}
+  catch(e){v.err=/row-level|policy|permission/i.test(String(e&&e.message||e))?"Speichern nicht erlaubt – in Supabase fehlt noch das SQL-Skript Teil 9 (siehe Start-Seite).":"Gerade keine Verbindung – nicht gespeichert.";if(viewing===v)coachUI()}},800)}
 $("whoSel").addEventListener("change",e=>setWho(e.target.value));
 $("acctBtn").addEventListener("click",()=>openAcct());
 $("sheet").addEventListener("submit",async e=>{if(e.target.id!=="acForm")return;e.preventDefault();
