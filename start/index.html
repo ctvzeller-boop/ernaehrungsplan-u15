@@ -74,6 +74,10 @@ input[type=time]{width:auto}
 .players .em{display:block;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
 .dots{display:flex;gap:4px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.chip{font:600 .88rem var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 12px;min-height:36px;cursor:pointer}.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--surface)}.chip span{opacity:.65;font-weight:500}
+.ghead{font:700 1rem/1.1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}.ghead:first-child{margin-top:4px}.ghead span{font:500 .85rem var(--body);text-transform:none;letter-spacing:0;margin-left:4px}
+.fold{border-top:1px solid var(--line)}.fold:first-of-type{border-top:0}.fold>summary{list-style:none;cursor:pointer;padding:8px 0}.fold>summary::-webkit-details-marker{display:none}.fold>summary h4::before{content:"▸ ";display:inline-block;transition:transform .15s}.fold[open]>summary h4::before{content:"▾ "}.fhead h4 span{font:500 .82rem var(--body);text-transform:none;letter-spacing:0;margin-left:4px}
+.tlist li:has(input[data-sid]:not(:checked)) .place{display:none}
+.fhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}.fhead:first-child{margin-top:0}.fhead h4{margin:0;font:700 .95rem var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .glist{display:grid;gap:6px;margin:0 0 10px;padding:0;list-style:none}.glist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.glist b{display:block}
 .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;margin:0 0 8px;padding:0;list-style:none}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:.75rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
@@ -178,7 +182,7 @@ function viewCoach(){const plans=nutPlans(),S=trSessions();
   <p class="lead">Wähle einen Spieler und schick ihm Wochenplan, Ernährungsplan und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
   if(noNut||oldList)h+=sqlCard();else if(needG)h+=sqlCardG();
   if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
-  else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div>${filterChips()}<ul class="players" id="plist">${playerList("")}</ul>
+  else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><div id="plist">${playerList("")}</div>
     <div class="acts" style="margin-top:10px"><button type="button" class="btn sm" id="copyStart">Anmelde-Link für neue Spieler kopieren</button></div></div>`;
     if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S);
     h+=groupsCard(S)}
@@ -186,8 +190,12 @@ function viewCoach(){const plans=nutPlans(),S=trSessions();
 function filterChips(){if(!groups.length)return "";const n=id=>id==="-"?players.filter(p=>!gOf(p.player_id).length).length:id?(groups.find(g=>g.id===id)||{members:[]}).members.length:players.length;
   return `<div class="chips" role="group" aria-label="Nach Gruppe filtern">${[["","Alle"]].concat(groups.map(g=>[g.id,g.name]),[["-","Ohne Gruppe"]]).map(([id,l])=>`<button type="button" class="chip" data-gf="${esc(id)}" aria-pressed="${gfilter===id}">${esc(l)} <span>${n(id)}</span></button>`).join("")}</div>`}
 function inFilter(p){if(!gfilter)return true;const G=gOf(p.player_id);return gfilter==="-"?!G.length:G.some(g=>g.id===gfilter)}
-function playerList(q){q=norm(q);return players.filter(p=>inFilter(p)&&(!q||norm(p.name).includes(q)||norm(p.email).includes(q))).map(p=>`<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`).join("")||`<li class="hint">Kein Spieler gefunden.</li>`}
-function tags(p){const t=gOf(p.player_id).map(g=>"👥 "+g.name);if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
+function pRow(p){return `<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`}
+function playerList(q){q=norm(q);const P=players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q));if(!P.length)return `<p class="hint">Kein Spieler gefunden.</p>`;
+  if(!groups.length)return `<ul class="players">${P.map(pRow).join("")}</ul>`;
+  const sec=(title,L,id)=>L.length?`<h3 class="ghead">${esc(title)} <span>${L.length}</span></h3><ul class="players">${L.map(pRow).join("")}</ul>`:"";
+  return groups.map(g=>sec(g.name,P.filter(p=>g.members.includes(p.player_id)),g.id)).join("")+sec("Ohne Gruppe",P.filter(p=>!gOf(p.player_id).length),"-")}
+function tags(p){const t=gOf(p.player_id).length>1?gOf(p.player_id).map(g=>"👥 "+g.name):[];if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
 function guessPlan(p,plans){const h=hub()[sel]||{};if(h.plan&&plans.some(x=>x.id===h.plan))return h.plan;const n=norm(pname(p)),first=n.split(" ")[0];
   const i=info[sel];if(i&&i.nut&&i.nut.data){const m=plans.find(x=>norm(x.name)===norm(i.nut.data.n));if(m)return m.id}
   const m=plans.find(x=>norm(x.name)===n)||plans.find(x=>first&&norm(x.name).includes(first)&&norm(x.name).split(" ").every(w=>n.includes(w)));return m?m.id:""}
@@ -206,8 +214,11 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
   </div>
   <div class="sec c-tr"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.tr}</span><h3>Trainings</h3></div>
     <p class="now${(i.tr||[]).length?" ok":""}">${(i.tr||[]).length?`Hat jetzt: ${i.tr.map(a=>esc(a.title)).join(", ")}`:"Noch keine Einheiten zugewiesen."}</p>
-    ${SS.length?`<ul class="tlist">${SS.map(x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}</small></label>
-      <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Wochenplan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`}).join("")}</ul>`:`<p class="hint">Auf diesem Gerät gibt es noch keine Trainingseinheit. <a href="../training/">In Workout erstellen</a></p>`}
+    ${SS.length?(()=>{const li=x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}</small></label>
+      <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Wochenplan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`};const mine=new Set([nm].concat(gOf(sel).map(g=>norm(g.name))));const fr=f=>!f?2:mine.has(norm(f))?0:1;
+      const F=[...new Set(SS.map(x=>x.folder||""))].sort((a,b)=>fr(a)-fr(b)||a.localeCompare(b,"de"));
+      return F.map(f=>{const L=SS.filter(x=>(x.folder||"")===f),n=L.filter(x=>as.has(x.id)).length,open=fr(f)===0||n>0;
+        return `<details class="fold"${open?" open":""}><summary class="fhead"><h4>${esc(f||"Ohne Ordner")} <span>${L.length}${n?` · ${n} zugewiesen`:""}</span></h4>${L.length>1?`<button type="button" class="btn sm" data-fall="${esc(f)}">Alle wählen</button>`:""}</summary><ul class="tlist">${L.map(li).join("")}</ul></details>`}).join("")})():`<p class="hint">Auf diesem Gerät gibt es noch keine Trainingseinheit. <a href="../training/">In Workout erstellen</a></p>`}
   </div>
   <div class="sec c-plan"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.plan}</span><h3>Wochenplan (Planner)</h3></div>
     <p class="now${nb?" ok":""}">${nb?`Hat jetzt einen Wochenplan mit ${nb} Einträgen${i.plan.updated_at?`, zuletzt geändert ${fdate(i.plan.updated_at)}`:""}.`:"Noch kein Wochenplan."}</p>
@@ -374,6 +385,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#acOut")){await sb.auth.signOut();user=null;cacheUser(null);isCoach=false;sel=null;viewLogin();return}
   const pl=t.closest("[data-pl]");if(pl){sel=pl.dataset.pl===sel?null:pl.dataset.pl;viewCoach();const pn=$("panel");if(pn)pn.scrollIntoView({behavior:"smooth",block:"start"});return}
   if(t.closest("#sendAll")){sendAll();return}
+  const fa=t.closest("[data-fall]");if(fa){e.preventDefault();const dd=fa.closest("details");if(dd)dd.open=true;const f=fa.dataset.fall;const cbs=[...document.querySelectorAll("[data-sid]")].filter(c=>{const x=trSessions().find(z=>z.id===c.dataset.sid);return x&&(x.folder||"")===f});const on=!cbs.every(c=>c.checked);cbs.forEach(c=>c.checked=on);fa.textContent=on?"Keine wählen":"Alle wählen";return}
   const gf=t.closest("[data-gf]");if(gf){gfilter=gf.dataset.gf;viewCoach();return}
   if(t.closest("#gAdd")){gNew=!gNew;viewCoach();if(gNew&&$("gName"))$("gName").focus();return}
   if(t.closest("#gCreate")){const n=$("gName").value.trim();if(!n){$("gName").focus();return}const r=await sb.from("groups").insert({coach_id:user.id,name:n});if(r.error){toast(gErrMsg(r.error));return}gNew=false;await loadGroups();const g=groups.find(x=>x.name===n);gsel=g?g.id:null;viewCoach();const gp=$("gpanel");if(gp)gp.scrollIntoView({behavior:"smooth",block:"start"});toast(`Gruppe «${n}» erstellt – jetzt Mitglieder wählen`);return}
