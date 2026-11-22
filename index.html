@@ -550,6 +550,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
       <button id="vegBtn" type="button" aria-pressed="false" title="Nur vegetarische Gerichte vorschlagen">🌱 Vegetarisch</button>
       <button id="plBtn" type="button" hidden title="Schule, Arbeit und Trainings dieser Woche aus dem Planner übernehmen">📅 Aus Planner</button>
       <button id="mpBtn" type="button" aria-pressed="false" title="Zmittag ist immer der Rest vom Znacht am Vorabend">🍱 Mealprep</button>
+      <button id="sendPlBtn" type="button" hidden title="Diesen Plan in das Konto eines Spielers schicken">📤 An Spieler schicken</button>
       <button id="shareBtn" type="button">Plan als Link teilen</button>
       <button id="pdfBtn" type="button" hidden>Als PDF speichern</button>
       <button id="impBtn" type="button">Trainingsplan-PDF importieren</button>
@@ -650,6 +651,18 @@ details.info[open] summary{margin-bottom:4px;display:block}
   </div>
 </div>
 
+<div id="sendModal" class="modal" hidden>
+  <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+    <button type="button" class="modalclose" data-close="1" aria-label="Schliessen">×</button>
+    <h3 id="sendTitle">Plan an Spieler schicken</h3>
+    <label for="sendWho" class="hint" style="display:block;margin:6px 0 4px">Spieler</label>
+    <select id="sendWho" style="width:100%;min-height:44px"></select>
+    <p class="hint" id="sendNow" style="margin:8px 0"></p>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0"><input type="checkbox" id="sendWeek" checked style="width:20px;height:20px;margin-top:2px"><span>Wochenplan im Planner auch neu erstellen (Schule, Trainings, Schlaf, Mahlzeiten). Seine Gym-Einheiten bleiben drin.</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="primary" id="sendGo">Schicken</button><a href="start/" class="hint" style="align-self:center">Alle Spieler auf der Start-Seite</a></div>
+    <p class="hint" id="sendErr" style="color:var(--warn,#c2412d);min-height:1.2em"></p>
+  </div>
+</div>
 <div id="critModal" class="modal" hidden>
   <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="critTitle">
     <button type="button" class="modalclose" id="critClose" data-close="1" aria-label="Schliessen">×</button>
@@ -991,7 +1004,7 @@ function mpAll(){return DAYS.every(([k])=>state.plan[k]&&state.plan[k].mp)}
 function renderMPBtn(){const b=document.getElementById("mpBtn");if(!b)return;const on=mpAll(),some=DAYS.some(([k])=>state.plan[k]&&state.plan[k].mp);
   b.setAttribute("aria-pressed",on);b.textContent=on?"🍱 Mealprep: an":some?"🍱 Mealprep: teilweise":"🍱 Mealprep"}
 function renderVegBtn(){const b=document.getElementById("vegBtn");if(b){b.setAttribute("aria-pressed",!!state.veg);b.textContent=state.veg?"🌱 Vegetarisch: an":"🌱 Vegetarisch"}const c=document.getElementById("vegToggle");if(c)c.checked=!!state.veg}
-function save(){syncMP();if(Array.isArray(state.plans))syncActive();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave()}
+function save(){syncMP();if(Array.isArray(state.plans))syncActive();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}cloudSave();if(window.czSendHook)window.czSendHook()}
 /* Nur in Claude: Pläne zusätzlich in der Datenbank des Artifacts speichern (geräteübergreifend).
    Auf GitHub Pages gibt es window.claude nicht – dort bleibt alles im Browser. */
 var cloud=null,cloudReady=false,cloudT=null,cloudLast="";
@@ -2244,9 +2257,47 @@ async function pullCoachPlan(){if(!sb||!sbUser)return;
     if(ok){state.coachUpd=data.updated_at;state.coachPlan=state.active;save()}}catch(e){}}
 async function sbInit(){try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null;return}
   try{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null}catch(e){}
-  if(sbUser)pullCoachPlan();
-  sb.auth.onAuthStateChange((ev,s2)=>{const was=sbUser;sbUser=s2?s2.user:null;if(sbUser&&!was)pullCoachPlan()});
+  if(sbUser){pullCoachPlan();coachCheck()}
+  sb.auth.onAuthStateChange((ev,s2)=>{const was=sbUser;sbUser=s2?s2.user:null;if(sbUser&&!was){pullCoachPlan();coachCheck()}});
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&sbUser)pullCoachPlan()})}
+/* ---------- Coach: aktuellen Plan direkt an einen Spieler schicken (auch Änderungen) ---------- */
+let sbCoach=false,cPlayers=[],cSent={};
+const nrm=x=>String(x||"").trim().toLowerCase();
+async function coachCheck(){try{const r=await sb.rpc("is_coach");sbCoach=!r.error&&r.data===true}catch(e){sbCoach=false}
+  if(!sbCoach)return;try{let r=await sb.rpc("coach_players");if(r.error)r=await sb.rpc("my_players");cPlayers=(r.data||[]).slice().sort((a,b)=>String(a.name||a.email).localeCompare(String(b.name||b.email),"de"))}catch(e){}
+  await loadSent();renderSendBtn()}
+async function loadSent(){cSent={};const ids=cPlayers.map(p=>p.player_id);if(!ids.length)return;
+  try{const r=await sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids);(r.data||[]).forEach(x=>cSent[x.user_id]=x)}catch(e){}}
+function planObj(){const o={n:state.name||"",v:!!state.veg,p:JSON.parse(JSON.stringify(state.plan))};if(state.kg)o.kg=state.kg;return o}
+function sentTo(){/* Spieler, die genau diesen Plan (gleicher Name) haben */return cPlayers.filter(p=>cSent[p.player_id]&&nrm(cSent[p.player_id].data.n)===nrm(state.name))}
+const changed=x=>JSON.stringify(x.data.p)!==JSON.stringify(state.plan)||!!x.data.v!==!!state.veg||(x.data.kg||null)!==(state.kg||null);
+function guessWho(){const s=sentTo();if(s.length)return s[0].player_id;const n=nrm(state.name);const m=cPlayers.find(p=>nrm(p.name)===n)||cPlayers.find(p=>n&&nrm(p.name).split(" ")[0]===n.split(" ")[0]);return m?m.player_id:""}
+function renderSendBtn(){const b=document.getElementById("sendPlBtn");if(!b)return;b.hidden=!sbCoach;if(!sbCoach)return;
+  const s=sentTo(),dirty=s.some(x=>changed(cSent[x.player_id]));
+  b.textContent=s.length?`📤 ${dirty?"Änderungen an":"An"} ${String(s[0].name||s[0].email).split(" ")[0]}${s.length>1?` +${s.length-1}`:""} schicken`:"📤 An Spieler schicken";
+  b.classList.toggle("primary",dirty)}
+function sendNowTxt(){const id=document.getElementById("sendWho").value,x=cSent[id];const el=document.getElementById("sendNow");
+  if(!id){el.textContent="";return}if(!x){el.textContent="Hat noch keinen Ernährungsplan von dir.";return}
+  const same=nrm(x.data.n)===nrm(state.name);el.textContent=same?(changed(x)?`Hat «${x.data.n}» – deine Änderungen hier sind noch nicht geschickt.`:`Hat «${x.data.n}» schon in dieser Version.`):`Hat jetzt «${x.data.n||"Plan"}». Er wird durch «${state.name||"diesen Plan"}» ersetzt.`}
+function openSend(){const sel=document.getElementById("sendWho");const g=guessWho();
+  sel.innerHTML=`<option value="">– Spieler wählen –</option>`+cPlayers.map(p=>`<option value="${esc(p.player_id)}"${p.player_id===g?" selected":""}>${esc(p.name||p.email||"Spieler")}</option>`).join("");
+  document.getElementById("sendErr").textContent="";sendNowTxt();document.getElementById("sendModal").hidden=false}
+async function doSend(){const id=document.getElementById("sendWho").value,err=document.getElementById("sendErr"),btn=document.getElementById("sendGo");if(!id){err.textContent="Bitte einen Spieler wählen.";return}
+  btn.disabled=true;err.textContent="";const now=new Date().toISOString(),p=cPlayers.find(x=>x.player_id===id),first=String(p.name||p.email||"Spieler").split(" ")[0];const done=[];
+  try{save();const r=await sb.from("nutrition_state").upsert({user_id:id,coach_id:sbUser.id,data:planObj(),updated_at:now});if(r.error)throw r.error;done.push("Ernährungsplan");
+    if(document.getElementById("sendWeek").checked){const q=await sb.from("planner_state").select("data").eq("user_id",id).maybeSingle();const prev=(q.data&&q.data.data)||null;
+      const tpl=plannerTpl();if(prev&&prev.tpl)DAYS.forEach(([k])=>{((prev.tpl[k]&&prev.tpl[k].b)||[]).filter(b=>b.k==="gym").forEach(b=>tpl[k].b.push(b))});
+      const school=Object.values(state.plan).some(d=>(d.act||[]).some(a=>a.k==="schule"));
+      const data=Object.assign({},prev||{},{tpl,ov:{},upd:Date.now()});if(!data.prof)data.prof=school?"jung":"jung";if(data.food==null)data.food=true;if(data.goal==null)data.goal=9;delete data.view;
+      const w=await sb.from("planner_state").upsert({user_id:id,data,updated_at:now});if(w.error)throw w.error;done.push("Wochenplan")}
+    document.getElementById("sendModal").hidden=true;await loadSent();renderSendBtn();flash(`An ${first} geschickt: ${done.join(" und ")}`)}
+  catch(e){const m=String(e&&((e.code?e.code+": ":"")+(e.message||""))||e);err.textContent=(done.length?done.join(", ")+" geschickt, aber ":"")+(/nutrition_state/.test(m)&&/exist|find|schema/i.test(m)?"zuerst das SQL auf der Start-Seite in Supabase ausführen.":"Fehler: "+m)}
+  btn.disabled=false}
+document.getElementById("sendPlBtn").addEventListener("click",openSend);
+window.czSendHook=()=>{if(!sbCoach)return;clearTimeout(window.czSendHook.t);window.czSendHook.t=setTimeout(renderSendBtn,300)};
+document.getElementById("sendGo").addEventListener("click",doSend);
+document.getElementById("sendWho").addEventListener("change",sendNowTxt);
+document.getElementById("sendModal").addEventListener("click",e=>{if(e.target.id==="sendModal"||e.target.closest("[data-close]"))document.getElementById("sendModal").hidden=true});
 {let has=false;try{has=!!localStorage.getItem(AKEY)}catch(e){}
  if(has&&!/claude/.test(location.hostname)){let tries=0;const go=()=>{if(window.supabase&&window.supabase.createClient){sbInit();return}if(++tries<150)setTimeout(go,100)};go()}}
 /* ---------- Spieler-Paket (start/): Plan und daraus abgeleitete Planner-Woche ---------- */
