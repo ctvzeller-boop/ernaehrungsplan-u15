@@ -1137,7 +1137,8 @@ function renderWeekTable(){renderMealsBtn();
     d.ses.forEach((x,i)=>{const st=toMin(x.s);items.push({t:st===null?2000+i:st,o:-1,kind:"ses",i})});
     if(!Array.isArray(d.act))d.act=[];
     d.act.forEach((x,i)=>{const st=toMin(x.s);items.push({t:st===null?2100+i:st,o:-2,kind:"act",i})});
-    items.sort((a,b)=>a.t-b.t||a.o-b.o);
+    /* gleiche Uhrzeit: Mahlzeit vor dem Block (z. B. Schokomilch 13:40 vor Schule ab 13:40) */
+    items.sort((a,b)=>a.t-b.t||(b.kind==="meal")-(a.kind==="meal")||a.o-b.o);
     const blocks=items.filter(it=>it.kind!=="meal").map(it=>{const x=it.kind==="act"?d.act[it.i]:d.ses[it.i],a=toMin(x.s),e=toMin(x.e);return a!=null&&e!=null&&e-a>=45?{key:it.kind+it.i,s:a,e}:null}).filter(Boolean);
     const nest=nestMeals(k,blocks,items.filter(it=>it.kind==="meal"));
     const lay={};blocks.forEach(b=>lay[b.key]=nestLayout(k,nest.get(b.key),b,n,L));const NL={html:"",minH:0};
@@ -2128,7 +2129,7 @@ function renderToday(){
   S.forEach(x=>items.push({t:x.s,kind:"session",x}));
   actsOf(d).forEach(a=>items.push({t:a.s,kind:"act",a}));
   const nt=nightOf(k);if(nt)items.push({t:nt.bed<720?nt.bed+1440:nt.bed,kind:"sleep",nt});
-  items.sort((a,b)=>a.t-b.t||(a.kind==="session"?-1:0));
+  const KR={wake:0,session:1,meal:2,act:3,sleep:4};items.sort((a,b)=>a.t-b.t||(KR[a.kind]??2)-(KR[b.kind]??2));
   tl.innerHTML=items.map(it=>{
     if(it.kind==="wake"){const ok=!!lg.s;
       return `<li class="tl${ok?" done":""}" data-time="${it.t}"><div class="tltime">${noWake?"":fmtTime(wk)}</div><div class="tlbody"><div class="tlhead"><span class="eyebrow">Aufstehen${noWake?" · Zeit im Wochenplan unter «Schlaf» eintragen":""}</span>
