@@ -80,6 +80,10 @@ input[type=time]{width:auto}
 .fhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}.fhead:first-child{margin-top:0}.fhead h4{margin:0;font:700 .95rem var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .glist{display:grid;gap:6px;margin:0 0 10px;padding:0;list-style:none}.glist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.glist b{display:block}
 .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;margin:0 0 8px;padding:0;list-style:none}
+.gsec{border-radius:12px;padding:2px 4px;margin:0 -4px;transition:background .12s}
+.gsec.over,.glist li.over{background:var(--accent-soft);outline:2px dashed var(--accent);outline-offset:-2px}
+.dropzone{margin:0 0 6px;padding:10px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:.88rem;text-align:center}
+[data-drag]{cursor:grab}[data-drag].dragging{opacity:.45}
 .uses{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px}.uses li{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;background:var(--c-tr-bg);border-radius:8px;padding:6px 10px}.uses span{color:var(--muted);font-size:.85rem}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:.75rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
 .dot{font-size:.78rem;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
@@ -186,16 +190,17 @@ function viewCoach(){const plans=nutPlans(),S=trSessions();
   if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
   else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><div id="plist">${playerList("")}</div>
     <div class="acts" style="margin-top:10px"><button type="button" class="btn sm" id="copyStart">Anmelde-Link für neue Spieler kopieren</button></div></div>`;
+    if(groups.length)h=h.replace('<div id="plist">','<p class="hint" style="margin:-2px 0 8px">Tipp: Spieler mit der Maus in eine andere Gruppe ziehen.</p><div id="plist">');
     if(sel&&players.some(p=>p.player_id===sel))h+=playerPanel(plans,S);
     h+=groupsCard(S)}
   $("app").innerHTML=h}
 function filterChips(){if(!groups.length)return "";const n=id=>id==="-"?players.filter(p=>!gOf(p.player_id).length).length:id?(groups.find(g=>g.id===id)||{members:[]}).members.length:players.length;
   return `<div class="chips" role="group" aria-label="Nach Gruppe filtern">${[["","Alle"]].concat(groups.map(g=>[g.id,g.name]),[["-","Ohne Gruppe"]]).map(([id,l])=>`<button type="button" class="chip" data-gf="${esc(id)}" aria-pressed="${gfilter===id}">${esc(l)} <span>${n(id)}</span></button>`).join("")}</div>`}
 function inFilter(p){if(!gfilter)return true;const G=gOf(p.player_id);return gfilter==="-"?!G.length:G.some(g=>g.id===gfilter)}
-function pRow(p){return `<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`}
+function pRow(p,from){return `<li><button type="button" data-pl="${esc(p.player_id)}" aria-pressed="${p.player_id===sel}"${groups.length?` draggable="true" data-drag="${esc(p.player_id)}" data-from="${esc(from||"")}" title="Antippen zum Öffnen · in eine andere Gruppe ziehen zum Verschieben"`:""}><span><span class="nm">${esc(pname(p))}</span>${p.email&&p.name?`<span class="em">${esc(p.email)}</span>`:""}${tags(p)}</span>${dots(p.player_id)}</button></li>`}
 function playerList(q){q=norm(q);const P=players.filter(p=>!q||norm(p.name).includes(q)||norm(p.email).includes(q));if(!P.length)return `<p class="hint">Kein Spieler gefunden.</p>`;
-  if(!groups.length)return `<ul class="players">${P.map(pRow).join("")}</ul>`;
-  const sec=(title,L,id)=>L.length?`<h3 class="ghead">${esc(title)} <span>${L.length}</span></h3><ul class="players">${L.map(pRow).join("")}</ul>`:"";
+  if(!groups.length)return `<ul class="players">${P.map(p=>pRow(p)).join("")}</ul>`;
+  const sec=(title,L,id)=>(L.length||!q)?`<div class="gsec" data-drop="${esc(id)}"><h3 class="ghead">${esc(title)} <span>${L.length}</span></h3>${L.length?`<ul class="players">${L.map(p=>pRow(p,id)).join("")}</ul>`:`<p class="dropzone">${id==="-"?"Hierher ziehen, um aus der Gruppe zu nehmen":"Spieler hierher ziehen"}</p>`}</div>`:"";
   return groups.map(g=>sec(g.name,P.filter(p=>g.members.includes(p.player_id)),g.id)).join("")+sec("Ohne Gruppe",P.filter(p=>!gOf(p.player_id).length),"-")}
 function tags(p){const t=gOf(p.player_id).length>1?gOf(p.player_id).map(g=>"👥 "+g.name):[];if(p.shares===false)t.push("teilt keine Resultate");if(p.confirmed===false)t.push("E-Mail noch nicht bestätigt");return t.length?`<span class="tags">${t.map(x=>`<span class="tag">${x}</span>`).join("")}</span>`:""}
 function guessPlan(p,plans){const h=hub()[sel]||{};if(h.plan&&plans.some(x=>x.id===h.plan))return h.plan;const n=norm(pname(p)),first=n.split(" ")[0];
@@ -226,7 +231,7 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
 function groupsCard(S){const g=gsel&&groups.find(x=>x.id===gsel);
   let h=`<div class="card" id="gcard"><div class="who" style="margin-bottom:8px"><h2 style="margin:0">Gruppen</h2><button type="button" class="btn sm" id="gAdd">＋ Neue Gruppe</button></div>`;
   if(gNew)h+=`<div class="acts" style="margin:0 0 10px"><input type="text" id="gName" placeholder="z. B. U15, Goalies, Fitness" aria-label="Name der neuen Gruppe" style="flex:1;min-width:180px"><button type="button" class="btn pri sm" id="gCreate">Erstellen</button></div>`;
-  h+=groups.length?`<ul class="glist">${groups.map(x=>`<li><span><b>${esc(x.name)}</b><span class="hint">${x.members.length} Spieler · ${x.sids.length} Einheit${x.sids.length===1?"":"en"} · ${x.social?"👀 Mitglieder sehen sich gegenseitig":"🔒 Mitglieder sehen sich nicht"}</span></span><button type="button" class="btn sm" data-gopen="${esc(x.id)}" aria-pressed="${x.id===gsel}">${x.id===gsel?"Schliessen":"Bearbeiten"}</button></li>`).join("")}</ul>`:`<p class="hint">Noch keine Gruppen. Lege z. B. «U15» oder «Goalies» an. Einheiten einer Gruppe bekommen alle Mitglieder automatisch, auch Spieler, die später dazukommen.</p>`;
+  h+=groups.length?`<ul class="glist">${groups.map(x=>`<li data-drop="${esc(x.id)}"><span><b>${esc(x.name)}</b><span class="hint">${x.members.length} Spieler · ${x.sids.length} Einheit${x.sids.length===1?"":"en"} · ${x.social?"👀 Mitglieder sehen sich gegenseitig":"🔒 Mitglieder sehen sich nicht"}</span></span><button type="button" class="btn sm" data-gopen="${esc(x.id)}" aria-pressed="${x.id===gsel}">${x.id===gsel?"Schliessen":"Bearbeiten"}</button></li>`).join("")}</ul>`:`<p class="hint">Noch keine Gruppen. Lege z. B. «U15» oder «Goalies» an. Einheiten einer Gruppe bekommen alle Mitglieder automatisch, auch Spieler, die später dazukommen.</p>`;
   if(g){const SS=S.filter(x=>!x.free);h+=`<div class="sec" id="gpanel" style="border-top:1px solid var(--line);padding-top:14px">
     <div class="f"><label for="gRen">Name</label><input type="text" id="gRen" value="${esc(g.name)}"></div>
     <label class="check" style="margin:2px 0 8px"><input type="checkbox" id="gSoc"${g.social?" checked":""}> <span>Mitglieder sehen Rangliste und Trainings der anderen <span class="hint">(Anzahl Trainings, Sätze und neue Bestleistungen – nie Körpergewicht oder ganzen Verlauf)</span></span></label>
@@ -395,6 +400,19 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#copyStart")){const l=location.origin+location.pathname;try{await navigator.clipboard.writeText(l);toast("Link kopiert – jetzt den Spielern schicken")}catch(_){prompt("Link kopieren:",l)}return}
   if(t.closest("#copySql")){const txt=t.closest("#copySql").dataset.sql==="10"?SQL10:SQL;try{await navigator.clipboard.writeText(txt);toast("SQL kopiert")}catch(_){const r=document.createRange();r.selectNodeContents($("sqlTxt"));getSelection().removeAllRanges();getSelection().addRange(r)}return}
   if(t.closest("#reload")){location.reload();return}});
+/* Spieler per Drag & Drop in eine Gruppe ziehen: aus Gruppe A nach B = verschieben, aus «Ohne Gruppe» = aufnehmen, nach «Ohne Gruppe» = aus Gruppe A nehmen */
+let dragP=null;
+document.addEventListener("dragstart",e=>{const b=e.target.closest&&e.target.closest("[data-drag]");if(!b)return;dragP={pid:b.dataset.drag,from:b.dataset.from||"-"};b.classList.add("dragging");
+  try{e.dataTransfer.setData("text/plain",dragP.pid);e.dataTransfer.effectAllowed="move"}catch(_){}});
+document.addEventListener("dragend",e=>{document.querySelectorAll(".dragging,.over").forEach(x=>x.classList.remove("dragging","over"));dragP=null});
+document.addEventListener("dragover",e=>{if(!dragP)return;const z=e.target.closest&&e.target.closest("[data-drop]");document.querySelectorAll(".over").forEach(x=>{if(x!==z)x.classList.remove("over")});if(!z)return;e.preventDefault();z.classList.add("over")});
+document.addEventListener("drop",async e=>{if(!dragP)return;const z=e.target.closest&&e.target.closest("[data-drop]");if(!z)return;e.preventDefault();const {pid,from}=dragP,to=z.dataset.drop;dragP=null;
+  document.querySelectorAll(".over,.dragging").forEach(x=>x.classList.remove("over","dragging"));if(to===from)return;
+  const p=players.find(x=>x.player_id===pid),who=p?pname(p).split(" ")[0]:"Spieler",gTo=groups.find(g=>g.id===to),gFrom=groups.find(g=>g.id===from);
+  try{if(gTo&&!gTo.members.includes(pid)){const w=new Set(gTo.members);w.add(pid);await setMembers(gTo,w)}
+    if(gFrom&&gFrom.members.includes(pid)){const w=new Set(gFrom.members);w.delete(pid);await setMembers(gFrom,w)}
+    await refresh(true);toast(gTo?`${who} → «${gTo.name}»${gFrom?` (aus «${gFrom.name}» verschoben)`:""}`:`${who} aus «${gFrom?gFrom.name:"Gruppe"}» genommen`)}
+  catch(err){toast(gErrMsg(err));await refresh(true)}});
 /* Gym-Tag gewählt → Häkchen setzen */
 document.addEventListener("change",e=>{const d=e.target.dataset&&e.target.dataset.pd;if(d&&e.target.value){const c=document.querySelector(`[data-sid="${CSS.escape(d)}"]`);if(c)c.checked=true}});
 async function init(){try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null}
