@@ -1,10 +1,10 @@
 <meta charset="utf-8">
 <script>try{var t=localStorage.getItem("cz-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CZ Nutrition</title>
+<title>CZ Plan</title>
 <meta name="theme-color" content="#0B0B0D">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="CZ Nutrition">
+<meta name="apple-mobile-web-app-title" content="CZ Plan">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -62,7 +62,7 @@ header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content
 .themeline{display:flex;justify-content:flex-end;align-items:center;margin:-6px 0 6px}
 /* Gemeinsame Navigation über alle drei Apps */
 .appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
-.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
 .appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
 .appnav a[aria-current="page"]{background:var(--ink);color:var(--surface)}
 
@@ -446,6 +446,10 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tl.act .tltime{color:var(--c)}
 .tl.act b{font-family:var(--display);font-size:1.1rem}
 .gymlink{font-size:.82rem;font-weight:600;color:var(--accent)}
+/* Essen ausgeblendet: nur Termine, Trainings und Schlaf */
+.nofood .typebtn,.nofood #plates,.nofood .witem.meal,.nofood .tl.meal,.nofood #hProt,.nofood #hWater,.nofood #vegBtn,.nofood #mpBtn,.nofood #autoBtn,.nofood .protpill,.nofood [data-nav="gerichte"]{display:none!important}
+.gympick{display:grid;gap:6px;max-height:42vh;overflow:auto;margin:6px 0 10px}.gympick h4{margin:6px 0 0;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.gympick button{text-align:left;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer}.gympick button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
 #addList input[type=url]{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
 #addList .sestimes input{background:var(--bg)}
 .addentry{align-self:flex-start;font-size:.85rem;font-weight:600;padding:5px 10px;border-style:dashed;color:var(--accent)}
@@ -482,15 +486,15 @@ details.info[open] summary{margin-bottom:4px;display:block}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<nav class="appnav" aria-label="Apps"><div><a href="start/">Start</a><a href="planner/">Planner</a><a href="training/">Workout</a><a href="./" aria-current="page">Nutrition</a></div></nav>
+<nav class="appnav" aria-label="Apps"><div><a href="start/">Start</a><a href="./" aria-current="page">Plan</a><a href="training/">Workout</a></div></nav>
 <div class="wrap">
   <div class="themeline"><button type="button" class="themebtn" id="themeBtn"></button></div>
   <header>
     <div class="brand">
-      <img class="logo" src="icons/icon-192.png" alt="CZ Nutrition by Calvin Zeller" width="64" height="64">
+      <img class="logo" src="icons/icon-192.png" alt="CZ Plan by Calvin Zeller" width="64" height="64">
       <div>
-      <div class="eyebrow">CZ Nutrition · Unihockey U15</div>
-      <h1>Ernährungswoche</h1>
+      <div class="eyebrow">CZ Plan · Unihockey U15</div>
+      <h1>Wochenplan</h1>
       </div>
     </div>
     <div class="namefield">
@@ -507,13 +511,13 @@ details.info[open] summary{margin-bottom:4px;display:block}
   </nav>
 
   <div class="sharebanner" id="shareBanner" role="status" hidden>
-    <span id="shareBannerText">Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.</span>
+    <span id="shareBannerText">Du hast einen Plan vom Coach erhalten. Er ist jetzt unter deinen Plänen gespeichert.</span>
     <button type="button" id="undoImport">Wieder entfernen</button>
     <button type="button" class="linkbtn" id="closeBanner">Ausblenden</button>
   </div>
 
   <div class="sharebanner warnbanner" id="browserBanner" hidden>
-    <span><b>Du bist im Browser, nicht in der App.</b> Hast du CZ Nutrition schon auf dem Homescreen? Dann so in die App holen: 1. «Link kopieren» tippen · 2. App öffnen · 3. «＋ Plan vom Coach». Noch keine App? Dann jetzt über Teilen → «Zum Home-Bildschirm» speichern.</span>
+    <span><b>Du bist im Browser, nicht in der App.</b> Hast du CZ Plan schon auf dem Homescreen? Dann so in die App holen: 1. «Link kopieren» tippen · 2. App öffnen · 3. «＋ Plan vom Coach». Noch keine App? Dann jetzt über Teilen → «Zum Home-Bildschirm» speichern.</span>
     <button type="button" class="primary" id="copyHereBtn">Link kopieren</button>
     <button type="button" class="linkbtn" id="browserClose">Ausblenden</button>
   </div>
@@ -547,8 +551,9 @@ details.info[open] summary{margin-bottom:4px;display:block}
 
     <div class="toolbar">
       <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
+      <button id="foodBtn" type="button" aria-pressed="true" title="Mahlzeiten im Plan anzeigen oder ausblenden">🍽 Essen anzeigen</button>
       <button id="vegBtn" type="button" aria-pressed="false" title="Nur vegetarische Gerichte vorschlagen">🌱 Vegetarisch</button>
-      <button id="plBtn" type="button" hidden title="Schule, Arbeit und Trainings dieser Woche aus dem Planner übernehmen">📅 Aus Planner</button>
+      <button id="plBtn" type="button" hidden title="Schule, Arbeit, Trainings, Termine und Schlaf aus dem alten Planner übernehmen">📅 Aus altem Planner</button>
       <button id="mpBtn" type="button" aria-pressed="false" title="Zmittag ist immer der Rest vom Znacht am Vorabend">🍱 Mealprep</button>
       <button id="sendPlBtn" type="button" hidden title="Diesen Plan in das Konto eines Spielers schicken">📤 An Spieler schicken</button>
       <button id="shareBtn" type="button">Plan als Link teilen</button>
@@ -658,7 +663,6 @@ details.info[open] summary{margin-bottom:4px;display:block}
     <label for="sendWho" class="hint" style="display:block;margin:6px 0 4px">Spieler</label>
     <select id="sendWho" style="width:100%;min-height:44px"></select>
     <p class="hint" id="sendNow" style="margin:8px 0"></p>
-    <label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0"><input type="checkbox" id="sendWeek" checked style="width:20px;height:20px;margin-top:2px"><span>Wochenplan im Planner auch neu erstellen (Schule, Trainings, Schlaf, Mahlzeiten). Seine Gym-Einheiten bleiben drin.</span></label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="primary" id="sendGo">Schicken</button><a href="start/" class="hint" style="align-self:center">Alle Spieler auf der Start-Seite</a></div>
     <p class="hint" id="sendErr" style="color:var(--warn,#c2412d);min-height:1.2em"></p>
   </div>
@@ -945,8 +949,9 @@ const RZ=[["recovery","Active Recovery Session"]];
 const SUBS={spiel:{f:"sz",l:SZ,a:"Spiele"},ganztag:{f:"tz",l:TZ,a:"Trainings"},intensiv:{f:"tz",l:TZ,a:"Trainings"},mittel:{f:"tz",l:TZ,a:"Trainings"},leicht:{f:"rz",l:RZ,a:"Erholung"}};
 function typeName(d){return d.t&&TYPES[d.t]?TYPES[d.t].n:""}
 function timeOpts(d){return SUBS[d.t]||null}
-const ACTS=[["schule","Schule"],["sauna","Sauna"],["recovery","Active Recovery"],["physio","Physio"],["massage","Massage"],["anderes","Anderes"]];
+const ACTS=[["schule","Schule"],["arbeit","Arbeit"],["sauna","Sauna"],["recovery","Active Recovery"],["physio","Physio"],["massage","Massage"],["anderes","Anderes"]];
 const ACT_IC={
+  arbeit:["M4 8h16v11H4z","M9 8V5h6v3","M4 13h16"],
   schule:["M4 4.5h6a3 3 0 0 1 3 3V20a2 2 0 0 0-2-2H4z","M20 4.5h-6a3 3 0 0 0-1 .2","M20 4.5V18h-7a2 2 0 0 0-1 .3"],
   sauna:["M8 3c-1.2 1.6 1.2 2.6 0 4.5","M12 3c-1.2 1.6 1.2 2.6 0 4.5","M16 3c-1.2 1.6 1.2 2.6 0 4.5","M3 12h18v4H3z","M5 16v4M19 16v4"],
   recovery:["M3 12a9 9 0 1 0 2.6-6.4L3 8","M3 3v5h5","M12 8v4l3 2"],
@@ -954,7 +959,7 @@ const ACT_IC={
   massage:["M8 12V5.5a1.5 1.5 0 0 1 3 0V11","M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5","M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13","M17 11.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1.5a6 6 0 0 1-5-2.7L4 15.5a1.5 1.5 0 0 1 2.5-1.6L8 16"],
   anderes:["M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18z","M12 8v4.5l3 1.5"]
 };
-function actIcon(kd,size){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--k-${kd==="schule"?"schule":"well"})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(ACT_IC[kd]||ACT_IC.anderes).map(x=>`<path d="${x}"/>`).join("")}</svg>`}
+function actIcon(kd,size){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--k-${kd==="schule"||kd==="arbeit"?"schule":"well"})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(ACT_IC[kd]||ACT_IC.anderes).map(x=>`<path d="${x}"/>`).join("")}</svg>`}
 const ACT_INFO={sauna:"Hitzeschockproteine werden ab ca. 20 Minuten bei 90 °C aktiviert. Nicht am Tag vor dem Matchday (Dehydrierung und Salzverlust). Nur in gesundem Zustand, also nicht, wenn du angeschlagen bist. Die Sauna sofort verlassen, wenn du dich nicht gut fühlst."};
 function actWarn(kd,k){if(kd!=="sauna")return "";const nx=state.plan[nextKey(k)],d=state.plan[k];
   if(nx&&nx.t==="spiel")return "Morgen ist Matchday: heute keine Sauna (Dehydrierung und Salzverlust).";
@@ -995,7 +1000,7 @@ function ensurePlans(){
   const p={id:uid(),name:state.name||"",plan:state.plan,veg:!!state.veg,sleepWeek:state.sleepWeek||null};
   state.plans=[p];state.active=p.id;
 }
-function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.kg=state.kg||null;a.sleepWeek=state.sleepWeek||null}}
+function syncActive(){const a=activePlan();if(a){a.name=state.name||"";a.plan=state.plan;a.veg=!!state.veg;a.kg=state.kg||null;a.sleepWeek=state.sleepWeek||null;a.food=state.food!==false}}
 function prevKey(k){return DAYS[(DAYS.findIndex(x=>x[0]===k)+6)%7][0]}
 function dayName(k){return DAYS.find(x=>x[0]===k)[1]}
 /* Mealprep: Zmittag = Reste vom Znacht am Vorabend */
@@ -1084,7 +1089,8 @@ function renderTabs(){
     `<button type="button" data-tab="${k}" aria-pressed="${k===activeDay}">${s}</button>`).join("");
 }
 
-function renderTable(){syncMP();renderMPBtn();renderVegBtn();if(typeof renderPlBtn==="function")renderPlBtn();renderWeekTable();if(typeof renderToday==="function")renderToday()}
+function renderFood(){const on=state.food!==false;document.body.classList.toggle("nofood",!on);const b=document.getElementById("foodBtn");if(b){b.setAttribute("aria-pressed",on);b.textContent=on?"🍽 Essen anzeigen":"🍽 Essen ausgeblendet"}}
+function renderTable(){renderFood();syncMP();renderMPBtn();renderVegBtn();if(typeof renderPlBtn==="function")renderPlBtn();renderWeekTable();if(typeof renderToday==="function")renderToday()}
 function dinnerSeg(k,d,id){
   return `<div class="seg" role="group" aria-label="Nachtessen"><button type="button" id="${id}-vor" data-dinner="${k}|vor" aria-pressed="${d.dinner==="vor"}">vor Training</button><button type="button" id="${id}-nach" data-dinner="${k}|nach" aria-pressed="${d.dinner!=="vor"}">nach Training</button></div>`;
 }
@@ -1116,7 +1122,7 @@ function renderWeekTable(){
           ${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
           <button type="button" class="xbtn" id="tsesdel-${k}-${it.i}" data-sesdel="${k}|${it.i}" data-pre="t" aria-label="Einheit entfernen" title="Entfernen">×</button></div>
-          ${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}
+          ${gymLink(x)}
         </div></div>`}
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
       return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
@@ -1398,8 +1404,11 @@ const SITE="https://ctvzeller-boop.github.io/ernaehrungsplan-u15/";
 function b64url(bytes){let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
 function unb64url(str){const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(bin,c=>c.charCodeAt(0))}
 async function pipe(bytes,stream){const res=new Response(new Blob([bytes]).stream().pipeThrough(stream));return new Uint8Array(await res.arrayBuffer())}
+/* Was ein geteilter Plan mitbringt: Name, Woche, Vegi, Gewicht, Schlafzeiten, «Essen anzeigen» */
+function hasSleep(sw){return !!sw&&Object.values(sw).some(x=>x&&(x.bed||x.wake))}
+function planShare(){const o={n:state.name||"",v:!!state.veg,p:state.plan};if(state.kg)o.kg=state.kg;if(hasSleep(state.sleepWeek))o.sw=state.sleepWeek;if(state.food===false)o.nf=1;return o}
 async function encodePlan(){
-  const o={n:state.name||"",v:!!state.veg,p:state.plan};if(state.kg)o.kg=state.kg;
+  const o=planShare();
   const data=new TextEncoder().encode(JSON.stringify(o));
   if(typeof CompressionStream!=="undefined"){try{return "z"+b64url(await pipe(data,new CompressionStream("deflate-raw")))}catch(e){}}
   return "b"+b64url(data);
@@ -1418,7 +1427,7 @@ document.getElementById("shareBtn").addEventListener("click",async()=>{
   try{navigator.clipboard.writeText(link).then(()=>flash("Link kopiert – jetzt dem Athleten schicken."),fallback)}catch(e){fallback()}
 });
 /* Pläne verwalten */
-function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.kg=p.kg||null;state.sleepWeek=p.sleepWeek||null;clearDefaultSleep(state.sleepWeek);migratePlan(state.plan)}
+function loadActive(){const p=activePlan();if(!p)return;state.name=p.name||"";state.plan=p.plan;state.veg=!!p.veg;state.kg=p.kg||null;state.sleepWeek=p.sleepWeek||null;state.food=p.food!==false;clearDefaultSleep(state.sleepWeek);migratePlan(state.plan)}
 function refreshAll(){document.getElementById("athlete").value=state.name||"";document.getElementById("kg").value=state.kg||"";document.getElementById("vegToggle").checked=!!state.veg;
   if(typeof sleepSel!=="undefined")sleepSel=null;renderPlanBar();renderAll();renderLikes()}
 function switchPlan(id){if(id===state.active)return;save();state.active=id;loadActive();save();refreshAll()}
@@ -1442,15 +1451,15 @@ async function importCode(code){
     const txt=document.getElementById("shareBannerText"),undo=document.getElementById("undoImport");
     if(old){
       replacedBackup=JSON.parse(JSON.stringify(old));
-      old.plan=d.p;old.veg=!!d.v;if(d.n)old.name=d.n;if(d.kg)old.kg=d.kg;
+      old.plan=d.p;old.veg=!!d.v;if(d.n)old.name=d.n;if(d.kg)old.kg=d.kg;if(hasSleep(d.sw))old.sleepWeek=d.sw;old.food=!d.nf;
       state.imported[code]=old.id;importedId=null;state.active=old.id;loadActive();save();refreshAll();
-      txt.textContent=fresh&&!norm(replacedBackup.name)?"Du hast einen Ernährungsplan erhalten. Er ersetzt die Beispielwoche.":`«${old.name||"Plan"}» wurde vom Coach aktualisiert. Deine abgehakten Mahlzeiten bleiben erhalten.`;
+      txt.textContent=fresh&&!norm(replacedBackup.name)?"Du hast einen Plan vom Coach erhalten. Er ersetzt die Beispielwoche.":`«${old.name||"Plan"}» wurde vom Coach aktualisiert. Deine abgehakten Mahlzeiten bleiben erhalten.`;
       undo.textContent=fresh&&!norm(replacedBackup.name)?"Beispielwoche zurückholen":"Alte Version zurückholen";
     }else{
       replacedBackup=null;
-      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,kg:d.kg||null,sleepWeek:null};
+      const p={id:uid(),name:d.n||"Geteilter Plan",plan:d.p,veg:!!d.v,kg:d.kg||null,sleepWeek:hasSleep(d.sw)?d.sw:null,food:!d.nf};
       state.plans.push(p);state.imported[code]=p.id;importedId=p.id;state.active=p.id;loadActive();save();refreshAll();
-      txt.textContent="Du hast einen Ernährungsplan erhalten. Er ist jetzt unter deinen Plänen gespeichert.";undo.textContent="Wieder entfernen";
+      txt.textContent="Du hast einen Plan vom Coach erhalten. Er ist jetzt unter deinen Plänen gespeichert.";undo.textContent="Wieder entfernen";
     }
     document.getElementById("shareBanner").hidden=false;browserHint();showView("heute",true);return true
   }catch(e){flash("Der geteilte Plan konnte nicht gelesen werden.");return false}
@@ -1537,7 +1546,7 @@ function sessionsOf(d){
   if(!d||!d.t)return [];
   if(Array.isArray(d.ses)){
     const rec=d.t==="leicht",dur=rec?60:90;
-    return d.ses.map((x,i)=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {i,s:st,e:en,rec,auto,named:!!nm,label:nm||auto,l:x.l||""}}).filter(Boolean).sort((a,b)=>a.s-b.s);
+    return d.ses.map((x,i)=>{const st=toMin(x.s);if(st===null)return null;let en=toMin(x.e);if(en===null||en<=st)en=st+dur;const auto=sesLabel(d.t,st),nm=String(x.n||"").trim();return {i,s:st,e:en,rec,auto,named:!!nm,label:nm||auto,l:x.l||"",g:x.g||""}}).filter(Boolean).sort((a,b)=>a.s-b.s);
   }
   const o=timeOpts(d);if(!o)return [];
   const sel=d[o.f]||[],rec=d.t==="leicht";
@@ -1563,7 +1572,7 @@ function planTimes(k,wake){
   const z=within(T.znueni);
   if(z){const pre=z.s-60;if(pre>=T.fruehstueck+45){T.znueni=pre;H.znueni="Kleiner Snack ca. 1 h vor dem Start."}else T.znueni=z.e+20}
   // Schule: Mittagessen in die Mittagspause, Znüni in die Pause
-  const school=actsOf(d).filter(a=>a.k==="schule"),inSchool=t=>school.find(b=>t>b.s&&t<b.e);
+  const school=actsOf(d).filter(a=>a.k==="schule"||a.k==="arbeit"),inSchool=t=>school.find(b=>t>b.s&&t<b.e);
   if(school.length){
     if(school[0].s-T.fruehstueck<25&&school[0].s>T.fruehstueck-60)H.fruehstueck={w:1,t:"Die Schule beginnt um "+fmtTime(school[0].s)+": früh genug aufstehen und nicht ohne Frühstück los."};
     if(inSchool(T.znueni))H.znueni="In der Pause, z. B. im Rucksack mitnehmen.";
@@ -1745,25 +1754,33 @@ const GYM_IC=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke
 function trainCode(str){const m=String(str||"").match(/#e=([zbyc][A-Za-z0-9_-]+)/);return m?m[1]:null}
 async function trainInfo(code){let bytes=unb64url(code.slice(1));if(code[0]==="z"||code[0]==="y")bytes=await pipe(bytes,new DecompressionStream("deflate-raw"));
   const d=JSON.parse(new TextDecoder().decode(bytes));return {t:String(d.t||"Gym-Einheit"),n:Array.isArray(d.i)?d.i.length:0}}
+function gymTitle(x){return x.g||(/^Gym:\s*/.test(x.n||x.label||"")?String(x.n||x.label).replace(/^Gym:\s*/,""):"")}
+function gymLink(x){const t=gymTitle(x);if(!t&&!x.l)return "";const base=/^https?:$/.test(location.protocol)&&!/claude/.test(location.hostname)?"training/":SITE+"training/";
+  const href=t?base+"#open="+encodeURIComponent("t:"+t):trainUrl(x.l);return `<a class="gymlink" href="${esc(href)}">Training öffnen ›</a>`}
 function trainUrl(code){const l=window.location;const base=/^https?:$/.test(l.protocol)&&!/claude/.test(l.hostname)?l.origin+l.pathname.replace(/[^/]*$/,""):SITE;return base+"training/#e="+code}
-async function showGymForm(){
-  document.getElementById("addList").innerHTML=`<p class="hint">Im Trainingstool bei der Einheit auf «Einheit als Link teilen» tippen, dann den Link hier einfügen.</p>
-    <input type="url" id="gymLink" placeholder="https://…/training/#e=…" aria-label="Link der Einheit">
+let gymPick="";
+function workoutSessions(){try{const t=JSON.parse(localStorage.getItem("u15-trainingseinheit-v1")||"null");return ((t&&t.sessions)||[]).filter(x=>(x.items||[]).length&&x.t)}catch(e){return []}}
+async function showGymForm(){gymPick="";const W=workoutSessions();const F=[...new Set(W.map(x=>x.folder||""))].sort((a,b)=>!a?1:!b?-1:a.localeCompare(b,"de"));
+  document.getElementById("addList").innerHTML=(W.length?`<p class="hint">Einheit aus deinem Workout wählen:</p><div class="gympick">${F.map(f=>(F.length>1?`<h4>${esc(f||"Ohne Ordner")}</h4>`:"")+W.filter(x=>(x.folder||"")===f).map(x=>`<button type="button" data-gympick="${esc(x.t)}" aria-pressed="false">${esc(x.t)}</button>`).join("")).join("")}</div>
+    <details><summary class="hint">… oder Link einer Einheit einfügen</summary>`:`<p class="hint">Im Workout bei der Einheit auf «Einheit als Link teilen» tippen, dann den Link hier einfügen.</p>`)+`
+    <input type="url" id="gymLink" placeholder="https://…/training/#e=…" aria-label="Link der Einheit">${W.length?"</details>":""}
     <div class="sestimes"><label for="gymS">von</label><input type="time" id="gymS" aria-label="Start"><span></span><label for="gymE">bis</label><input type="time" id="gymE" aria-label="Ende"></div>
     <button type="button" class="primary" id="gymGo">Einheit einfügen</button>`;
-  const li=document.getElementById("gymLink");li.focus();
-  try{if(navigator.clipboard&&navigator.clipboard.readText){const t=await navigator.clipboard.readText();if(trainCode(t))li.value=t.trim()}}catch(e){}
+  const li=document.getElementById("gymLink");if(!W.length){li.focus();try{if(navigator.clipboard&&navigator.clipboard.readText){const t=await navigator.clipboard.readText();if(trainCode(t))li.value=t.trim()}}catch(e){}}
+  else{const f=document.querySelector("[data-gympick]");if(f)f.focus()}
 }
+addModal.addEventListener("click",e=>{const b=e.target.closest("[data-gympick]");if(!b)return;gymPick=b.dataset.gympick;document.querySelectorAll("[data-gympick]").forEach(x=>x.setAttribute("aria-pressed",x===b));const s=document.getElementById("gymS");if(s&&!s.value)s.focus()});
 addModal.addEventListener("click",async e=>{if(!e.target.closest("#gymGo")||!addCtx)return;
-  const code=trainCode(document.getElementById("gymLink").value);if(!code){flash("Das ist kein Link aus dem Trainingstool.");return}
+  const code=trainCode(document.getElementById("gymLink").value);if(!code&&!gymPick){flash("Bitte eine Einheit wählen oder einen Link einfügen.");return}
   const s=document.getElementById("gymS").value,en=document.getElementById("gymE").value;if(!s){flash("Bitte die Startzeit eintragen.");document.getElementById("gymS").focus();return}
-  let info;try{info=await trainInfo(code)}catch(err){flash("Die Einheit konnte nicht gelesen werden.");return}
+  let info={t:gymPick,n:0};if(code){try{info=await trainInfo(code)}catch(err){flash("Die Einheit konnte nicht gelesen werden.");return}}
+  else{const w=workoutSessions().find(x=>x.t===gymPick);info.n=w?w.items.length:0}
   const k=addCtx.k,d=state.plan[k];if(!Array.isArray(d.ses))d.ses=[];if(!d.t||d.t==="leicht")d.t="mittel";
-  d.ses.push({s,e:en||"",n:"Gym: "+info.t,l:code});save();addModal.hidden=true;activeDay=k;renderTabs();renderTable();renderText();
+  const eDef=en||fmtTime(toMin(s)+60);const o={s,e:eDef,n:"Gym: "+info.t,g:info.t};if(code)o.l=code;d.ses.push(o);save();addModal.hidden=true;activeDay=k;renderTabs();renderTable();renderText();
   flash(`«${info.t}» eingefügt${info.n?` (${info.n} Übungen)`:""}`)});
 function openAdd(k,from){addCtx={k,from};const d=state.plan[k],n=DAYS.find(x=>x[0]===k)[1];
   document.getElementById("addTitle").textContent="Eintrag am "+n;
-  document.getElementById("addList").innerHTML=`<button type="button" class="addopt" data-addkind="gym">${GYM_IC}<span>Gym-Einheit aus CZ Training<small>Link vom Trainingstool einfügen</small></span></button><button type="button" class="addopt" data-addkind="ses">${d.t?icon(d.t==="leicht"?"leicht":d.t,22):icon("mittel",22)}<span>${d.t==="spiel"?"Spiel":d.t==="leicht"?"Active Recovery Session (Tagestyp)":"Training"}<small>bestimmt Essenszeiten und Tagestyp</small></span></button>`+
+  document.getElementById("addList").innerHTML=`<button type="button" class="addopt" data-addkind="gym">${GYM_IC}<span>Gym-Einheit aus Workout<small>Öffnet sich später mit einem Tipp im Workout</small></span></button><button type="button" class="addopt" data-addkind="ses">${d.t?icon(d.t==="leicht"?"leicht":d.t,22):icon("mittel",22)}<span>${d.t==="spiel"?"Spiel":d.t==="leicht"?"Active Recovery Session (Tagestyp)":"Training"}<small>bestimmt Essenszeiten und Tagestyp</small></span></button>`+
     ACTS.map(([kd,nm])=>`<button type="button" class="addopt" data-addkind="${kd}">${actIcon(kd,22)}<span>${nm}${kd==="schule"?"<small>Essen in den Pausen und nach der Schule</small>":""}</span></button>`).join("");
   addModal.hidden=false;const f=addModal.querySelector(".addopt");if(f)f.focus()}
 function closeAdd(){addModal.hidden=true;const f=addCtx&&document.getElementById(addCtx.from);if(f)f.focus()}
@@ -1955,6 +1972,7 @@ let autoArmed=false;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-xdel]");if(!b)return;const [k,sk,i]=b.dataset.xdel.split("|"),d=state.plan[k];
   const n=d.x[sk].splice(+i,1)[0];save();renderTable();renderText();flash(`${n} entfernt`);
   const f=document.getElementById(b.id.replace(/xdel-.*/,"xadd-"+k+"-"+sk));if(f)f.focus()});
+document.getElementById("foodBtn").addEventListener("click",()=>{state.food=state.food===false;save();renderTable();renderText();flash(state.food?"Mahlzeiten werden angezeigt":"Mahlzeiten ausgeblendet – nur Termine und Trainings")});
 document.getElementById("vegBtn").addEventListener("click",()=>{state.veg=!state.veg;save();renderTable();renderText();renderLikes();
   const n=state.veg?DAYS.reduce((a,[k])=>a+SLOTS.filter(([sk])=>isMeat(sk,state.plan[k].s[sk])).length,0):0;
   flash(state.veg?(n?`Vegetarisch an · ${n} Gerichte mit Fleisch markiert, mit ↻ ersetzen`:"Vegetarisch an"):"Vegetarisch aus");});
@@ -1971,15 +1989,20 @@ function plWeek(st){const now=new Date(),mon=new Date(now.getFullYear(),now.getM
       school:b.filter(x=>(x.k==="schule"||x.k==="arbeit")&&x.s).flatMap(x=>{const a=toMin(x.s),e=toMin(x.e);
         /* durchgehender Schul-/Arbeitstag: Mittagspause 12:00–13:00 einplanen, damit das Zmittag dort Platz hat */
         return a!=null&&e!=null&&a<=11*60+30&&e>=13*60+30?[{s:x.s,e:"12:00"},{s:"13:00",e:x.e}]:[{s:x.s,e:x.e||""}]}),
-      rec:b.filter(x=>x.k==="rec"&&x.s).map(x=>({s:x.s,e:x.e||"",n:x.t||""}))}});return out}
+      rec:b.filter(x=>x.k==="rec"&&x.s).map(x=>({s:x.s,e:x.e||"",n:x.t||""})),
+      other:b.filter(x=>x.k==="termin"&&x.s).map(x=>({s:x.s,e:x.e||"",n:x.t||""})),
+      work:b.some(x=>x.k==="arbeit"),wake:t.wake||"",bed:t.bed||""}});return out}
 function plDayType(tr){if(!tr.length)return "leicht";if(tr.some(x=>x.k==="match"))return "spiel";
   const mins=tr.reduce((a,x)=>{const s=toMin(x.s),e=toMin(x.e);return a+(e!=null&&e>s?e-s:60)},0);
   if(mins>=300)return "ganztag";if(tr.length>=2||mins>=150)return "intensiv";return "mittel"}
 function renderPlBtn(){const b=document.getElementById("plBtn");if(b)b.hidden=!plState()}
 function importPlanner(){const st=plState();if(!st){flash("Im Planner ist noch nichts eingetragen.");return}const w=plWeek(st);let n=0;
-  DAYS.forEach(([k])=>{const d=state.plan[k],x=w[k];d.ses=x.train.map(t=>({s:t.s,e:t.e,n:t.n}));n+=d.ses.length;
-    d.act=(d.act||[]).filter(a=>a.k!=="schule"&&!a.pl).concat(x.school.map(c=>({k:"schule",s:c.s,e:c.e})),x.rec.map(c=>Object.assign({k:"recovery",s:c.s,e:c.e,pl:1},c.n?{n:c.n}:{})));
-    d.t=plDayType(x.train);d.mt={}});
+  ensureSleep();
+  DAYS.forEach(([k],i)=>{const d=state.plan[k],x=w[k];d.ses=x.train.map(t=>t.k==="gym"?{s:t.s,e:t.e,n:"Gym: "+t.n,g:t.n}:{s:t.s,e:t.e,n:t.n});n+=d.ses.length;
+    d.act=(d.act||[]).filter(a=>a.k!=="schule"&&a.k!=="arbeit"&&!a.pl).concat(x.school.map(c=>({k:x.work?"arbeit":"schule",s:c.s,e:c.e,pl:1})),x.rec.map(c=>Object.assign({k:"recovery",s:c.s,e:c.e,pl:1},c.n?{n:c.n}:{})),x.other.map(c=>Object.assign({k:"anderes",s:c.s,e:c.e,pl:1},c.n?{n:c.n}:{})));
+    d.t=plDayType(x.train);d.mt={};
+    /* Schlaf: Planner «Aufstehen am Tag k» = Nutrition «Aufstehen nach der Nacht vor k» */
+    if(x.bed)state.sleepWeek[k].bed=x.bed;if(x.wake)state.sleepWeek[DAYS[(i+6)%7][0]].wake=x.wake});
   save();renderTable();renderText();flash(`Aus dem Planner übernommen: ${n} Trainings, Schule/Arbeit und Tagestypen dieser Woche. Die Essenszeiten passen sich an.`)}
 document.getElementById("plBtn").addEventListener("click",importPlanner);
 addEventListener("pageshow",renderPlBtn);
@@ -2013,8 +2036,8 @@ function renderToday(){
   // Hero
   document.getElementById("hHero").innerHTML=`<div class="hero" data-t="${d.t||""}">
     <span class="hicon">${d.t?icon(d.t,32):""}</span>
-    <h3>${d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
-    <p>${d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
+    <h3>${state.food===false?(S.length?"Trainingstag":"Dein Tag"):d.t?esc(typeName(d)):"Noch kein Tagestyp"}</h3>
+    <p>${state.food===false?(S.length?"":"Kein Training geplant."):d.t?esc(TYPES[d.t].h):"Wähle einen Tagestyp, damit Vorschläge und Zeiten passen."}</p>
     <div class="hmeta">${S.map(x=>`<span class="pill">${esc(x.label)} ${fmtTime(x.s)}–${fmtTime(x.e)}</span>`).join("")}${d.tr?`<span class="pill">${esc(d.tr)}</span>`:""}${!S.length&&(d.t==="mittel"||d.t==="intensiv"||d.t==="ganztag"||d.t==="spiel")?`<span class="pill">Uhrzeit fehlt: unter «Tagestyp ändern» eintragen</span>`:""}
       <button type="button" class="typebtn" id="htypebtn-${k}" data-typemenu="${k}" data-t="${d.t||""}" aria-haspopup="dialog" aria-expanded="${menu.day===k}">Tagestyp ändern ▾</button><button type="button" class="addentry" id="hadd-${k}" data-addentry="${k}">＋ Eintrag</button></div>
   </div>`;
@@ -2057,7 +2080,7 @@ function renderToday(){
     if(it.kind==="act"){const a=it.a;
       return `<li class="tl act" data-k="${a.k}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(a.s)}</span><input type="time" class="tedit" id="hat-${a.i}" data-itime="${k}|act|${a.i}" value="${fmtTime(a.s)}" aria-label="Startzeit ${esc(a.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${actIcon(a.k,22)}<div><b>${esc(a.label)}</b><button type="button" class="draghandle tldh" id="hdha-${a.i}" data-drag="${k}|act|${a.i}" aria-label="${esc(a.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${a.label!==actName(a.k)?esc(actName(a.k))+" · ":""}${fmtTime(a.s)}–${fmtTime(a.e)}</div>${actWarn(a.k,k)?`<p class="tlhint warn">${esc(actWarn(a.k,k))}</p>`:""}${ACT_INFO[a.k]?`<details class="info"><summary>Info</summary>${esc(ACT_INFO[a.k])}</details>`:""}</div></div></li>`}
     if(it.kind==="session"){const x=it.x;
-      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(x.s)}</span><input type="time" class="tedit" id="hst-${x.i}" data-itime="${k}|ses|${x.i}" value="${fmtTime(x.s)}" aria-label="Startzeit ${esc(x.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><button type="button" class="draghandle tldh" id="hdhs-${x.i}" data-drag="${k}|ses|${x.i}" aria-label="${esc(x.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${x.l?`<a class="gymlink" href="${esc(trainUrl(x.l))}" target="_blank" rel="noopener">Im Trainingstool öffnen ↗</a>`:""}</div></div></li>`}
+      return `<li class="tl session" data-t="${d.t}" data-time="${it.t}"><div class="tltime"><span class="tpick"><span class="tshow" aria-hidden="true">${fmtTime(x.s)}</span><input type="time" class="tedit" id="hst-${x.i}" data-itime="${k}|ses|${x.i}" value="${fmtTime(x.s)}" aria-label="Startzeit ${esc(x.label)} ändern" title="Uhrzeit ändern"></span></div><div class="tlbody">${icon(d.t,22)}<div><b>${esc(x.label)}</b><button type="button" class="draghandle tldh" id="hdhs-${x.i}" data-drag="${k}|ses|${x.i}" aria-label="${esc(x.label)} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button><div class="tlhint">${x.named?esc(x.auto)+" · ":""}${fmtTime(x.s)}–${fmtTime(x.e)}</div>${gymLink(x)}</div></div></li>`}
     if(it.kind==="sleep"){const n=it.nt;
       return `<li class="tl sleepitem" data-level="${n.level}" data-time="${it.t}"><div class="tltime">${fmtTime(n.bed)}</div><div class="tlbody"><b>Schlafen</b><span class="ndur">${fmtShort(n.dur)}</span><span class="tlhint">bis ${fmtTime(n.wake)} · ${SLEEP_TEXT[n.level][0]}${n.dur<480?`. Für 8 h spätestens um ${fmtTime(n.wake-480)} ins Bett.`:""}</span></div></li>`}
     const sk=it.sk,v=d.s[sk]||NONE,done=!!lg.m[sk]&&!!v,opts=optionsFor(sk),known=!v||opts.some(o=>o.n===v);
@@ -2124,7 +2147,7 @@ function buildPDF(){
     if(state.name){doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(255,255,255);doc.text(T(state.name),W-M,12.6,{align:"right"})}
     if(state.veg){doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(150,215,175);doc.text("Vegetarisch",W-M,18.4,{align:"right"})}
   }
-  band("Ernährungswoche","CZ Nutrition · Unihockey");
+  band(state.food===false?"Wochenplan":"Wochenplan mit Ernährung","CZ Plan · Unihockey");
   // daily line
   doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(...INK);doc.text("Jeden Tag:",M,29.5);
   const lw=doc.getTextWidth("Jeden Tag:")+2;doc.setFont("helvetica","normal");doc.setTextColor(...MUTED);
@@ -2253,7 +2276,7 @@ async function encodeObj(o){const data=new TextEncoder().encode(JSON.stringify(o
 async function pullCoachPlan(){if(!sb||!sbUser)return;
   try{const {data,error}=await sb.from("nutrition_state").select("data,updated_at").eq("user_id",sbUser.id).maybeSingle();if(error||!data||!data.data||!data.data.p)return;
     if(state.coachUpd===data.updated_at&&state.plans.some(p=>p.id===state.coachPlan))return;
-    const o=data.data,ok=await importCode(await encodeObj({n:o.n||"",v:!!o.v,p:o.p,kg:o.kg||null}));
+    const o=data.data,ok=await importCode(await encodeObj(o));
     if(ok){state.coachUpd=data.updated_at;state.coachPlan=state.active;save()}}catch(e){}}
 async function sbInit(){try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:AKEY}})}catch(e){sb=null;return}
   try{const {data}=await sb.auth.getSession();sbUser=data&&data.session?data.session.user:null}catch(e){}
@@ -2268,7 +2291,7 @@ async function coachCheck(){try{const r=await sb.rpc("is_coach");sbCoach=!r.erro
   await loadSent();renderSendBtn()}
 async function loadSent(){cSent={};const ids=cPlayers.map(p=>p.player_id);if(!ids.length)return;
   try{const r=await sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids);(r.data||[]).forEach(x=>cSent[x.user_id]=x)}catch(e){}}
-function planObj(){const o={n:state.name||"",v:!!state.veg,p:JSON.parse(JSON.stringify(state.plan))};if(state.kg)o.kg=state.kg;return o}
+function planObj(){return JSON.parse(JSON.stringify(planShare()))}
 function sentTo(){/* Spieler, die genau diesen Plan (gleicher Name) haben */return cPlayers.filter(p=>cSent[p.player_id]&&nrm(cSent[p.player_id].data.n)===nrm(state.name))}
 const changed=x=>JSON.stringify(x.data.p)!==JSON.stringify(state.plan)||!!x.data.v!==!!state.veg||(x.data.kg||null)!==(state.kg||null);
 function guessWho(){const s=sentTo();if(s.length)return s[0].player_id;const n=nrm(state.name);const m=cPlayers.find(p=>nrm(p.name)===n)||cPlayers.find(p=>n&&nrm(p.name).split(" ")[0]===n.split(" ")[0]);return m?m.player_id:""}
@@ -2277,7 +2300,7 @@ function renderSendBtn(){const b=document.getElementById("sendPlBtn");if(!b)retu
   b.textContent=s.length?`📤 ${dirty?"Änderungen an":"An"} ${String(s[0].name||s[0].email).split(" ")[0]}${s.length>1?` +${s.length-1}`:""} schicken`:"📤 An Spieler schicken";
   b.classList.toggle("primary",dirty)}
 function sendNowTxt(){const id=document.getElementById("sendWho").value,x=cSent[id];const el=document.getElementById("sendNow");
-  if(!id){el.textContent="";return}if(!x){el.textContent="Hat noch keinen Ernährungsplan von dir.";return}
+  if(!id){el.textContent="";return}if(!x){el.textContent="Hat noch keinen Plan von dir.";return}
   const same=nrm(x.data.n)===nrm(state.name);el.textContent=same?(changed(x)?`Hat «${x.data.n}» – deine Änderungen hier sind noch nicht geschickt.`:`Hat «${x.data.n}» schon in dieser Version.`):`Hat jetzt «${x.data.n||"Plan"}». Er wird durch «${state.name||"diesen Plan"}» ersetzt.`}
 function openSend(){const sel=document.getElementById("sendWho");const g=guessWho();
   sel.innerHTML=`<option value="">– Spieler wählen –</option>`+cPlayers.map(p=>`<option value="${esc(p.player_id)}"${p.player_id===g?" selected":""}>${esc(p.name||p.email||"Spieler")}</option>`).join("");
@@ -2285,12 +2308,12 @@ function openSend(){const sel=document.getElementById("sendWho");const g=guessWh
 async function doSend(){const id=document.getElementById("sendWho").value,err=document.getElementById("sendErr"),btn=document.getElementById("sendGo");if(!id){err.textContent="Bitte einen Spieler wählen.";return}
   btn.disabled=true;err.textContent="";const now=new Date().toISOString(),p=cPlayers.find(x=>x.player_id===id),first=String(p.name||p.email||"Spieler").split(" ")[0];const done=[];
   try{save();const r=await sb.from("nutrition_state").upsert({user_id:id,coach_id:sbUser.id,data:planObj(),updated_at:now});if(r.error)throw r.error;done.push("Ernährungsplan");
-    if(document.getElementById("sendWeek").checked){const q=await sb.from("planner_state").select("data").eq("user_id",id).maybeSingle();const prev=(q.data&&q.data.data)||null;
+    if(false){const q=await sb.from("planner_state").select("data").eq("user_id",id).maybeSingle();const prev=(q.data&&q.data.data)||null;
       const tpl=plannerTpl();if(prev&&prev.tpl)DAYS.forEach(([k])=>{((prev.tpl[k]&&prev.tpl[k].b)||[]).filter(b=>b.k==="gym").forEach(b=>tpl[k].b.push(b))});
       const school=Object.values(state.plan).some(d=>(d.act||[]).some(a=>a.k==="schule"));
       const data=Object.assign({},prev||{},{tpl,ov:{},upd:Date.now()});if(!data.prof)data.prof=school?"jung":"jung";if(data.food==null)data.food=true;if(data.goal==null)data.goal=9;delete data.view;
       const w=await sb.from("planner_state").upsert({user_id:id,data,updated_at:now});if(w.error)throw w.error;done.push("Wochenplan")}
-    document.getElementById("sendModal").hidden=true;await loadSent();renderSendBtn();flash(`An ${first} geschickt: ${done.join(" und ")}`)}
+    document.getElementById("sendModal").hidden=true;await loadSent();renderSendBtn();flash(`Plan an ${first} geschickt`)}
   catch(e){const m=String(e&&((e.code?e.code+": ":"")+(e.message||""))||e);err.textContent=(done.length?done.join(", ")+" geschickt, aber ":"")+(/nutrition_state/.test(m)&&/exist|find|schema/i.test(m)?"zuerst das SQL auf der Start-Seite in Supabase ausführen.":"Fehler: "+m)}
   btn.disabled=false}
 document.getElementById("sendPlBtn").addEventListener("click",openSend);
@@ -2311,8 +2334,11 @@ function plannerTpl(){ensureSleep();const tpl={},GYM=/gym|kraft|athletik|krafttr
     tpl[k]={b,wake,bed}});
   return tpl}
 window.czPlans=()=>{save();return state.plans.map(p=>({id:p.id,name:p.name||"",active:p.id===state.active}))};
-window.czExport=id=>{const prev=state.active;if(id&&id!==prev)switchPlan(id);
-  const obj={n:state.name||"",v:!!state.veg,p:JSON.parse(JSON.stringify(state.plan))};if(state.kg)obj.kg=state.kg;
+window.czExport=(id,gyms)=>{const prev=state.active;if(id&&id!==prev)switchPlan(id);
+  /* Gym-Einheiten von der Start-Seite: alte Einträge dieser Einheiten ersetzen, dann neu an den gewählten Tagen eintragen */
+  if(gyms){const titles=new Set(gyms.titles||[]);DAYS.forEach(([k])=>{const d=state.plan[k];d.ses=(d.ses||[]).filter(x=>!(x.g&&titles.has(x.g)))});
+    (gyms.place||[]).forEach(g=>{const d=state.plan[g.d];if(!d)return;if(!Array.isArray(d.ses))d.ses=[];if(!d.t||d.t==="leicht")d.t="mittel";const st=toMin(g.s);d.ses.push({s:g.s,e:fmtTime(st+60),n:"Gym: "+g.t,g:g.t})});save()}
+  const obj=JSON.parse(JSON.stringify(planShare()));
   const tpl=plannerTpl(),school=Object.values(state.plan).some(d=>(d.act||[]).some(a=>a.k==="schule"));
   if(id&&id!==prev)switchPlan(prev);return {obj,tpl,school}};
 {const c=codeFrom(location.hash);if(c)importCode(c)}

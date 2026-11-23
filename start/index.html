@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" defer></script>
 <style>
-/* CZ Start: Konto für Spieler, Coach schickt Wochenplan, Ernährungsplan und Trainings */
+/* CZ Start: Konto für Spieler, Coach schickt Plan und Trainings */
 :root{
   --bg:#F2F5F7; --surface:#FFFFFF; --ink:#14232C; --muted:#5A6A73; --line:#D8E0E5;
   --accent:#1D63C9; --accent-soft:#E3ECFA; --warn:#C2412D; --ok:#2E8B57; --ok-soft:#E2F2E8;
@@ -35,7 +35,7 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body)}
 .appnav{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top,0px)) 16px 6px}
-.appnav div{display:grid;grid-template-columns:.8fr repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
+.appnav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:440px;margin:0 auto}
 .appnav a{text-align:center;padding:7px 4px;border-radius:9px;font-weight:600;font-size:.92rem;line-height:1.2;text-decoration:none;color:var(--ink)}
 main{max-width:720px;margin:0 auto;padding:18px 16px 60px}
 h1{font:700 2.1rem/1.05 var(--display);margin:6px 0 4px;letter-spacing:.01em}
@@ -106,7 +106,7 @@ details summary{cursor:pointer;font-weight:600}
 </style>
 </head>
 <body>
-<nav class="appnav" aria-label="Apps"><div><a href="../start/" aria-current="page">Start</a><a href="../planner/">Planner</a><a href="../training/">Workout</a><a href="../">Nutrition</a></div></nav>
+<nav class="appnav" aria-label="Apps"><div><a href="../start/" aria-current="page">Start</a><a href="../">Plan</a><a href="../training/">Workout</a></div></nav>
 <main id="app"><p class="loading">Lädt …</p></main>
 <div class="toast" id="toast" role="status" hidden></div>
 <iframe id="nutFrame" title="" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px"></iframe>
@@ -132,10 +132,9 @@ const uname=()=>user?((user.user_metadata||{}).name||String(user.email||"").spli
 /* ---------- Ansichten ---------- */
 const ICON={plan:"🗓",nut:"🍽",tr:"🏋"};
 function appCards(st){st=st||{};const c=(cls,href,ic,name,txt,ok)=>`<a class="app ${cls}" href="${href}"><span class="ic" aria-hidden="true">${ic}</span><span><b>${name}</b><span class="st${ok?" ok":""}">${txt}</span></span><span class="go" aria-hidden="true">›</span></a>`;
-  return `<div class="apps">${c("c-plan","../planner/",ICON.plan,"Planner",st.plan||"Deine Woche: Schule, Training, Schlaf, Essen",st.planOk)}
-  ${c("c-tr","../training/",ICON.tr,"Workout",st.tr||"Deine Trainingseinheiten, Sätze und Gewichte",st.trOk)}
-  ${c("c-nut","../",ICON.nut,"Nutrition",st.nut||"Dein Ernährungsplan für die Woche",st.nutOk)}</div>`}
-function viewLogin(msg){$("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">Planner, Workout und Nutrition in einem Konto. Melde dich einmal an – dein Coach schickt dir Wochenplan, Trainings und Ernährungsplan direkt hierhin, auf jedem Gerät.</p>
+  return `<div class="apps">${c("c-plan","../",ICON.plan,"Plan",st.plan||"Deine Woche: Schule, Trainings, Schlaf und Essen",st.planOk)}
+  ${c("c-tr","../training/",ICON.tr,"Workout",st.tr||"Deine Trainingseinheiten, Sätze und Gewichte",st.trOk)}</div>`}
+function viewLogin(msg){$("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">Plan und Workout in einem Konto. Melde dich einmal an – dein Coach schickt dir Wochenplan, Trainings und Ernährungsplan direkt hierhin, auf jedem Gerät.</p>
   <div class="card"><h2>Anmelden oder Konto erstellen</h2>
   <form id="acForm" autocomplete="on">
     <div class="f"><label for="acMail">E-Mail</label><input type="email" id="acMail" autocomplete="email" required inputmode="email" autocapitalize="off"></div>
@@ -144,13 +143,11 @@ function viewLogin(msg){$("app").innerHTML=`<h1>CZ Athlete</h1><p class="lead">P
     <div class="acts"><button type="submit" class="btn pri">Anmelden</button><button type="button" class="btn" id="acUp">Neues Konto erstellen</button></div>
   </form><p class="err" id="acErr">${esc(msg||"")}</p></div>
   <p class="hint" style="margin:0 0 8px">Ohne Konto funktionieren die Apps auch, dann bleibt alles nur auf diesem Gerät.</p>${appCards()}`}
-async function viewPlayer(){$("app").innerHTML=`<div class="who"><h1>Hallo ${esc(uname())}</h1><button type="button" class="btn sm" id="acOut">Abmelden</button></div><p class="lead">Das hat dein Coach für dich bereit:</p><div id="pc">${appCards({plan:"Lädt …",tr:"Lädt …",nut:"Lädt …"})}</div>
-  <div class="card"><p class="hint" style="margin:0"><b>Tipp:</b> Leg dir die drei Apps auf den Homescreen (Teilen › «Zum Home-Bildschirm»). Auf dem iPhone musst du dich in der Homescreen-App einmal anmelden – danach kommt alles vom Coach automatisch.</p></div>`;
+async function viewPlayer(){$("app").innerHTML=`<div class="who"><h1>Hallo ${esc(uname())}</h1><button type="button" class="btn sm" id="acOut">Abmelden</button></div><p class="lead">Das hat dein Coach für dich bereit:</p><div id="pc">${appCards({plan:"Lädt …",tr:"Lädt …"})}</div>
+  <div class="card"><p class="hint" style="margin:0"><b>Tipp:</b> Leg dir Plan und Workout auf den Homescreen (Teilen › «Zum Home-Bildschirm»). Auf dem iPhone musst du dich in der Homescreen-App einmal anmelden – danach kommt alles vom Coach automatisch.</p></div>`;
   const st={};
-  const [p,n,a]=await Promise.all([sb.from("planner_state").select("data,updated_at").eq("user_id",user.id).maybeSingle(),sb.from("nutrition_state").select("data,updated_at").eq("user_id",user.id).maybeSingle(),sb.from("assignments").select("title,updated_at").eq("player_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
-  const pd=p.data&&p.data.data,nb=pd&&pd.tpl?Object.values(pd.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
-  st.plan=nb?`Wochenplan mit ${nb} Einträgen`:"Noch kein Wochenplan";st.planOk=!!nb;
-  const nd=n.data&&n.data.data;st.nut=nd&&nd.p?`«${nd.n||"Ernährungsplan"}» vom Coach`:"Noch kein Ernährungsplan vom Coach";st.nutOk=!!(nd&&nd.p);
+  const [n,a]=await Promise.all([sb.from("nutrition_state").select("data,updated_at").eq("user_id",user.id).maybeSingle(),sb.from("assignments").select("title,updated_at").eq("player_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
+  const nd=n.data&&n.data.data;st.plan=nd&&nd.p?`«${nd.n||"Plan"}» vom Coach${nd.nf?"":", mit Essen"}`:"Noch kein Plan vom Coach";st.planOk=!!(nd&&nd.p);
   const tl=(a.data||[]).map(x=>x.title).filter(Boolean);st.tr=tl.length?`${tl.length} Einheit${tl.length===1?"":"en"}: ${tl.join(", ")}`:"Noch keine Einheiten vom Coach";st.trOk=!!tl.length;
   if($("pc"))$("pc").innerHTML=appCards(st)}
 
@@ -176,10 +173,10 @@ async function loadCoach(){await loadGroups();const r=await coachPlayersRPC();ol
   noNut=!!(n.error&&missing(n.error));(n.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].nut=x});
   (a.data||[]).forEach(x=>{if(info[x.player_id])info[x.player_id].tr.push(x)})}
 function dots(id){const i=info[id]||{},nb=i.plan&&i.plan.data&&i.plan.data.tpl?Object.values(i.plan.data.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
-  return `<span class="dots"><span class="dot c-plan${nb?" on":""}" title="Wochenplan">${ICON.plan}${nb?" ✓":""}</span><span class="dot c-nut${i.nut?" on":""}" title="Ernährungsplan">${ICON.nut}${i.nut?" ✓":""}</span><span class="dot c-tr${i.tr&&i.tr.length?" on":""}" title="Trainings">${ICON.tr} ${i.tr?i.tr.length:0}</span></span>`}
+  return `<span class="dots"><span class="dot c-plan${i.nut?" on":""}" title="Plan">${ICON.plan}${i.nut?" ✓":""}</span><span class="dot c-tr${i.tr&&i.tr.length?" on":""}" title="Trainings">${ICON.tr} ${i.tr?i.tr.length:0}</span></span>`}
 function viewCoach(){const plans=nutPlans(),S=trSessions();
   let h=`<div class="who"><div><h1>Spieler</h1><p class="hint" style="margin:0">Coach: <b>${esc(uname())}</b></p></div><button type="button" class="btn sm" id="acOut">Abmelden</button></div>
-  <p class="lead">Wähle einen Spieler und schick ihm Wochenplan, Ernährungsplan und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
+  <p class="lead">Wähle einen Spieler und schick ihm seinen Plan (Woche mit Schule, Trainings, Schlaf und Essen) und Trainings. Er sieht alles sofort, wenn er mit seinem Konto angemeldet ist.</p>`;
   if(noNut||oldList)h+=sqlCard();else if(needG)h+=sqlCardG();
   if(!players.length)h+=`<div class="card"><h2>Noch keine Spieler</h2><p>Schick deinen Spielern diesen Link. Sie erstellen dort ihr Konto und erscheinen dann hier:</p><p><b>${esc(location.origin+location.pathname)}</b></p><div class="acts"><button type="button" class="btn" id="copyStart">Link kopieren</button></div></div>`;
   else{h+=`<div class="card"><div class="f" style="margin-bottom:8px"><label for="pq">Spieler suchen</label><input type="search" id="pq" placeholder="Name oder E-Mail"></div><div id="plist">${playerList("")}</div>
@@ -205,25 +202,20 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
   const pid=guessPlan(p,plans);
   /* Einheiten: zugewiesene zuerst, dann solche mit dem Namen des Spielers */
   const rank=x=>as.has(x.id)?0:norm(x.a)&&nm.includes(norm(x.a).split(" ")[0])?1:2;const SS=S.slice().sort((a,b)=>rank(a)-rank(b));
-  const dayOpts=v=>`<option value="">nicht im Wochenplan</option>`+DAYS.map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
+  const dayOpts=v=>`<option value="">nicht im Plan</option>`+DAYS.map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
   return `<div class="card" id="panel"><h2>${esc(pname(p))}</h2>${p.email?`<p class="hint">${esc(p.email)}</p>`:""}${p.shares===false?`<p class="hint">Er teilt seine Resultate nicht mit dir. Pläne und Trainings kannst du ihm trotzdem schicken.</p>`:""}${p.confirmed===false?`<p class="hint">Seine E-Mail ist noch nicht bestätigt. Was du schickst, sieht er nach dem Bestätigen.</p>`:""}
   ${groups.length?`<div class="chips" role="group" aria-label="Gruppen von ${esc(pname(p))}"><span class="hint" style="align-self:center">Gruppen:</span>${groups.map(g=>`<button type="button" class="chip" data-gtog="${esc(g.id)}" aria-pressed="${g.members.includes(sel)}">${g.members.includes(sel)?"✓ ":""}${esc(g.name)}</button>`).join("")}</div>`:""}
-  <div class="sec c-nut"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.nut}</span><h3>Ernährungsplan</h3></div>
-    <p class="now${i.nut?" ok":""}">${i.nut?`Hat jetzt: «${esc(i.nut.data.n||"Plan")}», geschickt ${fdate(i.nut.updated_at)}`:noNut?"Zuerst das SQL oben in Supabase ausführen.":"Noch kein Ernährungsplan geschickt."}</p>
-    ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Ernährungsplan. <a href="../">In Nutrition erstellen</a></p>`}
+  <div class="sec c-plan"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.plan}</span><h3>Plan</h3></div>
+    <p class="now${i.nut?" ok":""}">${i.nut?`Hat jetzt: «${esc(i.nut.data.n||"Plan")}», geschickt ${fdate(i.nut.updated_at)}`:noNut?"Zuerst das SQL oben in Supabase ausführen.":"Noch kein Plan geschickt."}</p>
+    ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Plan. <a href="../">In Plan erstellen</a> – für Spieler ohne Ernährung dort «Essen anzeigen» ausschalten.</p>`}
   </div>
   <div class="sec c-tr"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.tr}</span><h3>Trainings</h3></div>
     <p class="now${(i.tr||[]).length?" ok":""}">${(i.tr||[]).length?`Hat jetzt: ${i.tr.map(a=>esc(a.title)).join(", ")}`:"Noch keine Einheiten zugewiesen."}</p>
     ${SS.length?(()=>{const li=x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}</small></label>
-      <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Wochenplan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`};const mine=new Set([nm].concat(gOf(sel).map(g=>norm(g.name))));const fr=f=>!f?2:mine.has(norm(f))?0:1;
+      <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Plan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`};const mine=new Set([nm].concat(gOf(sel).map(g=>norm(g.name))));const fr=f=>!f?2:mine.has(norm(f))?0:1;
       const F=[...new Set(SS.map(x=>x.folder||""))].sort((a,b)=>fr(a)-fr(b)||a.localeCompare(b,"de"));
       return F.map(f=>{const L=SS.filter(x=>(x.folder||"")===f),n=L.filter(x=>as.has(x.id)).length,open=fr(f)===0||n>0;
         return `<details class="fold"${open?" open":""}><summary class="fhead"><h4>${esc(f||"Ohne Ordner")} <span>${L.length}${n?` · ${n} zugewiesen`:""}</span></h4>${L.length>1?`<button type="button" class="btn sm" data-fall="${esc(f)}">Alle wählen</button>`:""}</summary><ul class="tlist">${L.map(li).join("")}</ul></details>`}).join("")})():`<p class="hint">Auf diesem Gerät gibt es noch keine Trainingseinheit. <a href="../training/">In Workout erstellen</a></p>`}
-  </div>
-  <div class="sec c-plan"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.plan}</span><h3>Wochenplan (Planner)</h3></div>
-    <p class="now${nb?" ok":""}">${nb?`Hat jetzt einen Wochenplan mit ${nb} Einträgen${i.plan.updated_at?`, zuletzt geändert ${fdate(i.plan.updated_at)}`:""}.`:"Noch kein Wochenplan."}</p>
-    <label class="check"><input type="checkbox" id="mkWeek"${hb.week===false?"":" checked"}> <span>Wochenplan neu erstellen: Schule, Trainings, Recovery, Schlaf und alle Mahlzeiten aus dem Ernährungsplan, dazu die Gym-Einheiten am gewählten Tag${nb?" <span class=\"hint\">(ersetzt seine Standardwoche)</span>":""}</span></label>
-    <div class="acts"><a class="btn sm" href="../planner/#who=${encodeURIComponent(sel)}" style="text-decoration:none;display:inline-flex;align-items:center">Im Planner ansehen und bearbeiten ›</a></div>
   </div>
   <div class="sendall"><button type="button" class="btn pri" id="sendAll">An ${esc(pname(p).split(" ")[0])} schicken</button><p class="err" id="sendErr"></p></div></div>`}
 function groupsCard(S){const g=gsel&&groups.find(x=>x.id===gsel);
@@ -340,33 +332,25 @@ create policy "planner_coach_all_update" on public.planner_state for update usin
 let nutReady=null;
 function nutApi(){if(nutReady)return nutReady;nutReady=new Promise((res,rej)=>{const f=$("nutFrame");let n=0;const chk=()=>{try{const w=f.contentWindow;if(w&&typeof w.czExport==="function"){res(w);return}}catch(e){}if(++n>150){nutReady=null;rej(new Error("Nutrition lädt nicht"));return}setTimeout(chk,100)};f.src="../";f.onload=chk});return nutReady}
 async function sendAll(){const btn=$("sendAll"),errEl=$("sendErr");btn.disabled=true;errEl.textContent="";const p=players.find(x=>x.player_id===sel),first=pname(p).split(" ")[0];
-  const pid=$("nutSel")?$("nutSel").value:"",mk=$("mkWeek").checked;const S=trSessions();
+  const pid=$("nutSel")?$("nutSel").value:"";const S=trSessions();
   const want=[...document.querySelectorAll("[data-sid]")].filter(c=>c.checked).map(c=>c.dataset.sid);
   const place={};document.querySelectorAll("[data-pd]").forEach(s=>{const id=s.dataset.pd,t=document.querySelector(`[data-pt="${CSS.escape(id)}"]`);place[id]={d:s.value,t:t?t.value:""}});
-  const h=hub();h[sel]={plan:pid,place,week:mk};setHub(h);
+  const h=hub();h[sel]={plan:pid,place};setHub(h);
   const done=[],errs=[];const now=new Date().toISOString();
+  /* nur Einheiten mit gewähltem Tag werden im Plan (neu) eingetragen; von Hand eingetragene bleiben unberührt */
+  const gp=want.map(sid=>{const x=S.find(z=>z.id===sid),pl=place[sid];return x&&pl&&pl.d&&toM(pl.t)!=null?{d:pl.d,s:pl.t,t:x.t||"Gym"}:null}).filter(Boolean);
+  const gyms={titles:gp.map(g=>g.t),place:gp};
+  if(!pid&&gyms.place.length)errs.push("Gym-Einheiten im Plan: zuerst oben einen Plan wählen – die Einheiten werden in seinen Plan eingetragen.");
   try{
-    /* 1. Ernährungsplan */
-    let exp=null;
-    if(pid||mk){btn.textContent="Ernährungsplan wird vorbereitet …";try{const w=await nutApi();exp=pid?w.czExport(pid):null}catch(e){if(pid)errs.push("Ernährungsplan: "+e.message)}}
-    if(pid&&exp){const r=await sb.from("nutrition_state").upsert({user_id:sel,coach_id:user.id,data:exp.obj,updated_at:now});if(r.error)errs.push(missing(r.error)?"Ernährungsplan: zuerst das SQL in Supabase ausführen (siehe oben).":"Ernährungsplan: "+sbMsg(r.error));else done.push("Ernährungsplan")}
+    /* 1. Plan (Woche mit Schule, Trainings, Gym, Schlaf und – falls eingeschaltet – Essen) */
+    if(pid){btn.textContent="Plan wird vorbereitet …";let exp=null;try{const w=await nutApi();exp=w.czExport(pid,gyms)}catch(e){errs.push("Plan: "+e.message)}
+      if(exp){const r=await sb.from("nutrition_state").upsert({user_id:sel,coach_id:user.id,data:exp.obj,updated_at:now});if(r.error)errs.push(missing(r.error)?"Plan: zuerst das SQL in Supabase ausführen (siehe oben).":"Plan: "+sbMsg(r.error));else done.push("Plan")}}
     /* 2. Trainings */
     btn.textContent="Trainings werden zugewiesen …";
     const cur=(info[sel]||{}).tr||[],rows=want.map(sid=>S.find(x=>x.id===sid)).filter(Boolean).map(x=>({coach_id:user.id,player_id:sel,sid:x.id,title:x.t||"Einheit",session:sessPayload(x),updated_at:now}));
     let trErr=null;if(rows.length){const r=await sb.from("assignments").upsert(rows,{onConflict:"coach_id,player_id,sid"});if(r.error)trErr=r.error}
     for(const a of cur.filter(a=>!want.includes(a.sid)&&S.some(x=>x.id===a.sid))){const r=await sb.from("assignments").delete().eq("id",a.id);if(r.error)trErr=r.error}
     if(trErr)errs.push("Trainings: "+sbMsg(trErr));else if(rows.length||cur.length)done.push(`${rows.length} Training${rows.length===1?"":"s"}`);
-    /* 3. Wochenplan */
-    if(mk){btn.textContent="Wochenplan wird erstellt …";
-      let tpl=null,school=false;
-      if(exp){tpl=exp.tpl;school=exp.school}
-      else{const plans=nutPlans();const any=(info[sel]&&info[sel].nut&&plans.find(x=>norm(x.name)===norm(info[sel].nut.data.n)))||null;if(any){try{const w=await nutApi();const e2=w.czExport(any.id);tpl=e2.tpl;school=e2.school}catch(e){}}}
-      const prev=(info[sel]&&info[sel].plan&&info[sel].plan.data)||null;
-      if(!tpl)tpl=prev&&prev.tpl?JSON.parse(JSON.stringify(prev.tpl)):Object.fromEntries(DAYS.map(([k])=>[k,{b:[],wake:k==="sa"||k==="so"?"08:00":"06:30",bed:k==="fr"||k==="sa"?"22:30":"21:30"}]));
-      DAYS.forEach(([k])=>{tpl[k]=tpl[k]||{b:[]};tpl[k].b=(tpl[k].b||[]).filter(b=>b.k!=="gym")});
-      want.forEach(sid=>{const x=S.find(z=>z.id===sid),pl=place[sid];if(!x||!pl||!pl.d||toM(pl.t)==null)return;const s=toM(pl.t);tpl[pl.d].b.push({id:uid(),k:"gym",s:fmt(s),e:fmt(s+60),t:x.t||"Gym"})});
-      const data=Object.assign({},prev||{},{tpl,ov:{},upd:Date.now()});if(!prev||!prev.prof)data.prof=school?"jung":(prev&&prev.prof)||"jung";if(data.food==null)data.food=true;if(data.goal==null)data.goal=9;delete data.view;
-      const r=await sb.from("planner_state").upsert({user_id:sel,data,updated_at:now});if(r.error)errs.push(/row-level|policy|permission/i.test(String(r.error.message))?"Wochenplan: Speichern nicht erlaubt – zuerst das SQL oben in Supabase ausführen.":"Wochenplan: "+sbMsg(r.error));else done.push("Wochenplan")}
   }catch(e){errs.push(sbMsg(e))}
   await loadCoach();viewCoach();
   if(done.length)toast(`An ${first} geschickt: ${done.join(", ")}`);
