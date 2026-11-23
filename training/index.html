@@ -2100,7 +2100,10 @@ async function pullAssignments(){if(!sb||!sbUser)return;let rows;try{const {data
   const dis=new Set(state.dismissed||[]);let changed=false,news=[],ups=[];const ids=new Set(rows.map(r=>r.id));
   rows.forEach(r=>{if(dis.has(r.id))return;const loc=state.sessions.find(x=>x.assign===r.id);const src=r.session||{};
     const mk=()=>({t:r.title||src.t||"Einheit",a:src.a||"",h:src.h||"",items:(src.items||[]).map(it=>fixItem(Object.assign({},it,{u:uid(),log:[],xs:0})))});
-    if(!loc){state.sessions.push(Object.assign({id:uid(),assign:r.id,coachUpd:r.updated_at},mk()));news.push(r.title);changed=true}
+    /* gleiche Einheit schon da (z. B. früher per Link bekommen)? Dann diese übernehmen statt doppelt anlegen */
+    const twin=!loc&&state.sessions.find(x=>!x.assign&&!x.free&&String(x.t||"").trim().toLowerCase()===String(r.title||src.t||"").trim().toLowerCase());
+    if(twin){twin.assign=r.id;twin.coachUpd=r.updated_at;if(!twin.items.some(it=>(it.log||[]).length)){const fo=twin.folder;Object.assign(twin,mk());if(fo)twin.folder=fo}changed=true}
+    else if(!loc){state.sessions.push(Object.assign({id:uid(),assign:r.id,coachUpd:r.updated_at},mk()));news.push(r.title);changed=true}
     else if(loc.coachUpd!==r.updated_at&&!loc.items.some(it=>(it.log||[]).length)){Object.assign(loc,mk(),{coachUpd:r.updated_at});ups.push(r.title);changed=true}});
   state.sessions.filter(x=>x.assign&&!ids.has(x.assign)).forEach(x=>{if(!x.items.some(it=>(it.log||[]).length)){state.sessions=state.sessions.filter(z=>z!==x);(state.delS=state.delS||[]).push(x.id);changed=true}else delete x.assign});
   if(!state.sessions.length)state.sessions.push({id:uid(),t:"Neue Einheit",a:"",h:"",items:[]});if(!state.sessions.some(x=>x.id===state.active))state.active=state.sessions[0].id;

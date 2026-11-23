@@ -80,6 +80,7 @@ input[type=time]{width:auto}
 .fhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}.fhead:first-child{margin-top:0}.fhead h4{margin:0;font:700 .95rem var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .glist{display:grid;gap:6px;margin:0 0 10px;padding:0;list-style:none}.glist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.glist b{display:block}
 .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;margin:0 0 8px;padding:0;list-style:none}
+.uses{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px}.uses li{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;background:var(--c-tr-bg);border-radius:8px;padding:6px 10px}.uses span{color:var(--muted);font-size:.85rem}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:.75rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
 .dot{font-size:.78rem;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
 .dot.on{background:var(--cbg);color:var(--c);border-color:transparent}
@@ -171,7 +172,11 @@ async function loadCoach(){await loadGroups();const r=await coachPlayersRPC();ol
   const [p,n,a]=await Promise.all([sb.from("planner_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("nutrition_state").select("user_id,data,updated_at").in("user_id",ids),sb.from("assignments").select("id,player_id,sid,title,updated_at").eq("coach_id",user.id)].map(q=>q.then(r=>r,e=>({error:e}))));
   (p.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].plan=x});
   noNut=!!(n.error&&missing(n.error));(n.data||[]).forEach(x=>{if(info[x.user_id])info[x.user_id].nut=x});
-  (a.data||[]).forEach(x=>{if(info[x.player_id])info[x.player_id].tr.push(x)})}
+  (a.data||[]).forEach(x=>{if(info[x.player_id])info[x.player_id].tr.push(x)});
+  /* Was der Spieler im Workout hat (nur von Spielern, die mit dir teilen) */
+  const shareIds=players.filter(p=>p.shares!==false).map(p=>p.player_id);
+  if(shareIds.length)try{const w=await sb.from("app_state").select("user_id,data").in("user_id",shareIds);(w.data||[]).forEach(x=>{const d=x.data||{};if(!info[x.user_id])return;
+    const H=(d.hist||[]);info[x.user_id].app=(d.sessions||[]).filter(z=>!z.free&&(z.items||[]).length).map(z=>{const done=H.filter(h=>h.sid===z.id||(!h.sid&&h.t===z.t)).map(h=>+h.d).sort((p,q)=>q-p);return {t:z.t||"Einheit",coach:!!z.assign,n:done.length,last:done[0]||0}})})}catch(e){}}
 function dots(id){const i=info[id]||{},nb=i.plan&&i.plan.data&&i.plan.data.tpl?Object.values(i.plan.data.tpl).reduce((s,d)=>s+((d&&d.b)||[]).length,0):0;
   return `<span class="dots"><span class="dot c-plan${i.nut?" on":""}" title="Plan">${ICON.plan}${i.nut?" ✓":""}</span><span class="dot c-tr${i.tr&&i.tr.length?" on":""}" title="Trainings">${ICON.tr} ${i.tr?i.tr.length:0}</span></span>`}
 function viewCoach(){const plans=nutPlans(),S=trSessions();
@@ -210,8 +215,8 @@ function playerPanel(plans,S){const p=players.find(x=>x.player_id===sel),i=info[
     ${plans.length?`<div class="f"><label for="nutSel">Plan</label><select id="nutSel"><option value="">– keinen schicken –</option>${plans.map(x=>`<option value="${esc(x.id)}"${x.id===pid?" selected":""}>${esc(x.name||"Ohne Name")}</option>`).join("")}</select></div>`:`<p class="hint">Auf diesem Gerät gibt es noch keinen Plan. <a href="../">In Plan erstellen</a> – für Spieler ohne Ernährung dort «Essen anzeigen» ausschalten.</p>`}
   </div>
   <div class="sec c-tr"><div class="sechead"><span class="ic" aria-hidden="true">${ICON.tr}</span><h3>Trainings</h3></div>
-    <p class="now${(i.tr||[]).length?" ok":""}">${(i.tr||[]).length?`Hat jetzt: ${i.tr.map(a=>esc(a.title)).join(", ")}`:"Noch keine Einheiten zugewiesen."}</p>
-    ${SS.length?(()=>{const li=x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}</small></label>
+    ${p.shares===false?`<p class="now">${(i.tr||[]).length?`Von dir zugewiesen: ${i.tr.map(a=>esc(a.title)).join(", ")}. `:""}Er teilt nicht – welche Einheiten er sonst nutzt, siehst du nicht.</p>`:i.app?`<p class="now" style="margin-bottom:4px">Hat in seinem Workout:</p><ul class="uses">${i.app.length?i.app.map(u=>`<li><b>${esc(u.t)}</b><span>${u.coach?"von dir zugewiesen":"eigene / per Link"} · ${u.n?`${u.n}× trainiert, zuletzt ${new Date(u.last).toLocaleDateString("de-CH",{day:"numeric",month:"numeric"})}`:"noch nicht trainiert"}</span></li>`).join(""):`<li class="hint">Noch keine Einheiten.</li>`}</ul>`:`<p class="now${(i.tr||[]).length?" ok":""}">${(i.tr||[]).length?`Hat jetzt: ${i.tr.map(a=>esc(a.title)).join(", ")}`:"Noch keine Einheiten zugewiesen."}</p>`}
+    ${SS.length?(()=>{const li=x=>{const pl=place[x.id]||{};return `<li><input type="checkbox" id="tr-${esc(x.id)}" data-sid="${esc(x.id)}"${as.has(x.id)?" checked":""}><label class="tt" for="tr-${esc(x.id)}">${esc(x.t||"Ohne Titel")}<small>${x.items.length} Übungen${x.a?" · "+esc(x.a):""}${!as.has(x.id)&&(i.app||[]).some(u=>norm(u.t)===norm(x.t))?' · <span style="color:var(--ok)">hat er schon (eigene Kopie) – Ankreuzen verbindet sie mit dir</span>':""}</small></label>
       <span class="place"><label class="hint" for="pd-${esc(x.id)}">Im Plan:</label><select id="pd-${esc(x.id)}" data-pd="${esc(x.id)}">${dayOpts(pl.d||"")}</select><input type="time" data-pt="${esc(x.id)}" value="${esc(pl.t||"17:30")}" aria-label="Beginn" step="300"></span></li>`};const mine=new Set([nm].concat(gOf(sel).map(g=>norm(g.name))));const fr=f=>!f?2:mine.has(norm(f))?0:1;
       const F=[...new Set(SS.map(x=>x.folder||""))].sort((a,b)=>fr(a)-fr(b)||a.localeCompare(b,"de"));
       return F.map(f=>{const L=SS.filter(x=>(x.folder||"")===f),n=L.filter(x=>as.has(x.id)).length,open=fr(f)===0||n>0;
