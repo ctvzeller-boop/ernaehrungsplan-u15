@@ -436,6 +436,9 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tl.session .tlbody>div,.tl.act .tlbody>div{flex:1;min-width:0}
 .tl.session .tlbody>svg,.tl.act .tlbody>svg{flex:none}
 .dragging{opacity:.35}
+.dayitems.dropday{outline:2px dashed var(--accent);outline-offset:2px;border-radius:8px;background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.daymv{flex:none;width:2.9em;max-width:2.9em;font:600 .72rem var(--body);color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:6px;padding:0 1px;min-height:24px;height:24px;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:center}
+@media (min-width:900px) and (hover:hover){.witem .daymv{display:none}.witem:hover .daymv,.witem .daymv:focus{display:inline-block}}
 .dragghost{position:fixed;z-index:80;pointer-events:none;box-shadow:0 12px 30px rgba(10,25,40,.25);opacity:.96;list-style:none;margin:0;transform:rotate(-1deg)}
 .dropline{height:4px;background:var(--accent);border-radius:2px;margin:1px 0;list-style:none;padding:0}
 .tl.dropline{display:block}
@@ -1142,7 +1145,7 @@ function renderWeekTable(){renderMealsBtn();
       if(it.kind==="act"){const x=d.act[it.i],st=toMin(x.s);
         return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"${durStyle(x,(lay["act"+it.i]||NL).minH)}><div class="whead">${actIcon(x.k,16)}
           <input type="text" class="sesname" id="tactn-${k}-${it.i}" data-act="${k}|${it.i}|n" value="${esc(x.n||"")}" placeholder="${esc(actName(x.k))}" aria-label="Name ${esc(actName(x.k))}">
-          ${st===null?"":`<button type="button" class="draghandle" id="dha-${k}-${it.i}" data-drag="${k}|act|${it.i}" aria-label="${esc(actName(x.k))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
+          <select class="daymv" id="dmv-act-${k}-${it.i}" data-daymv="${k}|act|${it.i}" aria-label="Auf einen anderen Tag verschieben" title="Auf einen anderen Tag verschieben">${DAYS.map(([dk,dn])=>`<option value="${dk}"${dk===k?" selected":""}>${dn.slice(0,2)}</option>`).join("")}</select>${st===null?"":`<button type="button" class="draghandle" id="dha-${k}-${it.i}" data-drag="${k}|act|${it.i}" aria-label="${esc(actName(x.k))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-e" data-act="${k}|${it.i}|e" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
           <button type="button" class="xbtn" id="tactdel-${k}-${it.i}" data-actdel="${k}|${it.i}" aria-label="Eintrag entfernen" title="Entfernen">×</button></div>
           ${actWarn(x.k,k)?`<div class="detail warn">${esc(actWarn(x.k,k))}</div>`:""}
@@ -1152,7 +1155,7 @@ function renderWeekTable(){renderMealsBtn();
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
         return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"${durStyle(x,(lay["ses"+it.i]||NL).minH)}><div class="whead">${icon(d.t||"mittel",16)}
           <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
-          ${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
+          <select class="daymv" id="dmv-ses-${k}-${it.i}" data-daymv="${k}|ses|${it.i}" aria-label="Auf einen anderen Tag verschieben" title="Auf einen anderen Tag verschieben">${DAYS.map(([dk,dn])=>`<option value="${dk}"${dk===k?" selected":""}>${dn.slice(0,2)}</option>`).join("")}</select>${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
           <button type="button" class="xbtn" id="tsesdel-${k}-${it.i}" data-sesdel="${k}|${it.i}" data-pre="t" aria-label="Einheit entfernen" title="Entfernen">×</button></div>
           ${gymLink(x)}
@@ -1175,7 +1178,7 @@ function renderWeekTable(){renderMealsBtn();
         <input type="text" class="trainfield" id="train-${k}" data-train="${k}" value="${esc(d.tr||"")}" placeholder="Notizen" aria-label="Notizen ${n}">
         <button type="button" class="addentry" id="tadd-${k}" data-addentry="${k}">＋ Eintrag</button>
       </div>
-      <div class="dayitems">${body}</div>
+      <div class="dayitems" data-wk="${k}">${body}</div>
       <div class="sleepcell" data-night="${k}" data-level="${nt?nt.level:"leer"}" aria-current="${k===sleepSel}">
         <span class="wlabel">Schlaf</span>
         <label class="slabel" for="bed-${k}">Schlafen</label>
@@ -1707,6 +1710,15 @@ function timeBetween(prev,next){
   let t=p!==null&&n!==null?(p+n)/2:p!==null?p+30:n!==null?n-30:null;
   if(t===null)return null;t=Math.round(t/5)*5;return Math.min(Math.max(t,300),1425);
 }
+/* Training oder Termin auf einen anderen Tag: gleiche Uhrzeit, Tagestyp und Essenszeiten um das Training passen sich an */
+function moveDay(ref,k2){const [k,a,b]=ref.split("|");if(!k2||k2===k)return;const d=state.plan[k],d2=state.plan[k2],arr=a==="ses"?d.ses:d.act,x=arr&&arr[+b];if(!x)return;
+  arr.splice(+b,1);if(a==="ses"){if(!Array.isArray(d2.ses))d2.ses=[];d2.ses.push(x);
+    if(!d2.t||d2.t==="leicht")d2.t="mittel";else if(d2.t==="mittel"&&d2.ses.length>1)d2.t="intensiv";
+    if(!d.ses.length&&d.t!=="spiel")d.t="leicht";else if(d.t==="intensiv"&&d.ses.length===1)d.t="mittel";
+    [d,d2].forEach(z=>{if(z.mt)["vor","abend","nach"].forEach(sk=>delete z.mt[sk]);if(z.s&&z.s.nach===NONE)delete z.s.nach})}
+  else{if(!Array.isArray(d2.act))d2.act=[];d2.act.push(x)}
+  save();renderTable();renderText();const nm=a==="ses"?(String(x.n||"").trim()||"Einheit"):(String(x.n||"").trim()||actName(x.k));
+  flash(`${nm} auf ${DAYS.find(z=>z[0]===k2)[1]} ${x.s||""}${x.e?"–"+x.e:""} verschoben${a==="ses"?" – Essenszeiten um das Training neu berechnet":""}. Zeit antippen zum Ändern.`)}
 function moveItem(ref,t,focusId){
   if(t===null)return;const [k,a,b]=ref.split("|"),d=state.plan[k];
   if(a==="ses"||a==="act"){const arr=a==="ses"?d.ses:d.act,x=arr&&arr[+b];if(!x)return;
@@ -1730,6 +1742,9 @@ document.addEventListener("pointerdown",e=>{
 document.addEventListener("pointermove",e=>{
   if(!drag)return;
   drag.ghost.style.top=(e.clientY-drag.dy)+"px";
+  { const el=document.elementFromPoint(e.clientX,e.clientY),col=el&&el.closest(".daycol"),L2=col&&col.querySelector(".dayitems");
+    if(L2&&L2!==drag.list&&!/\|(fruehstueck|znueni|mittag|vor|abend|nach)$/.test(drag.ref)&&/\|(ses|act)\|/.test(drag.ref)){drag.list=L2;drag.cross=L2.dataset.wk!==drag.ref.split("|")[0]?L2.dataset.wk:null;
+      document.querySelectorAll(".dayitems.dropday").forEach(x=>x.classList.remove("dropday"));if(drag.cross)L2.classList.add("dropday")} }
   let before=null;for(const c of timedSibs(drag.list,drag.item)){const r=c.getBoundingClientRect();if(e.clientY<r.top+r.height/2){before=c;break}}
   if(drag.ph.nextSibling!==before)drag.list.insertBefore(drag.ph,before);
   if(e.clientY<70)window.scrollBy(0,-14);else if(e.clientY>window.innerHeight-100)window.scrollBy(0,14);
@@ -1743,6 +1758,8 @@ function endDrag(cancel){
   for(let i=idx+1;i<sibs.length;i++){const c=sibs[i];if(c!==g.item&&c.dataset.time!==undefined&&!c.classList.contains("dropline")){next=c;break}}
   const unchanged=sibs[idx+1]===g.item||sibs[idx-1]===g.item;
   g.ph.remove();
+  document.querySelectorAll(".dayitems.dropday").forEach(x=>x.classList.remove("dropday"));
+  if(!cancel&&g.cross){moveDay(g.ref,g.cross);return}
   if(cancel||unchanged)return;
   moveItem(g.ref,timeBetween(prev,next),g.h.id);
 }
@@ -2007,6 +2024,7 @@ let autoArmed=false;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-xdel]");if(!b)return;const [k,sk,i]=b.dataset.xdel.split("|"),d=state.plan[k];
   const n=d.x[sk].splice(+i,1)[0];save();renderTable();renderText();flash(`${n} entfernt`);
   const f=document.getElementById(b.id.replace(/xdel-.*/,"xadd-"+k+"-"+sk));if(f)f.focus()});
+document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("[data-daymv]");if(!s)return;moveDay(s.dataset.daymv,s.value)});
 document.getElementById("mealsBtn").addEventListener("click",()=>{state.mealsOpen=!state.mealsOpen;mealFlip.clear();save();renderWeekTable()});
 document.getElementById("week").addEventListener("click",e=>{const b=e.target.closest("[data-mtog]");if(!b)return;const key=b.dataset.mtog;mealFlip.has(key)?mealFlip.delete(key):mealFlip.add(key);renderWeekTable();
   const f=document.getElementById((mealOpen(...key.split("|"))?"mc-":"mm-")+key.replace("|","-"));if(f)f.focus()});
