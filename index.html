@@ -404,6 +404,14 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tltime .tedit:focus{left:auto;right:0}
 .wtime{font-family:var(--display);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;color:var(--ink)}
 .wbody{display:flex;flex-direction:column;gap:5px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--surface)}
+.mmini{display:flex;align-items:baseline;gap:6px;width:100%;min-height:34px;padding:5px 8px;border:1px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.mmini:hover{border-style:solid;border-color:var(--accent)}
+.mmt{font-family:var(--display);font-weight:700;font-size:.92rem;font-variant-numeric:tabular-nums;flex:none}
+.mml{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;flex:none;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mmd{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem}
+.mmx{font-size:.75rem;color:var(--muted)}.mmc{flex:none;color:var(--muted)}
+@media (min-width:900px){.mmini .mml{display:none}.mmini{padding:5px 6px;gap:5px}}
+.mclose{flex:none;border:0;background:transparent;color:var(--muted);font-size:.9rem;cursor:pointer;padding:0 2px;line-height:1}
 .wlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .witem.train{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
 .witem.train[data-t="spiel"]{--c:var(--t-spiel);--cbg:var(--t-spiel-bg)}.witem.train[data-t="intensiv"]{--c:var(--t-intensiv);--cbg:var(--t-intensiv-bg)}.witem.train[data-t="leicht"]{--c:var(--t-leicht);--cbg:var(--t-leicht-bg)}
@@ -447,7 +455,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .tl.act b{font-family:var(--display);font-size:1.1rem}
 .gymlink{font-size:.82rem;font-weight:600;color:var(--accent)}
 /* Essen ausgeblendet: nur Termine, Trainings und Schlaf */
-.nofood .typebtn,.nofood #plates,.nofood .witem.meal,.nofood .tl.meal,.nofood #hProt,.nofood #hWater,.nofood #vegBtn,.nofood #mpBtn,.nofood #autoBtn,.nofood .protpill,.nofood [data-nav="gerichte"]{display:none!important}
+.nofood #mealsBtn,.nofood .typebtn,.nofood #plates,.nofood .witem.meal,.nofood .tl.meal,.nofood #hProt,.nofood #hWater,.nofood #vegBtn,.nofood #mpBtn,.nofood #autoBtn,.nofood .protpill,.nofood [data-nav="gerichte"]{display:none!important}
 .gympick{display:grid;gap:6px;max-height:42vh;overflow:auto;margin:6px 0 10px}.gympick h4{margin:6px 0 0;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .gympick button{text-align:left;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer}.gympick button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
 #addList input[type=url]{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
@@ -552,6 +560,7 @@ details.info[open] summary{margin-bottom:4px;display:block}
     <div class="toolbar">
       <button class="primary" id="autoBtn" type="button">Woche automatisch füllen</button>
       <button id="foodBtn" type="button" aria-pressed="true" title="Mahlzeiten im Plan anzeigen oder ausblenden">🍽 Essen anzeigen</button>
+      <button id="mealsBtn" type="button" aria-pressed="false" title="Alle Mahlzeiten auf- oder zuklappen">▾ Alle Mahlzeiten aufklappen</button>
       <button id="vegBtn" type="button" aria-pressed="false" title="Nur vegetarische Gerichte vorschlagen">🌱 Vegetarisch</button>
       <button id="plBtn" type="button" hidden title="Schule, Arbeit, Trainings, Termine und Schlaf aus dem alten Planner übernehmen">📅 Aus altem Planner</button>
       <button id="mpBtn" type="button" aria-pressed="false" title="Zmittag ist immer der Rest vom Znacht am Vorabend">🍱 Mealprep</button>
@@ -1095,7 +1104,13 @@ function dinnerSeg(k,d,id){
   return `<div class="seg" role="group" aria-label="Nachtessen"><button type="button" id="${id}-vor" data-dinner="${k}|vor" aria-pressed="${d.dinner==="vor"}">vor Training</button><button type="button" id="${id}-nach" data-dinner="${k}|nach" aria-pressed="${d.dinner!=="vor"}">nach Training</button></div>`;
 }
 function wakeFor(k){ensureSleep();const i=DAYS.findIndex(x=>x[0]===k);const w=toMin(state.sleepWeek[DAYS[(i+6)%7][0]].wake);return w===null?390:w}
-function renderWeekTable(){
+/* Dauer → Höhe: 0,75 px pro Minute, damit lange Blöcke (Schule, Arbeit) sichtbar länger sind */
+function durStyle(x){const a=toMin(x.s),b=toMin(x.e);if(a==null||b==null||b<=a)return "";return ` style="min-height:${Math.round(Math.min(b-a,720)*0.75)}px"`}
+/* Mahlzeiten zu- und aufklappen: Grundeinstellung für alle (state.mealsOpen) plus einzelne Ausnahmen */
+const mealFlip=new Set();
+function mealOpen(k,sk){const flip=mealFlip.has(k+"|"+sk);return state.mealsOpen?!flip:flip}
+function renderMealsBtn(){const b=document.getElementById("mealsBtn");if(!b)return;b.textContent=state.mealsOpen?"▴ Alle Mahlzeiten zuklappen":"▾ Alle Mahlzeiten aufklappen";b.setAttribute("aria-pressed",!!state.mealsOpen)}
+function renderWeekTable(){renderMealsBtn();
   const t=document.getElementById("week");ensureSleep();const sw=matchWarnings();
   t.innerHTML=DAYS.map(([k,n],di)=>{
     const d=state.plan[k];if(!Array.isArray(d.ses))d.ses=[];
@@ -1108,7 +1123,7 @@ function renderWeekTable(){
     items.sort((a,b)=>a.t-b.t||a.o-b.o);
     const body=items.map(it=>{
       if(it.kind==="act"){const x=d.act[it.i],st=toMin(x.s);
-        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"><div class="whead">${actIcon(x.k,16)}
+        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"${durStyle(x)}><div class="whead">${actIcon(x.k,16)}
           <input type="text" class="sesname" id="tactn-${k}-${it.i}" data-act="${k}|${it.i}|n" value="${esc(x.n||"")}" placeholder="${esc(actName(x.k))}" aria-label="Name ${esc(actName(x.k))}">
           ${st===null?"":`<button type="button" class="draghandle" id="dha-${k}-${it.i}" data-drag="${k}|act|${it.i}" aria-label="${esc(actName(x.k))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-e" data-act="${k}|${it.i}|e" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
@@ -1117,7 +1132,7 @@ function renderWeekTable(){
           ${ACT_INFO[x.k]?`<details class="info detail"><summary>Info</summary>${esc(ACT_INFO[x.k])}</details>`:""}
         </div></div>`}
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
-        return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"><div class="whead">${icon(d.t||"mittel",16)}
+        return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"${durStyle(x)}><div class="whead">${icon(d.t||"mittel",16)}
           <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
           ${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
@@ -1125,7 +1140,9 @@ function renderWeekTable(){
           ${gymLink(x)}
         </div></div>`}
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
-      return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
+      if(!mealOpen(k,sk)){const ex=extrasOf(k,sk);return `<div class="witem meal mini" data-time="${it.t}"><button type="button" class="mmini" id="mm-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="false" aria-label="${esc(sn)} ${esc(n)} um ${fmtTime(it.t)}: ${esc(val||"nichts gewählt")}. Aufklappen" title="${esc(val||"")}">
+        <span class="mmt">${fmtTime(it.t)}</span><span class="mml">${esc(L[sk]||SHORT[sk]||sn)}</span><span class="mmd">${val?esc(val.split(" (")[0])+(ex.length?` <span class="mmx">+${ex.length}</span>`:""):"–"}</span><span class="mmc" aria-hidden="true">▸</span></button></div>`}
+      return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><button type="button" class="mclose" id="mc-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="true" aria-label="${esc(sn)} zuklappen" title="Zuklappen">▾</button><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
         ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5). Grün = günstig, rot = ungünstig">${(()=>{const g=goodOf(val),r=SC[val];const a=allScores(val);return [["Carbs",0],["P",1],["F",2],["Vit",4],["Ball",5],["Zusatzzucker",6],["Gesund",3]].filter(([,i])=>a[i]!=null).map(([l,i])=>`<span class="g" style="${gcol(g[i])}">${l} ${a[i]}${l==="Gesund"?"/5":""}</span>`).join(" · ")})()}</div>`:""}${extraChips(k,sk,"w")}
         ${state.veg&&isMeat(sk,val)?`<div class="detail warn">Nicht vegetarisch, bitte ersetzen.</div>`:isHidden(val)?`<div class="detail warn">Ausgeblendet, bitte ersetzen.</div>`:""}
@@ -1972,6 +1989,9 @@ let autoArmed=false;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-xdel]");if(!b)return;const [k,sk,i]=b.dataset.xdel.split("|"),d=state.plan[k];
   const n=d.x[sk].splice(+i,1)[0];save();renderTable();renderText();flash(`${n} entfernt`);
   const f=document.getElementById(b.id.replace(/xdel-.*/,"xadd-"+k+"-"+sk));if(f)f.focus()});
+document.getElementById("mealsBtn").addEventListener("click",()=>{state.mealsOpen=!state.mealsOpen;mealFlip.clear();save();renderWeekTable()});
+document.getElementById("week").addEventListener("click",e=>{const b=e.target.closest("[data-mtog]");if(!b)return;const key=b.dataset.mtog;mealFlip.has(key)?mealFlip.delete(key):mealFlip.add(key);renderWeekTable();
+  const f=document.getElementById((mealOpen(...key.split("|"))?"mc-":"mm-")+key.replace("|","-"));if(f)f.focus()});
 document.getElementById("foodBtn").addEventListener("click",()=>{state.food=state.food===false;save();renderTable();renderText();flash(state.food?"Mahlzeiten werden angezeigt":"Mahlzeiten ausgeblendet – nur Termine und Trainings")});
 document.getElementById("vegBtn").addEventListener("click",()=>{state.veg=!state.veg;save();renderTable();renderText();renderLikes();
   const n=state.veg?DAYS.reduce((a,[k])=>a+SLOTS.filter(([sk])=>isMeat(sk,state.plan[k].s[sk])).length,0):0;
