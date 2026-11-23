@@ -1117,11 +1117,13 @@ function miniMeal(k,sk,t,n,L,style){const d=state.plan[k],sn=SLOTS.find(x=>x[0]=
   return `<div class="witem meal mini${style?" inblock":""}" data-time="${it.t}"${style||""}><button type="button" class="mmini" id="mm-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="false" aria-label="${esc(sn)} ${esc(n)} um ${fmtTime(it.t)}: ${esc(val||"nichts gewählt")}. Aufklappen" title="${esc(val||"")}">
         <span class="mmt">${fmtTime(it.t)}</span><span class="mml">${esc(L[sk]||SHORT[sk]||sn)}</span><span class="mmd">${val?esc(val.split(" (")[0])+(ex.length?` <span class="mmx">+${ex.length}</span>`:""):"–"}</span><span class="mmc" aria-hidden="true">▸</span></button></div>`}
 /* Mahlzeit fällt in einen Block (Schule, Arbeit, Training)? Dann klein im Block anzeigen, an der passenden Höhe */
-function nestMeals(k,blocks,meals){const res=new Map();meals.forEach(m=>{if(mealOpen(k,m.sk))return;
-    const b=blocks.find(b=>m.t>b.s&&m.t<b.e);if(!b)return;m.nested=true;if(!res.has(b.key))res.set(b.key,[]);res.get(b.key).push(m)});return res}
-function nestLayout(k,list,b,n,L){if(!list||!list.length)return {html:"",minH:0};const h=Math.round(Math.min(b.e-b.s,720)*0.75);let last=-99;
-  const html=list.sort((x,y)=>x.t-y.t).map(m=>{let top=Math.round((m.t-b.s)*0.75);top=Math.max(top,58,last+38);if(top+36>h&&top>last+38)top=Math.max(58,last+38,h-36);last=top;
-    return miniMeal(k,m.sk,m.t,n,L,` style="top:${top}px"`)}).join("");return {html,minH:last+42}}
+function nestMeals(k,blocks,meals){const res=new Map(),last={};meals.slice().sort((x,y)=>x.t-y.t).forEach(m=>{if(mealOpen(k,m.sk))return;
+    const b=blocks.find(b=>m.t>b.s&&m.t<b.e);if(!b)return;const h=Math.round(Math.min(b.e-b.s,720)*0.75);
+    /* passt die kleine Zeile in den Block (unter Name und Zeit)? Sonst bleibt sie hinter dem Block */
+    const floor=Math.max(58,(last[b.key]??-99)+38);let top=Math.max(Math.round((m.t-b.s)*0.75),floor);if(top+36>h)top=h-36;if(top<floor)return;
+    last[b.key]=top;m.top=top;m.nested=true;if(!res.has(b.key))res.set(b.key,[]);res.get(b.key).push(m)});return res}
+function nestLayout(k,list,b,n,L){if(!list||!list.length)return {html:"",minH:0};
+  return {html:list.map(m=>miniMeal(k,m.sk,m.t,n,L,` style="top:${m.top}px"`)).join(""),minH:0}}
 function renderWeekTable(){renderMealsBtn();
   const t=document.getElementById("week");ensureSleep();const sw=matchWarnings();
   t.innerHTML=DAYS.map(([k,n],di)=>{
