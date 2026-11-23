@@ -411,6 +411,9 @@ details.info[open] summary{margin-bottom:4px;display:block}
 .mmd{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem}
 .mmx{font-size:.75rem;color:var(--muted)}.mmc{flex:none;color:var(--muted)}
 @media (min-width:900px){.mmini .mml{display:none}.mmini{padding:5px 6px;gap:5px}}
+.witem.act .wbody,.witem.train .wbody{position:relative}
+.witem.meal.inblock{position:absolute;left:8px;right:6px;z-index:2}
+.witem.meal.inblock .mmini{border-style:solid;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .mclose{flex:none;border:0;background:transparent;color:var(--muted);font-size:.9rem;cursor:pointer;padding:0 2px;line-height:1}
 .wlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .witem.train{--c:var(--t-mittel);--cbg:var(--t-mittel-bg)}
@@ -1105,11 +1108,20 @@ function dinnerSeg(k,d,id){
 }
 function wakeFor(k){ensureSleep();const i=DAYS.findIndex(x=>x[0]===k);const w=toMin(state.sleepWeek[DAYS[(i+6)%7][0]].wake);return w===null?390:w}
 /* Dauer → Höhe: 0,75 px pro Minute, damit lange Blöcke (Schule, Arbeit) sichtbar länger sind */
-function durStyle(x){const a=toMin(x.s),b=toMin(x.e);if(a==null||b==null||b<=a)return "";return ` style="min-height:${Math.round(Math.min(b-a,720)*0.75)}px"`}
+function durStyle(x,minH){const a=toMin(x.s),b=toMin(x.e);if(a==null||b==null||b<=a)return minH?` style="min-height:${minH}px"`:"";return ` style="min-height:${Math.max(Math.round(Math.min(b-a,720)*0.75),minH||0)}px"`}
 /* Mahlzeiten zu- und aufklappen: Grundeinstellung für alle (state.mealsOpen) plus einzelne Ausnahmen */
 const mealFlip=new Set();
 function mealOpen(k,sk){const flip=mealFlip.has(k+"|"+sk);return state.mealsOpen?!flip:flip}
 function renderMealsBtn(){const b=document.getElementById("mealsBtn");if(!b)return;b.textContent=state.mealsOpen?"▴ Alle Mahlzeiten zuklappen":"▾ Alle Mahlzeiten aufklappen";b.setAttribute("aria-pressed",!!state.mealsOpen)}
+function miniMeal(k,sk,t,n,L,style){const d=state.plan[k],sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,ex=extrasOf(k,sk),it={t};
+  return `<div class="witem meal mini${style?" inblock":""}" data-time="${it.t}"${style||""}><button type="button" class="mmini" id="mm-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="false" aria-label="${esc(sn)} ${esc(n)} um ${fmtTime(it.t)}: ${esc(val||"nichts gewählt")}. Aufklappen" title="${esc(val||"")}">
+        <span class="mmt">${fmtTime(it.t)}</span><span class="mml">${esc(L[sk]||SHORT[sk]||sn)}</span><span class="mmd">${val?esc(val.split(" (")[0])+(ex.length?` <span class="mmx">+${ex.length}</span>`:""):"–"}</span><span class="mmc" aria-hidden="true">▸</span></button></div>`}
+/* Mahlzeit fällt in einen Block (Schule, Arbeit, Training)? Dann klein im Block anzeigen, an der passenden Höhe */
+function nestMeals(k,blocks,meals){const res=new Map();meals.forEach(m=>{if(mealOpen(k,m.sk))return;
+    const b=blocks.find(b=>m.t>b.s&&m.t<b.e);if(!b)return;m.nested=true;if(!res.has(b.key))res.set(b.key,[]);res.get(b.key).push(m)});return res}
+function nestLayout(k,list,b,n,L){if(!list||!list.length)return {html:"",minH:0};const h=Math.round(Math.min(b.e-b.s,720)*0.75);let last=-99;
+  const html=list.sort((x,y)=>x.t-y.t).map(m=>{let top=Math.round((m.t-b.s)*0.75);top=Math.max(top,58,last+38);if(top+36>h&&top>last+38)top=Math.max(58,last+38,h-36);last=top;
+    return miniMeal(k,m.sk,m.t,n,L,` style="top:${top}px"`)}).join("");return {html,minH:last+42}}
 function renderWeekTable(){renderMealsBtn();
   const t=document.getElementById("week");ensureSleep();const sw=matchWarnings();
   t.innerHTML=DAYS.map(([k,n],di)=>{
@@ -1121,27 +1133,31 @@ function renderWeekTable(){renderMealsBtn();
     if(!Array.isArray(d.act))d.act=[];
     d.act.forEach((x,i)=>{const st=toMin(x.s);items.push({t:st===null?2100+i:st,o:-2,kind:"act",i})});
     items.sort((a,b)=>a.t-b.t||a.o-b.o);
-    const body=items.map(it=>{
+    const blocks=items.filter(it=>it.kind!=="meal").map(it=>{const x=it.kind==="act"?d.act[it.i]:d.ses[it.i],a=toMin(x.s),e=toMin(x.e);return a!=null&&e!=null&&e-a>=45?{key:it.kind+it.i,s:a,e}:null}).filter(Boolean);
+    const nest=nestMeals(k,blocks,items.filter(it=>it.kind==="meal"));
+    const lay={};blocks.forEach(b=>lay[b.key]=nestLayout(k,nest.get(b.key),b,n,L));const NL={html:"",minH:0};
+    const body=items.filter(it=>!it.nested).map(it=>{
       if(it.kind==="act"){const x=d.act[it.i],st=toMin(x.s);
-        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"${durStyle(x)}><div class="whead">${actIcon(x.k,16)}
+        return `<div class="witem act" data-k="${x.k}" data-time="${it.t}"><div class="wbody"${durStyle(x,(lay["act"+it.i]||NL).minH)}><div class="whead">${actIcon(x.k,16)}
           <input type="text" class="sesname" id="tactn-${k}-${it.i}" data-act="${k}|${it.i}|n" value="${esc(x.n||"")}" placeholder="${esc(actName(x.k))}" aria-label="Name ${esc(actName(x.k))}">
           ${st===null?"":`<button type="button" class="draghandle" id="dha-${k}-${it.i}" data-drag="${k}|act|${it.i}" aria-label="${esc(actName(x.k))} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-s" data-act="${k}|${it.i}|s" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tact-${k}-${it.i}-e" data-act="${k}|${it.i}|e" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
           <button type="button" class="xbtn" id="tactdel-${k}-${it.i}" data-actdel="${k}|${it.i}" aria-label="Eintrag entfernen" title="Entfernen">×</button></div>
           ${actWarn(x.k,k)?`<div class="detail warn">${esc(actWarn(x.k,k))}</div>`:""}
           ${ACT_INFO[x.k]?`<details class="info detail"><summary>Info</summary>${esc(ACT_INFO[x.k])}</details>`:""}
+          ${(lay["act"+it.i]||NL).html}
         </div></div>`}
       if(it.kind==="ses"){const x=d.ses[it.i],st=toMin(x.s);
-        return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"${durStyle(x)}><div class="whead">${icon(d.t||"mittel",16)}
+        return `<div class="witem train" data-t="${d.t||"mittel"}" data-time="${it.t}"><div class="wbody"${durStyle(x,(lay["ses"+it.i]||NL).minH)}><div class="whead">${icon(d.t||"mittel",16)}
           <input type="text" class="sesname" id="tsesn-${k}-${it.i}" data-ses="${k}|${it.i}|n" data-pre="t" value="${esc(x.n||"")}" placeholder="${esc(sesLabel(d.t,st))}" aria-label="Name der Einheit">
           ${st===null?"":`<button type="button" class="draghandle" id="dhs-${k}-${it.i}" data-drag="${k}|ses|${it.i}" aria-label="Einheit verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button>`}</div>
           <div class="trow"><span class="tpick"><span class="tshow" aria-hidden="true">${x.s?esc(x.s):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-s" data-ses="${k}|${it.i}|s" data-pre="t" value="${esc(x.s||"")}" aria-label="Start ${n}"></span><span aria-hidden="true">–</span><span class="tpick"><span class="tshow" aria-hidden="true">${x.e?esc(x.e):"--:--"}</span><input type="time" class="tedit" id="tses-${k}-${it.i}-e" data-ses="${k}|${it.i}|e" data-pre="t" value="${esc(x.e||"")}" aria-label="Ende ${n}"></span>
           <button type="button" class="xbtn" id="tsesdel-${k}-${it.i}" data-sesdel="${k}|${it.i}" data-pre="t" aria-label="Einheit entfernen" title="Entfernen">×</button></div>
           ${gymLink(x)}
+          ${(lay["ses"+it.i]||NL).html}
         </div></div>`}
       const sk=it.sk,sn=SLOTS.find(x=>x[0]===sk)[1],val=d.s[sk]||NONE,rec=recipeFor(sk,val);
-      if(!mealOpen(k,sk)){const ex=extrasOf(k,sk);return `<div class="witem meal mini" data-time="${it.t}"><button type="button" class="mmini" id="mm-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="false" aria-label="${esc(sn)} ${esc(n)} um ${fmtTime(it.t)}: ${esc(val||"nichts gewählt")}. Aufklappen" title="${esc(val||"")}">
-        <span class="mmt">${fmtTime(it.t)}</span><span class="mml">${esc(L[sk]||SHORT[sk]||sn)}</span><span class="mmd">${val?esc(val.split(" (")[0])+(ex.length?` <span class="mmx">+${ex.length}</span>`:""):"–"}</span><span class="mmc" aria-hidden="true">▸</span></button></div>`}
+      if(!mealOpen(k,sk))return miniMeal(k,sk,it.t,n,L);
       return `<div class="witem meal" data-time="${it.t}"><div class="wbody"><div class="whead"><button type="button" class="mclose" id="mc-${k}-${sk}" data-mtog="${k}|${sk}" aria-expanded="true" aria-label="${esc(sn)} zuklappen" title="Zuklappen">▾</button><span class="tpick wtime"><span class="tshow" aria-hidden="true">${fmtTime(it.t)}</span><input type="time" class="tedit" id="mt-${k}-${sk}" data-mtime="${k}|${sk}" value="${fmtTime(it.t)}" aria-label="Uhrzeit ${sn} ändern" title="Uhrzeit ändern"></span>
         <span class="wlabel" title="${esc(L[sk]||sn)}">${esc(L[sk]||SHORT[sk]||sn)}</span><button type="button" class="draghandle" id="dh-${k}-${sk}" data-drag="${k}|${sk}" aria-label="${sn} verschieben, auch mit Pfeiltasten" title="Ziehen zum Verschieben">⠿</button></div>
         ${dishPick(`sel-${k}-${sk}`,k,sk,val,`${sn} ${n}`)}${val&&SC[val]?`<div class="wscore" title="Kohlenhydrate · Protein · Fett · Gesundheit (je von 5). Grün = günstig, rot = ungünstig">${(()=>{const g=goodOf(val),r=SC[val];const a=allScores(val);return [["Carbs",0],["P",1],["F",2],["Vit",4],["Ball",5],["Zusatzzucker",6],["Gesund",3]].filter(([,i])=>a[i]!=null).map(([l,i])=>`<span class="g" style="${gcol(g[i])}">${l} ${a[i]}${l==="Gesund"?"/5":""}</span>`).join(" · ")})()}</div>`:""}${extraChips(k,sk,"w")}
